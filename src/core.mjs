@@ -181,6 +181,8 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     const bookingStatus = bookingStatusKey ? String(source[bookingStatusKey] ?? '').trim() : '';
     const flags = [];
     if (!id) flags.push('取引IDなし');
+    // Trimming changes the reconciliation key; quarantine rather than silently rewriting it.
+    if (rawId !== id) flags.push('取引IDの前後に空白があります（元IDと照合キーが異なります）');
     // Do not silently rewrite identifiers containing tabs, line breaks, NUL, etc.
     // Such IDs would change in the spreadsheet-safe report/export and evade exact matching.
     if (/[\u0000-\u001F\u007F]/.test(rawId)) flags.push('取引IDに制御文字が含まれます');
