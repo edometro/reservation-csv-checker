@@ -30,7 +30,8 @@
       // Wait for the actual application DOM rather than readyState alone.
       await until(() => frame.contentDocument?.getElementById('demo') &&
         frame.contentDocument?.getElementById('analyze') &&
-        frame.contentDocument?.location?.pathname === '/index.html', 'production iframe');
+        frame.contentDocument?.location?.pathname === '/index.html' &&
+        frame.contentDocument?.readyState === 'complete', 'production iframe and module scripts');
       const doc = frame.contentDocument;
       const win = frame.contentWindow;
       const el = id => doc.getElementById(id);
