@@ -313,3 +313,30 @@ test('journal description 200-character boundary counts Unicode code points with
   const invalid=analyze([{...row,メニュー:'😀'.repeat(maxText+1)}],map);
   assert.throws(()=>ledgerCSV(invalid,'普通預金','売上高',true),/摘要は200文字以内/);
 });
+
+
+test('control characters in source transaction IDs are quarantined before journal export',()=>{
+  // A quoted line break, leading tab, NUL or DEL can be silently changed by
+  // spreadsheet-safe export, losing the exact source identifier.
+  const csv=[
+    '予約ID,決済日,決済金額,決済状況,メニュー',
+    '"PAY\n001",2026/10/01,1200,決済済,改行ID',
+    '"\tPAY-002",2026/10/02,1200,決済済,タブID',
+    'PAY\u0000003,2026/10/03,1200,決済済,NUL ID',
+    'PAY\u007F004,2026/10/04,1200,決済済,DEL ID',
+    'PAY-005,2026/10/05,1200,決済済,正常'
+  ].join('\n');
+  const findings=analyze(objectRows(csv).rows,map);
+  assert.deepEqual(findings.map(r=>r.ready),[false,false,false,false,true]);
+  assert.deepEqual(findings.map(r=>r.line),[2,4,5,6,7]);
+  for(const row of findings.slice(0,4)) {
+    assert.match(row.flags.join(' / '),/取引IDに制御文字/);
+  }
+  const ledger=parseCSV(ledgerCSV(findings,'普通預金','売上高',true));
+  assert.equal(ledger.length,2);
+  assert.match(ledger[1][18],/PAY-005/);
+  const report=parseCSV(reportCSV(findings));
+  assert.deepEqual(report.slice(1).map(r=>r[6]),['要確認','要確認','要確認','要確認','候補']);
+  assert.deepEqual(report.slice(1).map(r=>r[1]),['PAY 001','PAY-002','PAY 003','PAY 004','PAY-005']);
+  assert.ok(!/[\u0000-\u001F\u007F]/.test(report[3][1]));
+});
