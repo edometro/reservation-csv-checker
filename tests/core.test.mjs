@@ -158,3 +158,39 @@ test('invalid source amount and date are review-only, not journal candidates',()
   assert.equal(journal.length,2);
   assert.match(journal[1][18],/S3/);
 });
+
+
+test('STORES confirmed and approval-pending reservations are not treated alike', () => {
+  // STORES official FAQ lists 確定, キャンセル, 承認待ち as distinct statuses.
+  // These rows are synthetic; the actual CSV field values remain unverified.
+  const csv = [
+    '予約ID,決済日,決済金額,支払ステータス,ステータス',
+    'P1,2026/10/01,1200,決済済,承認待ち',
+    'P2,2026/10/02,1200,決済済,確定',
+    'P3,2026/10/03,1200,決済済,キャンセル',
+    'P4,2026/10/04,1200,決済済,仮予約',
+    'P5,2026/10/05,1200,決済済,予約確定',
+    'P6,2026/10/06,1200,決済済,未確認の新状態'
+  ].join('\\n');
+  const mapping = {id:'予約ID',date:'決済日',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス'};
+  const findings = analyze(objectRows(csv).rows, mapping);
+  assert.deepEqual(findings.map(x => x.ready), [false, true, false, false, true, false]);
+  for (const i of [0, 3, 5]) assert.match(findings[i].flags.join(' / '), /未確定|未確認/);
+  assert.match(findings[2].flags.join(' / '), /予約キャンセル/);
+  const journal = parseCSV(ledgerCSV(findings, '普通預金', '売上高', true));
+  assert.equal(journal.length, 3); // header + confirmed candidates only
+  assert.match(journal[1][18], /P2/);
+  assert.match(journal[2][18], /P5/);
+});
+
+test('unknown booking status is review-only even when payment is explicitly paid', () => {
+  const mapping = {id:'予約ID',date:'決済日',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス'};
+  const rows = [
+    {予約ID:'X1',決済日:'2026/10/01',決済金額:'2000',支払ステータス:'paid',ステータス:'保留'},
+    {予約ID:'X2',決済日:'2026/10/01',決済金額:'2000',支払ステータス:'paid',ステータス:'confirmed'}
+  ];
+  const findings = analyze(rows, mapping);
+  assert.equal(findings[0].ready, false);
+  assert.equal(findings[1].ready, true);
+  assert.match(reportCSV(findings), /予約未確定または未確認のステータス/);
+});
