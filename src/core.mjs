@@ -140,7 +140,7 @@ const BOOKING_REVIEW = /キャンセル|取消|取り消|中止|無効|cancel|re
 // Other service-specific statuses need explicit validation against real CSV samples.
 const BOOKING_CONFIRMED = new Set(['確定', '予約確定', 'confirmed']);
 function excelSafe(s) {
-  const v = String(s ?? '').replace(/[\r\n\t]+/g, ' ').trim();
+  const v = String(s ?? '').replace(/[\u0000-\u001F\u007F]+/g, ' ').trim();
   return /^[=+\-@]/.test(v) ? `'${v}` : v;
 }
 
@@ -167,13 +167,17 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     if (id) frequencies.set(id, (frequencies.get(id) ?? 0) + 1);
   }
   return rows.map((source, i) => {
-    const id = String(source[idKey] ?? '').trim();
+    const rawId = String(source[idKey] ?? '');
+    const id = rawId.trim();
     const date = normalizeDate(source[dateKey]);
     const amount = parseYen(source[amountKey]);
     const status = String(source[statusKey] ?? '').trim();
     const bookingStatus = bookingStatusKey ? String(source[bookingStatusKey] ?? '').trim() : '';
     const flags = [];
     if (!id) flags.push('取引IDなし');
+    // Do not silently rewrite identifiers containing tabs, line breaks, NUL, etc.
+    // Such IDs would change in the spreadsheet-safe report/export and evade exact matching.
+    if (/[\u0000-\u001F\u007F]/.test(rawId)) flags.push('取引IDに制御文字が含まれます');
     if (!date) flags.push('日付形式エラー');
     if (dateSourceNeedsReview) flags.push('予約・申込・来客・購入日時を会計取引日とする根拠が未確認');
     if (amount == null) flags.push('金額形式エラーまたは0円');
