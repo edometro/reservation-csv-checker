@@ -38,11 +38,33 @@ test('journal preflight rejects wrong schema, empty journals and malformed CSV s
 
 test('preflight warns only for missing tax classifications and transaction numbers',()=>{
   const rows=parseCSV(draft());
-  rows[1][0]='T1';
+  rows[1][0]='123456789';
   rows[1][6]='仮の借方税区分';
   rows[1][14]='仮の貸方税区分';
   const audit=auditJournalCSV(stringifyCSV(rows));
   assert.deepEqual(audit.errors,[]);
   assert.deepEqual(audit.warnings,[]);
   // This is a structural check only: values may still be invalid in the actual accounting software.
+});
+
+test('MF optional transaction number must be at most nine digits when present',()=>{
+  const rows=parseCSV(draft());
+  rows[1][0]='1234567890';
+  assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' '),/取引Noは9桁以内の数字/);
+  rows[1][0]='T-001';
+  assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' '),/取引Noは9桁以内の数字/);
+  rows[1][0]='000000001';
+  assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
+  rows[1][0]='';
+  const empty=auditJournalCSV(stringifyCSV(rows));
+  assert.deepEqual(empty.errors,[]);
+  assert.match(empty.warnings.join(' '),/取引Noが未設定/);
+});
+
+test('MF optional description is limited to 200 characters',()=>{
+  const rows=parseCSV(draft());
+  rows[1][18]='あ'.repeat(200);
+  assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
+  rows[1][18]='あ'.repeat(201);
+  assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' '),/摘要は200文字以内/);
 });

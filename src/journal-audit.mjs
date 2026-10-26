@@ -35,8 +35,18 @@ export function auditJournalCSV(csvText) {
     if (debit === null || credit === null || debit !== credit) {
       errors.push(`${line}行目: 借方・貸方金額が不正、または一致しません`);
     }
+    // MF permits an empty transaction number, but a supplied one must be
+    // 1-9 ASCII digits. Repeated numbers may intentionally form a compound entry.
+    const transactionNumber = row[0].trim();
+    if (transactionNumber && !/^[0-9]{1,9}$/.test(transactionNumber)) {
+      errors.push(`${line}行目: 取引Noは9桁以内の数字で指定してください`);
+    }
+    // The official import guide limits 摘要 to 200 characters.
+    if (Array.from(row[18]).length > 200) {
+      errors.push(`${line}行目: 摘要は200文字以内で指定してください`);
+    }
     if (!row[6].trim() || !row[14].trim()) missingTax++;
-    if (!row[0].trim()) missingNumber++;
+    if (!transactionNumber) missingNumber++;
   });
 
   if (missingTax) warnings.push(`借方または貸方の税区分が未設定: ${missingTax}件（会計・税務上の判断が必要）`);
