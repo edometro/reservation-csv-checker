@@ -1,0 +1,45 @@
+import {MF_HEADERS, MAX_INPUT_ROWS, normalizeDate, parseCSV, parseYen} from './core.mjs';
+
+/**
+ * Structural preflight for Money Forward journal *candidates*.
+ * Passing this audit does NOT establish the correctness of tax treatment,
+ * recognition timing, account names, or the absence of prior imports.
+ */
+export function auditJournalCSV(csvText) {
+  let parsed;
+  try {
+    parsed = parseCSV(csvText, {maxRows: MAX_INPUT_ROWS + 1, maxColumns: MF_HEADERS.length});
+  } catch (error) {
+    return {rowCount: 0, errors: [`CSV解析エラー: ${error.message}`], warnings: []};
+  }
+
+  const [header, ...rows] = parsed;
+  const errors = [];
+  const warnings = [];
+  if (header.length !== MF_HEADERS.length || header.some((name, i) => name !== MF_HEADERS[i])) {
+    errors.push('マネーフォワード仕訳帳の27列ヘッダーと一致しません');
+  }
+  if (!rows.length) errors.push('仕訳候補がありません');
+
+  let missingTax = 0, missingNumber = 0;
+  rows.forEach((row, index) => {
+    const line = index + 2;
+    if (normalizeDate(row[1]) !== row[1]) errors.push(`${line}行目: 取引日がyyyy/MM/dd形式ではありません`);
+    for (const col of [2, 10]) {
+      const account = row[col].trim();
+      if (!account || account.length > 30 || /^[=+\-@]/.test(account) || /[\r\n]/.test(account)) {
+        errors.push(`${line}行目: ${MF_HEADERS[col]}が不正です`);
+      }
+    }
+    const debit = parseYen(row[8]), credit = parseYen(row[16]);
+    if (debit === null || credit === null || debit !== credit) {
+      errors.push(`${line}行目: 借方・貸方金額が不正、または一致しません`);
+    }
+    if (!row[6].trim() || !row[14].trim()) missingTax++;
+    if (!row[0].trim()) missingNumber++;
+  });
+
+  if (missingTax) warnings.push(`借方または貸方の税区分が未設定: ${missingTax}件（会計・税務上の判断が必要）`);
+  if (missingNumber) warnings.push(`取引Noが未設定: ${missingNumber}件（会計側の二重取り込みを防止できません）`);
+  return {rowCount: rows.length, errors, warnings};
+}
