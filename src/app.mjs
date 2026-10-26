@@ -1,8 +1,15 @@
-import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet} from './core.mjs';
+import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns} from './core.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
-const MAPPING = {id:['予約ID','取引ID','オーダー番号','注文ID','予約番号'],date:['決済日','支払日','購入日時','入金日','取引日'],amount:['決済金額','金額','売上金額','支払金額','決済額'],status:['決済状況','支払状況','ステータス','支払いステータス'],description:['メニュー','商品名','摘要','予約メニュー']};
+const MAPPING = ['id','date','amount','status','bookingStatus','description'];
+function invalidateResults(){
+  findings = null;
+  $('resultsection').hidden=true;
+  $('ledgersection').hidden=true;
+  $('confirm').checked=false;
+  $('downloadledger').disabled=true;
+}
 function alertMessage(text){$('feedback').textContent=text;$('feedback').hidden=false;}
 function clearMessage(){$('feedback').hidden=true;}
 async function readFile(file){
@@ -14,14 +21,15 @@ async function readFile(file){
 function applyCSV(text,label){
  const parsed=objectRows(text);
  if(parsed.rows.length>50000) throw new Error('試作版では50,000件以下にしてください');
- current=parsed;findings=null;
- for(const [field,likely] of Object.entries(MAPPING)){
+ current=parsed;invalidateResults();
+ const suggestions = suggestColumns(current.headers);
+ for(const field of MAPPING){
    const node=$(`map-${field}`);node.replaceChildren();
    node.add(new Option('選択してください',''));
    for(const header of current.headers)node.add(new Option(header,header));
-   node.value=likely.find(x=>current.headers.includes(x))??'';
+   node.value=suggestions[field];
  }
- $('mappingsection').hidden=false;$('resultsection').hidden=true;$('ledgersection').hidden=true;
+ $('mappingsection').hidden=false;
  $('fileinfo').textContent=`${label} / ${current.rows.length}レコード / ${current.headers.length}列`;
  clearMessage();
 }
@@ -30,7 +38,8 @@ $('demo').addEventListener('click',()=>{try{applyCSV(sample,'合成サンプル�
 $('analyze').addEventListener('click',async()=>{
  try{
    if(!current)throw new Error('CSVを選択してください');
-   const mapping={};for(const field of Object.keys(MAPPING))mapping[field]=$(`map-${field}`).value;
+   invalidateResults();
+   const mapping={};for(const field of MAPPING)mapping[field]=$(`map-${field}`).value;
    if(!['id','date','amount','status'].every(field=>mapping[field])) throw new Error('必須列をすべて指定してください');
    if(new Set([mapping.id,mapping.date,mapping.amount,mapping.status]).size!==4)throw new Error('異なる4つの必須列を指定してください');
    let priorKeys=new Set(); const prior=$('prior').files[0];
@@ -42,7 +51,7 @@ $('analyze').addEventListener('click',async()=>{
    const tbody=$('preview');tbody.replaceChildren();
    for(const item of findings.slice(0,200)){
      const tr=document.createElement('tr');
-     const values=[item.line,item.id,item.date??'—',item.amount?.toLocaleString('ja-JP')??'—',item.status];
+     const values=[item.line,item.id,item.date??'—',item.amount?.toLocaleString('ja-JP')??'—',item.status,item.bookingStatus||'—'];
      for(const value of values){const td=document.createElement('td');td.textContent=value;tr.append(td);}
      const td=document.createElement('td'),span=document.createElement('span');span.className=`pill ${item.ready?'ok':'review'}`;span.textContent=item.ready?'候補':'要確認';span.title=item.flags.join(' / ');td.append(span);tr.append(td);tbody.append(tr);
    }
@@ -52,6 +61,11 @@ $('analyze').addEventListener('click',async()=>{
  }catch(err){alertMessage(err.message);}
 });
 function download(text,filename){const blob=new Blob(['\uFEFF',text],{type:'text/csv;charset=utf-8'});const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}
+for(const field of MAPPING){
+  $('map-'+field).addEventListener('change',invalidateResults);
+}
+$('prior').addEventListener('change',invalidateResults);
+$('priorheader').addEventListener('input',invalidateResults);
 $('downloadreport').addEventListener('click',()=>{if(findings)download(reportCSV(findings),'validation-report.csv');});
 $('confirm').addEventListener('change',e=>{$('downloadledger').disabled=!e.target.checked;});
 $('downloadledger').addEventListener('click',()=>{try{if(!findings)throw new Error('先に検査してください');download(ledgerCSV(findings,$('debit').value,$('credit').value,$('confirm').checked),'mf-journal-candidates.csv');clearMessage();}catch(err){alertMessage(err.message);}});
