@@ -107,7 +107,7 @@ function refreshJournalAudit(){
       ...audit.errors.map(message=>'【要修正】'+message),
       ...audit.warnings.map(message=>'【未設定】'+message),
       '【要手動確認】仕訳日・科目の実在・税区分・収益認識・返金/手数料・過去インポートは自動検証できません。'
-    ].join('\\n');
+    ].join('\n');
   }catch(error){
     panel.textContent='【要修正】'+error.message;
   }
