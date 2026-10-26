@@ -171,7 +171,7 @@ test('STORES purchase history timestamp must not become an accounting date',()=>
   const csv=[
     'オーダー番号,購入日時,金額,支払ステータス,予約ステータス',
     'P-001,2026/10/01 12:30,1200,決済済,確定'
-  ].join('\\n');
+  ].join('\n');
   const mapping={id:'オーダー番号',date:'購入日時',amount:'金額',status:'支払ステータス',bookingStatus:'予約ステータス'};
   const findings=analyze(objectRows(csv).rows,mapping);
   assert.equal(findings[0].ready,false);
