@@ -208,7 +208,13 @@ export function ledgerCSV(analysis, debit, credit, confirmation) {
     r[8] = row.amount;
     r[10] = c;
     r[16] = row.amount;
-    r[18] = excelSafe(`予約 ${row.id} ${row.description}`).slice(0, 200);
+    const description = excelSafe(`予約 ${row.id} ${row.description}`);
+    // Never silently truncate a transaction ID or user text. Truncation used to
+    // hide an overlong description from the preflight audit, and could split emoji.
+    if (Array.from(description).length > 200) {
+      throw new Error(`元CSV${row.line}行目: 摘要は200文字以内にしてください（元データの修正が必要です）`);
+    }
+    r[18] = description;
     return r;
   });
   return stringifyCSV([MF_HEADERS, ...content]);
