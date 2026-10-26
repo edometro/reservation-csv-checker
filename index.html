@@ -42,6 +42,7 @@
     <section id="ledgersection" class="panel" hidden>
       <div class="step-head"><span class="step">4</span><div><h2>仕訳候補CSVを作る</h2><p>マネーフォワード会計の「仕訳帳」インポート用の列構成に合わせます。税区分等は未設定のため、そのまま本番投入せず必ず確認してください。</p></div></div>
       <div class="mapping-grid"><label>借方勘定科目 <em>必須</em><input id="debit" type="text" maxlength="30" placeholder="自社の勘定科目を入力"></label><label>貸方勘定科目 <em>必須</em><input id="credit" type="text" maxlength="30" placeholder="自社の勘定科目を入力"></label></div>
+      <div id="journalaudit" role="status" aria-live="polite" class="feedback" style="white-space:pre-line" hidden></div>
       <label class="checkbox"><input id="confirm" type="checkbox"><span>仕訳日・勘定科目・金額・収益認識・税区分を自分で確認し、必要な修正を行います。実際の会計ソフトへの取り込み前に内容を再確認します。</span></label>
       <button id="downloadledger" type="button" class="primary" disabled>仕訳候補CSVを保存</button>
       <p class="fine">CSV形式は公式ガイドに基づく参考実装です。取引Noは空欄です。インポートのたび新規仕訳が作られるため、重複登録には十分注意してください。</p>
