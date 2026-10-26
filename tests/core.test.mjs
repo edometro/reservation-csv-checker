@@ -113,5 +113,9 @@ test('paid but cancelled bookings must never become journal candidates',()=>{
  const report=parseCSV(reportCSV(findings));
  assert.equal(report[0][5],'予約状況');
  assert.equal(report[1][5],'キャンセル済');
+ const withoutBooking = analyze(objectRows(csv).rows,{...mapping,bookingStatus:''});
+ assert.equal(withoutBooking.filter(x=>x.ready).length,0);
+ assert.match(withoutBooking[1].flags.join(','),/未指定/);
  assert.throws(()=>analyze(objectRows(csv).rows,{...mapping,bookingStatus:'支払ステータス'}),/別の列/);
+ assert.throws(()=>analyze(objectRows(csv).rows,{...mapping,bookingStatus:'決済金額'}),/別の列/);
 });
