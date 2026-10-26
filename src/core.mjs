@@ -95,6 +95,9 @@ export function stringifyCSV(rows) {
   }).join(',')).join('\r\n') + '\r\n';
 }
 
+// Physical CSV row metadata must not occupy a user-controlled column name (e.g. '__line').
+const SOURCE_LINE = Symbol('csvPhysicalLine');
+
 export function objectRows(csvText) {
   const recordLines = [];
   const [header, ...records] = parseCSV(csvText, {
@@ -106,8 +109,11 @@ export function objectRows(csvText) {
   if (keys.some(x => !x) || new Set(keys).size !== keys.length) {
     throw new Error('ヘッダーが空欄、または重複しています');
   }
-  return {headers: keys, rows: records.map((record, idx) =>
-    ({...Object.fromEntries(keys.map((key,i) => [key, record[i]])), __line: recordLines[idx + 1]}))};
+  return {headers: keys, rows: records.map((record, idx) => {
+    const row = Object.fromEntries(keys.map((key, i) => [key, record[i]]));
+    Object.defineProperty(row, SOURCE_LINE, {value: recordLines[idx + 1]});
+    return row;
+  })};
 }
 
 export function normalizeDate(value) {
@@ -192,7 +198,7 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     }
     if (id && frequencies.get(id) > 1) flags.push('ファイル内の取引ID重複');
     if (id && priorKeys.has(id)) flags.push('過去出力との取引ID重複（参考）');
-    return {line: source.__line ?? i+2, id, date, amount, status, bookingStatus, flags,
+    return {line: source[SOURCE_LINE] ?? i+2, id, date, amount, status, bookingStatus, flags,
       description: excelSafe(mapping.description ? source[mapping.description] : ''),
       ready: flags.length === 0};
   });
