@@ -162,6 +162,26 @@ test('core rejects reusing a CSV column for different mandatory financial fields
   assert.equal(analyze(rows,valid)[0].ready,true);
 });
 
+test('STORES purchase history timestamp must not become an accounting date',()=>{
+  // STORES official purchase-history FAQ (updated 2025-12-04) lists 購入日時,
+  // but does not establish the accounting recognition date or settlement date.
+  const listed=['購入日時','商品名','金額','支払い方法','スタッフ','ステータス','オーダー番号','顧客名'];
+  assert.equal(suggestColumns(listed).date,'');
+  assert.equal(suggestColumns(listed).status,''); // generic ステータス is not payment status
+  const csv=[
+    'オーダー番号,購入日時,金額,支払ステータス,予約ステータス',
+    'P-001,2026/10/01 12:30,1200,決済済,確定'
+  ].join('\\n');
+  const mapping={id:'オーダー番号',date:'購入日時',amount:'金額',status:'支払ステータス',bookingStatus:'予約ステータス'};
+  const findings=analyze(objectRows(csv).rows,mapping);
+  assert.equal(findings[0].ready,false);
+  assert.match(findings[0].flags.join(' / '),/購入日時を会計取引日とする根拠が未確認/);
+  assert.throws(()=>ledgerCSV(findings,'普通預金','売上高',true),/出力可能な候補がありません/);
+  // Explicitly supplied transaction-date column remains usable (still not an accounting guarantee).
+  const withPaymentDate=objectRows(csv.replaceAll('購入日時','決済日')).rows;
+  assert.equal(analyze(withPaymentDate,{...mapping,date:'決済日'})[0].ready,true);
+});
+
 test('strict yen parsing preserves only well-formed integer amounts',()=>{
   for (const [input, expected] of [
     ['1200',1200],['1,200',1200],['￥12,345',12345],['¥ 1,234,567',1234567],
