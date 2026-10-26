@@ -81,7 +81,9 @@
       const bookingCSV = [
         '予約ID,決済日,決済金額,支払ステータス,ステータス,メニュー',
         'C1,2026/10/01,1000,決済済,キャンセル済,取消',
-        'C2,2026/10/02,1500,決済済,予約確定,通常'
+        'C2,2026/10/02,1500,決済済,予約確定,通常',
+        'C3,2026/10/03,1500,決済済,承認待ち,未承認',
+        'C4,2026/10/04,1500,決済済,不明,要調査'
       ].join('\n');
       upload(doc, bookingCSV, 'booking-synthetic.csv');
       await until(() => el('fileinfo').textContent.includes('booking-synthetic.csv'), 'synthetic file upload');
@@ -90,7 +92,7 @@
       check(el('resultsection').hidden, 'old demo results remain visible');
       el('analyze').click();
       await until(() => !el('resultsection').hidden, 'synthetic analysis');
-      check(el('ok').textContent === '1' && el('review').textContent === '1', 'cancelled paid booking not blocked');
+      check(el('ok').textContent === '1' && el('review').textContent === '3', 'cancelled, pending or unknown paid booking not blocked');
       check(el('preview').textContent.includes('キャンセル済'), 'booking status not shown in UI');
 
       // Invalid replacement must clear previous results and disable export.
