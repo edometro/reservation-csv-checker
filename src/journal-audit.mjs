@@ -25,6 +25,14 @@ export function auditJournalCSV(csvText) {
   const seenEntries = new Map();
   rows.forEach((row, index) => {
     const line = index + 2;
+    // CSV quoting is not spreadsheet formula escaping. Fail closed even when
+    // an optional column contains a formula-like value: users may inspect or
+    // edit this CSV in spreadsheet software before importing it.
+    row.forEach((value, col) => {
+      if (/^[\u0000-\u001F\u007F\s]*[=+\-@]/u.test(value)) {
+        errors.push(`${line}行目: ${MF_HEADERS[col]}に数式として解釈される可能性のある値があります`);
+      }
+    });
     // Money Forward imports every row as a new entry. Reject exact duplicates
     // within one export; matching amounts alone may be legitimate transactions.
     const entryKey = JSON.stringify(row);

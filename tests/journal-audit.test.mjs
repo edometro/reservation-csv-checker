@@ -94,3 +94,26 @@ test('preflight allows same-day same-amount entries with distinct descriptions',
   rows[2][0]='123';
   assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
 });
+
+test('preflight blocks spreadsheet formulas in optional columns and description',()=>{
+  const rows=parseCSV(draft());
+  rows[1][3]='=HYPERLINK("https://example.invalid","click")'; // optional subaccount
+  rows[1][18]=' \t=1+1'; // leading whitespace must not bypass the guard
+  rows[1][19]='@SUM(1,1)'; // optional memo
+  rows[1][9]='\uFEFF+1+2'; // optional tax amount with BOM
+  const audit=auditJournalCSV(stringifyCSV(rows));
+  assert.equal(audit.rowCount,1);
+  for(const name of ['借方補助科目','摘要','仕訳メモ','借方税額']) {
+    assert.match(audit.errors.join(' / '),new RegExp(name+'.*数式として解釈'));
+  }
+});
+
+test('preflight permits normal text and escaped formula-looking descriptions',()=>{
+  const rows=parseCSV(draft());
+  rows[1][3]='補助科目';
+  rows[1][18]="'=SUM(1,1)"; // spreadsheet-safe literal, not a formula
+  rows[1][19]='予約の追加メモ - 価格調整';
+  assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
+  rows[1][19]='\n-1+2'; // quoted multiline field must not bypass the guard
+  assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' / '),/仕訳メモに数式として解釈/);
+});
