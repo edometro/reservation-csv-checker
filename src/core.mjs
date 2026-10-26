@@ -1,0 +1,144 @@
+/** Pure CSV and validation logic. User files are processed in the browser. */
+export const MF_HEADERS = [
+  '取引No','取引日','借方勘定科目','借方補助科目','借方部門','借方取引先',
+  '借方税区分','借方インボイス','借方金額(円)','借方税額',
+  '貸方勘定科目','貸方補助科目','貸方部門','貸方取引先',
+  '貸方税区分','貸方インボイス','貸方金額(円)','貸方税額',
+  '摘要','仕訳メモ','タグ','MF仕訳タイプ'
+];
+
+export function parseCSV(input) {
+  const csv = String(input).replace(/^\uFEFF/, '');
+  const rows = [];
+  let record = [], cell = '', inQuotes = false, afterQuote = false;
+  for (let i = 0; i < csv.length; i++) {
+    const c = csv[i];
+    if (inQuotes) {
+      if (c === '"' && csv[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') { inQuotes = false; afterQuote = true; }
+      else cell += c;
+    } else if (c === ',') {
+      record.push(cell); cell = ''; afterQuote = false;
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && csv[i + 1] === '\n') i++;
+      record.push(cell); cell = ''; afterQuote = false;
+      if (!(record.length === 1 && record[0] === '')) rows.push(record);
+      record = [];
+    } else if (afterQuote) {
+      throw new Error('CSV書式エラー: 閉じ引用符の直後に不正な文字');
+    } else if (c === '"') {
+      if (cell !== '') throw new Error(`CSV書式エラー: ${rows.length + 1}行目の引用符`);
+      inQuotes = true;
+    } else cell += c;
+  }
+  if (inQuotes) throw new Error('CSV書式エラー: 閉じられていない引用符');
+  record.push(cell);
+  if (!(record.length === 1 && record[0] === '')) rows.push(record);
+  if (!rows.length) throw new Error('CSVファイルが空です');
+  const width = rows[0].length;
+  if (rows.some((row, idx) => idx > 0 && row.length !== width)) throw new Error('CSVの列数が行ごとに異なります');
+  return rows;
+}
+
+export function stringifyCSV(rows) {
+  return rows.map(row => row.map(value => {
+    let s = String(value ?? '');
+    if (/[",\r\n]/.test(s)) s = '"' + s.replaceAll('"', '""') + '"';
+    return s;
+  }).join(',')).join('\r\n') + '\r\n';
+}
+
+export function objectRows(csvText) {
+  const [header, ...records] = parseCSV(csvText);
+  const keys = header.map(x => x.trim());
+  if (keys.some(x => !x) || new Set(keys).size !== keys.length) {
+    throw new Error('ヘッダーが空欄、または重複しています');
+  }
+  return {headers: keys, rows: records.map((record, idx) =>
+    ({...Object.fromEntries(keys.map((key,i) => [key, record[i]])), __line: idx + 2}))};
+}
+
+export function normalizeDate(value) {
+  const s = String(value ?? '').trim();
+  const m = /^(\d{4})[-\/.年](\d{1,2})[-\/.月](\d{1,2})(?:日)?(?:\s.*)?$/.exec(s);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], day = +m[3];
+  const d = new Date(Date.UTC(y, mo - 1, day));
+  if (d.getUTCFullYear() !== y || d.getUTCMonth() !== mo - 1 || d.getUTCDate() !== day) return null;
+  return `${y}/${String(mo).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+}
+
+export function parseYen(value) {
+  const s = String(value ?? '').trim().replace(/[¥￥,\s]/g,'');
+  if (!/^\d+$/.test(s)) return null;
+  const n = Number(s);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
+const PAID = new Set(['paid','payment completed','支払済','支払い済み','決済済','決済完了','入金済','入金済み']);
+const REVIEW = /キャンセル|cancel|返金|refund|未払|未決済|支払待|現地|未収/i;
+function excelSafe(s) {
+  const v = String(s ?? '').replace(/[\r\n\t]+/g, ' ').trim();
+  return /^[=+\-@]/.test(v) ? `'${v}` : v;
+}
+
+/** Generate review-only candidates, not final accounting decisions. */
+export function analyze(rows, mapping, priorKeys = new Set()) {
+  const idKey = mapping.id, dateKey = mapping.date, amountKey = mapping.amount, statusKey = mapping.status;
+  if (![idKey,dateKey,amountKey,statusKey].every(Boolean)) throw new Error('4つの必須列を指定してください');
+  const frequencies = new Map();
+  for (const source of rows) {
+    const id = String(source[idKey] ?? '').trim();
+    if (id) frequencies.set(id, (frequencies.get(id) ?? 0) + 1);
+  }
+  return rows.map((source, i) => {
+    const id = String(source[idKey] ?? '').trim();
+    const date = normalizeDate(source[dateKey]);
+    const amount = parseYen(source[amountKey]);
+    const status = String(source[statusKey] ?? '').trim();
+    const flags = [];
+    if (!id) flags.push('取引IDなし');
+    if (!date) flags.push('日付形式エラー');
+    if (amount == null) flags.push('金額形式エラーまたは0円');
+    if (!status) flags.push('支払状況が空欄');
+    else if (REVIEW.test(status)) flags.push('キャンセル・返金・未決済等の確認が必要');
+    else if (!PAID.has(status.toLowerCase())) flags.push('支払済みと判定できない状態');
+    if (id && frequencies.get(id) > 1) flags.push('ファイル内の取引ID重複');
+    if (id && priorKeys.has(id)) flags.push('過去出力との取引ID重複（参考）');
+    return {line: source.__line ?? i+2, id, date, amount, status, flags,
+      description: excelSafe(mapping.description ? source[mapping.description] : ''),
+      ready: flags.length === 0};
+  });
+}
+
+export function ledgerCSV(analysis, debit, credit, confirmation) {
+  if (!confirmation) throw new Error('内容の確認と仕訳方針の承認が必要です');
+  const d = String(debit ?? '').trim(), c = String(credit ?? '').trim();
+  if (!d || !c || d.length > 30 || c.length > 30) throw new Error('借方・貸方勘定科目を1〜30文字で指定してください');
+  if (/^[=+\-@]/.test(d) || /^[=+\-@]/.test(c) || /[\r\n]/.test(d+c)) throw new Error('勘定科目の形式が不正です');
+  const ready = analysis.filter(row => row.ready);
+  if (!ready.length) throw new Error('出力可能な候補がありません');
+  const content = ready.map(row => {
+    const r = Array(MF_HEADERS.length).fill('');
+    r[1] = row.date;
+    r[2] = d;
+    r[8] = row.amount;
+    r[10] = c;
+    r[16] = row.amount;
+    r[18] = excelSafe(`予約 ${row.id} ${row.description}`).slice(0, 200);
+    return r;
+  });
+  return stringifyCSV([MF_HEADERS, ...content]);
+}
+
+export function reportCSV(analysis) {
+  return stringifyCSV([['元CSV行','取引ID','取引日','金額','支払状況','判定','理由'], ...analysis.map(r => [
+    r.line, excelSafe(r.id), r.date ?? '', r.amount ?? '', excelSafe(r.status), r.ready ? '候補' : '要確認', r.flags.join(' / ')
+  ])]);
+}
+
+export function priorIdSet(csvText, idHeader) {
+  const {headers, rows} = objectRows(csvText);
+  if (!headers.includes(idHeader)) throw new Error('過去ファイルに指定した取引ID列がありません');
+  return new Set(rows.map(r => String(r[idHeader] ?? '').trim()).filter(Boolean));
+}

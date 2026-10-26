@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>予約売上チェッカー | CSV照合・仕訳候補作成</title>
+  <meta name="description" content="予約・決済CSVを端末内でチェックし、マネーフォワード会計向けの仕訳候補を作成する試作品。">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="brandmark">▤</span> 予約売上チェッカー <span class="beta">試作版 v0.1</span></div><a href="#about">使い方・注意事項</a></header>
+  <main class="container">
+    <section class="hero"><div class="eyebrow">予約データ × 会計CSV</div><h1>毎月のCSV作業を、<br><span>確かめながら簡単に。</span></h1><p>予約・決済データの重複、未決済、日付エラーを検査し、会計ソフト向けの仕訳候補を作ります。アップロードしたデータはブラウザ内だけで処理されます。</p></section>
+    <div id="feedback" role="status" aria-live="polite" class="feedback" hidden></div>
+    <section class="panel">
+      <div class="step-head"><span class="step">1</span><div><h2>CSVファイルを選ぶ</h2><p>STORES予約などから取得したCSVを読み込んでください。正式な出力サンプルに合わせた専用プリセットは準備中です。</p></div></div>
+      <div class="uploadrow">
+        <label class="fileinput"> <strong>予約・決済CSV</strong><input id="file" type="file" accept=".csv,text/csv"><small>UTF-8 / Shift_JIS 対応・ローカル解析</small></label>
+        <button id="demo" type="button" class="secondary">サンプルで試す</button>
+      </div>
+      <div id="fileinfo" class="muted"></div>
+    </section>
+    <section id="mappingsection" class="panel" hidden>
+      <div class="step-head"><span class="step">2</span><div><h2>列の対応を指定</h2><p>データの列名はサービスや出力設定により異なります。CSVの実際のヘッダーを選択してください。</p></div></div>
+      <div class="mapping-grid">
+        <label>取引・予約ID <em>必須</em><select id="map-id"></select></label>
+        <label>決済日・取引日 <em>必須</em><select id="map-date"></select></label>
+        <label>決済金額（円） <em>必須</em><select id="map-amount"></select></label>
+        <label>決済・支払状況 <em>必須</em><select id="map-status"></select></label>
+        <label>メニュー・摘要 <span class="muted">任意</span><select id="map-description"></select></label>
+      </div>
+      <details class="detail"><summary>過去ファイルと重複チェックする（任意）</summary><p>以前取り込んだ元CSVを選ぶと、同じ取引IDを照合します。会計ソフト内の登録済み仕訳を直接確認する機能ではありません。</p><label>過去CSV <input type="file" id="prior" accept=".csv,text/csv"></label><label>過去CSV内のID列名 <input id="priorheader" type="text" placeholder="例：予約ID"></label></details>
+      <button id="analyze" type="button" class="primary">CSVを検査する</button>
+    </section>
+    <section id="resultsection" class="panel" hidden>
+      <div class="step-head"><span class="step">3</span><div><h2>検査結果</h2><p>「候補」は形式と支払ステータスの簡易検査を通過しただけです。取引の実態や仕訳の正しさを保証しません。</p></div></div>
+      <div class="stats"><div><b id="total">0</b><span>総レコード数</span></div><div><b id="ok">0</b><span>候補</span></div><div><b id="review">0</b><span>要確認</span></div></div>
+      <div class="tablewrap"><table><thead><tr><th>行</th><th>取引ID</th><th>日付</th><th>金額</th><th>支払状況</th><th>判定</th></tr></thead><tbody id="preview"></tbody></table></div>
+      <button id="downloadreport" type="button" class="secondary">検査レポートをCSVで保存</button>
+    </section>
+    <section id="ledgersection" class="panel" hidden>
+      <div class="step-head"><span class="step">4</span><div><h2>仕訳候補CSVを作る</h2><p>マネーフォワード会計の「仕訳帳」インポート用の列構成に合わせます。税区分等は未設定のため、そのまま本番投入せず必ず確認してください。</p></div></div>
+      <div class="mapping-grid"><label>借方勘定科目 <em>必須</em><input id="debit" type="text" maxlength="30" placeholder="自社の勘定科目を入力"></label><label>貸方勘定科目 <em>必須</em><input id="credit" type="text" maxlength="30" placeholder="自社の勘定科目を入力"></label></div>
+      <label class="checkbox"><input id="confirm" type="checkbox"><span>仕訳日・勘定科目・金額・収益認識・税区分を自分で確認し、必要な修正を行います。実際の会計ソフトへの取り込み前に内容を再確認します。</span></label>
+      <button id="downloadledger" type="button" class="primary" disabled>仕訳候補CSVを保存</button>
+      <p class="fine">CSV形式は公式ガイドに基づく参考実装です。取引Noは空欄です。インポートのたび新規仕訳が作られるため、重複登録には十分注意してください。</p>
+    </section>
+    <section id="about" class="info"><h2>この試作版でできること／できないこと</h2><div class="two-col"><div><h3>できること</h3><ul><li>CSV読み込みと列の手動マッピング</li><li>同一ファイル内の取引ID重複検出</li><li>別CSVとの取引ID照合</li><li>未決済・キャンセル・返金などを要確認に分類</li><li>マネーフォワード形式の仕訳「候補」CSV生成</li></ul></div><div><h3>現時点で未対応</h3><ul><li>STORES予約の実CSVスキーマ自動追従</li><li>取引実態に合わせた仕訳・税区分の自動判定</li><li>決済手数料・前受金・返金の複合仕訳</li><li>会計側に既に登録されている仕訳の検知</li><li>本番会計への直接連携・API接続</li></ul></div></div><p class="sources">参照：<a href="https://reserve-faq.stores.jp/hc/ja/articles/28712681987097" target="_blank" rel="noreferrer">STORES予約 CSV出力</a> ／ <a href="https://biz.moneyforward.com/support/account/guide/import-books/ib01.html" target="_blank" rel="noreferrer">マネーフォワード会計 仕訳帳CSV仕様</a></p></section>
+  </main><footer>予約売上チェッカー — ローカル実行・試作版。会計処理の正確性を保証するものではありません。</footer>
+  <script type="module" src="./src/app.mjs"></script>
+</body>
+</html>
