@@ -8,6 +8,13 @@ export const MF_HEADERS = [
   '決算整理仕訳','作成日時','作成者','最終更新日時','最終更新者'
 ];
 
+// These STORES reservation-list dates do not establish a payment/ledger transaction date.
+// Never silently promote application, booking, or visit timestamps to journal candidates.
+const UNVERIFIED_TRANSACTION_DATE_COLUMNS = new Set([
+  '申込日時', '予約日時', '希望の予約日時', '来客日時',
+  '来客／キャンセル日時', '来客/キャンセル日時', 'キャンセル日時'
+]);
+
 // STORES予約 lists reservation status and payment status separately.
 // Never infer the payment state from a generic "ステータス" column.
 export const COLUMN_SUGGESTIONS = Object.freeze({
@@ -141,6 +148,7 @@ function excelSafe(s) {
 export function analyze(rows, mapping, priorKeys = new Set()) {
   const idKey = mapping.id, dateKey = mapping.date, amountKey = mapping.amount, statusKey = mapping.status;
   const bookingStatusKey = mapping.bookingStatus;
+  const dateSourceNeedsReview = UNVERIFIED_TRANSACTION_DATE_COLUMNS.has(String(dateKey ?? '').trim());
   if (bookingStatusKey && [idKey,dateKey,amountKey,statusKey].includes(bookingStatusKey)) {
     throw new Error('予約ステータスには他の必須項目と別の列を指定してください');
   }
@@ -162,6 +170,7 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     const flags = [];
     if (!id) flags.push('取引IDなし');
     if (!date) flags.push('日付形式エラー');
+    if (dateSourceNeedsReview) flags.push('予約・申込・来客日時を会計取引日とする根拠が未確認');
     if (amount == null) flags.push('金額形式エラーまたは0円');
     if (!status) flags.push('支払状況が空欄');
     else if (REVIEW.test(status)) flags.push('キャンセル・返金・未決済等の確認が必要');
