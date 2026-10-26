@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><title>Browser E2E harness</title></head>
+<body>
+  <pre id="result">RUNNING</pre>
+  <iframe id="app" src="../index.html" title="予約売上チェッカー" style="width:1100px;height:1000px"></iframe>
+  <script type="module">
+    import {parseCSV} from '../src/core.mjs';
+    const result = document.getElementById('result');
+    const frame = document.getElementById('app');
+    function check(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+    async function until(predicate, message) {
+      for (let i=0; i<200; i++) {
+        if (predicate()) return;
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+      throw new Error('Timeout: ' + message);
+    }
+    function upload(doc, text, filename) {
+      const input = doc.getElementById('file');
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([text], filename, {type:'text/csv'}));
+      input.files = transfer.files;
+      input.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+    try {
+      await new Promise((resolve, reject) => {
+        if (frame.contentDocument?.readyState === 'complete') return resolve();
+        frame.addEventListener('load', resolve, {once:true});
+        frame.addEventListener('error', () => reject(new Error('iframe load failed')), {once:true});
+      });
+      const doc = frame.contentDocument;
+      const win = frame.contentWindow;
+      const el = id => doc.getElementById(id);
+      check(el('demo') && el('analyze'), 'production UI did not load');
+
+      // Real browser DOM events, module imports and asynchronous analysis.
+      el('demo').click();
+      check(!el('mappingsection').hidden, 'demo mapping not shown');
+      el('analyze').click();
+      await until(() => !el('resultsection').hidden, 'demo analysis');
+      check(el('total').textContent === '5', 'demo row count');
+      check(el('ok').textContent === '1', 'demo safe candidate count');
+      check(el('review').textContent === '4', 'demo review count');
+
+      // Exercise the actual browser download path and inspect its Blob.
+      let downloaded;
+      const originalCreate = win.URL.createObjectURL.bind(win.URL);
+      win.URL.createObjectURL = blob => {
+        downloaded = blob;
+        return originalCreate(blob);
+      };
+      el('debit').value = '普通預金';
+      el('credit').value = '売上高';
+      el('confirm').click();
+      check(!el('downloadledger').disabled, 'confirmed download disabled');
+      el('downloadledger').click();
+      await until(() => downloaded instanceof win.Blob, 'CSV download Blob');
+      const journal = parseCSV(await downloaded.text().then(s => s.replace(/^\uFEFF/, '')));
+      check(journal.length === 2, 'journal must include header and only one eligible row');
+      check(journal[0].length === 27 && journal[1].length === 27, 'MF journal must be 27 columns');
+      check(journal[1][18].includes('D001'), 'unexpected demo transaction exported');
+
+      // Real File API upload, independent payment/booking statuses, cancellation.
+      const bookingCSV = [
+        '予約ID,決済日,決済金額,支払ステータス,ステータス,メニュー',
+        'C1,2026/10/01,1000,決済済,キャンセル済,取消',
+        'C2,2026/10/02,1500,決済済,予約確定,通常'
+      ].join('\n');
+      upload(doc, bookingCSV, 'booking-synthetic.csv');
+      await until(() => el('fileinfo').textContent.includes('booking-synthetic.csv'), 'synthetic file upload');
+      check(el('map-status').value === '支払ステータス', 'payment status mapped incorrectly');
+      check(el('map-bookingStatus').value === 'ステータス', 'booking status mapped incorrectly');
+      check(el('resultsection').hidden, 'old demo results remain visible');
+      el('analyze').click();
+      await until(() => !el('resultsection').hidden, 'synthetic analysis');
+      check(el('ok').textContent === '1' && el('review').textContent === '1', 'cancelled paid booking not blocked');
+      check(el('preview').textContent.includes('キャンセル済'), 'booking status not shown in UI');
+
+      // Invalid replacement must clear previous results and disable export.
+      upload(doc, '予約ID,決済日\n"x"oops,2026/10/01', 'malformed.csv');
+      await until(() => !el('feedback').hidden, 'malformed file error');
+      check(el('resultsection').hidden && el('ledgersection').hidden, 'stale result exposed after upload failure');
+      check(el('downloadledger').disabled, 'stale export enabled after upload failure');
+
+      // No external resources loaded by the app during the test.
+      const resources = [
+        ...performance.getEntriesByType('resource'),
+        ...win.performance.getEntriesByType('resource')
+      ];
+      check(resources.length >= 3, 'resource observation did not run');
+      check(resources.every(entry => new URL(entry.name).origin === location.origin),
+        'external resource request observed');
+
+      result.textContent = 'PASS: demo, journal download, cancellation, failed upload, local-only resources';
+    } catch (error) {
+      result.textContent = 'FAIL: ' + (error.stack || error.message || String(error));
+    }
+  </script>
+</body>
+</html>
