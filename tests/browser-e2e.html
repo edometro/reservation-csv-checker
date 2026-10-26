@@ -26,11 +26,11 @@
       input.dispatchEvent(new Event('change', {bubbles:true}));
     }
     try {
-      await new Promise((resolve, reject) => {
-        if (frame.contentDocument?.readyState === 'complete') return resolve();
-        frame.addEventListener('load', resolve, {once:true});
-        frame.addEventListener('error', () => reject(new Error('iframe load failed')), {once:true});
-      });
+      // An iframe starts with a complete about:blank document before navigation.
+      // Wait for the actual application DOM rather than readyState alone.
+      await until(() => frame.contentDocument?.getElementById('demo') &&
+        frame.contentDocument?.getElementById('analyze') &&
+        frame.contentDocument?.location?.pathname === '/index.html', 'production iframe');
       const doc = frame.contentDocument;
       const win = frame.contentWindow;
       const el = id => doc.getElementById(id);
