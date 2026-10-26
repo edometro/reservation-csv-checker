@@ -383,3 +383,17 @@ test('whitespace-padded transaction IDs are review-only and never silently expor
   assert.deepEqual(report.slice(1).map(row=>row[6]),['要確認','要確認','候補']);
   assert.match(report[1][7],/取引IDの前後に空白/);
 });
+
+test('prior CSV IDs are exact: surrounding whitespace is rejected instead of normalized',()=>{
+ const clean=priorIdSet('予約ID,備考\nA1,ok\nA2,ok\n','予約ID');
+ assert.deepEqual([...clean],['A1','A2']);
+ assert.throws(()=>priorIdSet('予約ID,備考\n" A1",ok\n','予約ID'),/過去CSV2行目.*前後の空白/);
+ assert.throws(()=>priorIdSet('予約ID,備考\n"A1 ",ok\n','予約ID'),/過去CSV2行目.*前後の空白/);
+ assert.throws(()=>priorIdSet('予約ID,備考\n"   ",ok\n','予約ID'),/過去CSV2行目.*前後の空白/);
+});
+
+test('prior CSV rejects control characters and reports physical source line',()=>{
+ const csv='予約ID,備考\nA1,"改行\n入り"\n"A2\\t",ok\n'.replace('A2\\t','A2\t');
+ assert.throws(()=>priorIdSet(csv,'予約ID'),/過去CSV4行目.*制御文字/);
+ assert.throws(()=>priorIdSet('予約ID,備考\n"A\\n2",ok\n'.replace('A\\n2','A\n2'),'予約ID'),/過去CSV2行目.*制御文字/);
+});
