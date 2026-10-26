@@ -287,3 +287,29 @@ test('explicit payment-date column still permits a structurally valid candidate'
   assert.equal(journal[1][1], '2026/10/04');
   // This does not validate accounting policy or actual STORES CSV field names.
 });
+
+test('journal export rejects overlong descriptions rather than silently losing transaction IDs',()=>{
+  const row = {予約ID:'PAY-001',決済日:'2026/10/01',決済金額:'1200',決済状況:'決済済',メニュー:'あ'.repeat(200)};
+  const findings = analyze([row],map);
+  assert.equal(findings[0].ready,true);
+  assert.throws(
+    ()=>ledgerCSV(findings,'普通預金','売上高',true),
+    /摘要は200文字以内/
+  );
+  // Even if an ID alone is unusually long, never clip its tail in the output.
+  const longId = analyze([{...row,予約ID:'X'.repeat(200),メニュー:''}],map);
+  assert.throws(()=>ledgerCSV(longId,'普通預金','売上高',true),/摘要は200文字以内/);
+});
+
+test('journal description 200-character boundary counts Unicode code points without splitting emoji',()=>{
+  const prefix='予約 PAY-002 ';
+  const maxText=200-Array.from(prefix).length;
+  const row = {予約ID:'PAY-002',決済日:'2026/10/01',決済金額:'1200',決済状況:'決済済',メニュー:'😀'.repeat(maxText)};
+  const valid=analyze([row],map);
+  const journal=parseCSV(ledgerCSV(valid,'普通預金','売上高',true));
+  assert.equal(Array.from(journal[1][18]).length,200);
+  assert.equal(journal[1][18],prefix+'😀'.repeat(maxText));
+  assert.equal(journal[1][18].includes('�'),false);
+  const invalid=analyze([{...row,メニュー:'😀'.repeat(maxText+1)}],map);
+  assert.throws(()=>ledgerCSV(invalid,'普通預金','売上高',true),/摘要は200文字以内/);
+});
