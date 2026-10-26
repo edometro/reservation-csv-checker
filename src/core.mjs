@@ -29,10 +29,11 @@ export function suggestColumns(headers) {
 export const MAX_INPUT_ROWS = 50000;
 export const MAX_INPUT_COLUMNS = 200;
 
-export function parseCSV(input, {maxRows = Infinity, maxColumns = Infinity} = {}) {
+export function parseCSV(input, {maxRows = Infinity, maxColumns = Infinity, recordLines = null} = {}) {
   const csv = String(input).replace(/^\uFEFF/, '');
   const rows = [];
   let record = [], cell = '', inQuotes = false, afterQuote = false;
+  let physicalLine = 1, recordStartLine = 1;
   function pushCell() {
     record.push(cell);
     if (record.length > maxColumns) throw new Error('CSVの列数上限を超えました');
@@ -43,6 +44,7 @@ export function parseCSV(input, {maxRows = Infinity, maxColumns = Infinity} = {}
     if (!(record.length === 1 && record[0] === '')) {
       if (rows.length >= maxRows) throw new Error('CSVの行数上限を超えました');
       rows.push(record);
+      if (recordLines) recordLines.push(recordStartLine);
     }
     record = [];
   }
@@ -51,12 +53,18 @@ export function parseCSV(input, {maxRows = Infinity, maxColumns = Infinity} = {}
     if (inQuotes) {
       if (c === '"' && csv[i + 1] === '"') { cell += '"'; i++; }
       else if (c === '"') { inQuotes = false; afterQuote = true; }
-      else cell += c;
+      else {
+        cell += c;
+        // Quoted fields may contain physical line breaks (CR, LF or CRLF).
+        if (c === '\r' || (c === '\n' && csv[i - 1] !== '\r')) physicalLine++;
+      }
     } else if (c === ',') {
       pushCell();
     } else if (c === '\n' || c === '\r') {
       if (c === '\r' && csv[i + 1] === '\n') i++;
       pushRecord();
+      physicalLine++;
+      recordStartLine = physicalLine;
     } else if (afterQuote) {
       throw new Error('CSV書式エラー: 閉じ引用符の直後に不正な文字');
     } else if (c === '"') {
@@ -81,16 +89,18 @@ export function stringifyCSV(rows) {
 }
 
 export function objectRows(csvText) {
+  const recordLines = [];
   const [header, ...records] = parseCSV(csvText, {
     maxRows: MAX_INPUT_ROWS + 1, // includes header
-    maxColumns: MAX_INPUT_COLUMNS
+    maxColumns: MAX_INPUT_COLUMNS,
+    recordLines
   });
   const keys = header.map(x => x.trim());
   if (keys.some(x => !x) || new Set(keys).size !== keys.length) {
     throw new Error('ヘッダーが空欄、または重複しています');
   }
   return {headers: keys, rows: records.map((record, idx) =>
-    ({...Object.fromEntries(keys.map((key,i) => [key, record[i]])), __line: idx + 2}))};
+    ({...Object.fromEntries(keys.map((key,i) => [key, record[i]])), __line: recordLines[idx + 1]}))};
 }
 
 export function normalizeDate(value) {
