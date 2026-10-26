@@ -8,6 +8,22 @@ export const MF_HEADERS = [
   '決算整理仕訳','作成日時','作成者','最終更新日時','最終更新者'
 ];
 
+// STORES予約 lists reservation status and payment status separately.
+// Never infer the payment state from a generic "ステータス" column.
+export const COLUMN_SUGGESTIONS = Object.freeze({
+  id: ['予約ID','取引ID','オーダー番号','注文ID','予約番号'],
+  date: ['決済日','支払日','購入日時','入金日','取引日'],
+  amount: ['決済金額','金額','売上金額','支払金額','決済額'],
+  status: ['支払ステータス','支払いステータス','決済状況','支払状況','決済ステータス'],
+  bookingStatus: ['予約ステータス','予約状況','ステータス','予約のステータス'],
+  description: ['メニュー','商品名','摘要','予約メニュー']
+});
+
+export function suggestColumns(headers) {
+  return Object.fromEntries(Object.entries(COLUMN_SUGGESTIONS).map(([field, names]) =>
+    [field, names.find(name => headers.includes(name)) ?? '']));
+}
+
 export function parseCSV(input) {
   const csv = String(input).replace(/^\uFEFF/, '');
   const rows = [];
@@ -78,6 +94,7 @@ export function parseYen(value) {
 
 const PAID = new Set(['paid','payment completed','支払済','支払い済み','決済済','決済完了','入金済','入金済み']);
 const REVIEW = /キャンセル|cancel|返金|refund|未払|未決済|支払待|現地|未収/i;
+const BOOKING_REVIEW = /キャンセル|取消|取り消|中止|無効|cancel|refund/i;
 function excelSafe(s) {
   const v = String(s ?? '').replace(/[\r\n\t]+/g, ' ').trim();
   return /^[=+\-@]/.test(v) ? `'${v}` : v;
@@ -86,6 +103,10 @@ function excelSafe(s) {
 /** Generate review-only candidates, not final accounting decisions. */
 export function analyze(rows, mapping, priorKeys = new Set()) {
   const idKey = mapping.id, dateKey = mapping.date, amountKey = mapping.amount, statusKey = mapping.status;
+  const bookingStatusKey = mapping.bookingStatus;
+  if (bookingStatusKey && bookingStatusKey === statusKey) {
+    throw new Error('予約ステータスと支払ステータスには別の列を指定してください');
+  }
   if (![idKey,dateKey,amountKey,statusKey].every(Boolean)) throw new Error('4つの必須列を指定してください');
   const frequencies = new Map();
   for (const source of rows) {
@@ -97,6 +118,7 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     const date = normalizeDate(source[dateKey]);
     const amount = parseYen(source[amountKey]);
     const status = String(source[statusKey] ?? '').trim();
+    const bookingStatus = bookingStatusKey ? String(source[bookingStatusKey] ?? '').trim() : '';
     const flags = [];
     if (!id) flags.push('取引IDなし');
     if (!date) flags.push('日付形式エラー');
@@ -104,9 +126,11 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     if (!status) flags.push('支払状況が空欄');
     else if (REVIEW.test(status)) flags.push('キャンセル・返金・未決済等の確認が必要');
     else if (!PAID.has(status.toLowerCase())) flags.push('支払済みと判定できない状態');
+    if (bookingStatusKey && !bookingStatus) flags.push('予約ステータスが空欄');
+    else if (bookingStatusKey && BOOKING_REVIEW.test(bookingStatus)) flags.push('予約キャンセル・取消等の確認が必要');
     if (id && frequencies.get(id) > 1) flags.push('ファイル内の取引ID重複');
     if (id && priorKeys.has(id)) flags.push('過去出力との取引ID重複（参考）');
-    return {line: source.__line ?? i+2, id, date, amount, status, flags,
+    return {line: source.__line ?? i+2, id, date, amount, status, bookingStatus, flags,
       description: excelSafe(mapping.description ? source[mapping.description] : ''),
       ready: flags.length === 0};
   });
@@ -133,8 +157,8 @@ export function ledgerCSV(analysis, debit, credit, confirmation) {
 }
 
 export function reportCSV(analysis) {
-  return stringifyCSV([['元CSV行','取引ID','取引日','金額','支払状況','判定','理由'], ...analysis.map(r => [
-    r.line, excelSafe(r.id), r.date ?? '', r.amount ?? '', excelSafe(r.status), r.ready ? '候補' : '要確認', r.flags.join(' / ')
+  return stringifyCSV([['元CSV行','取引ID','取引日','金額','支払状況','予約状況','判定','理由'], ...analysis.map(r => [
+    r.line, excelSafe(r.id), r.date ?? '', r.amount ?? '', excelSafe(r.status), excelSafe(r.bookingStatus), r.ready ? '候補' : '要確認', r.flags.join(' / ')
   ])]);
 }
 
