@@ -171,7 +171,7 @@ test('STORES confirmed and approval-pending reservations are not treated alike',
     'P4,2026/10/04,1200,決済済,仮予約',
     'P5,2026/10/05,1200,決済済,予約確定',
     'P6,2026/10/06,1200,決済済,未確認の新状態'
-  ].join('\\n');
+  ].join('\n');
   const mapping = {id:'予約ID',date:'決済日',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス'};
   const findings = analyze(objectRows(csv).rows, mapping);
   assert.deepEqual(findings.map(x => x.ready), [false, true, false, false, true, false]);
