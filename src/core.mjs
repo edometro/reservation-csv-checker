@@ -104,9 +104,12 @@ function excelSafe(s) {
 export function analyze(rows, mapping, priorKeys = new Set()) {
   const idKey = mapping.id, dateKey = mapping.date, amountKey = mapping.amount, statusKey = mapping.status;
   const bookingStatusKey = mapping.bookingStatus;
-  if (bookingStatusKey && bookingStatusKey === statusKey) {
-    throw new Error('予約ステータスと支払ステータスには別の列を指定してください');
+  if (bookingStatusKey && [idKey,dateKey,amountKey,statusKey].includes(bookingStatusKey)) {
+    throw new Error('予約ステータスには他の必須項目と別の列を指定してください');
   }
+  const bookingHeaderPresent = !bookingStatusKey && rows.some(row =>
+    COLUMN_SUGGESTIONS.bookingStatus.some(header =>
+      Object.prototype.hasOwnProperty.call(row, header) && header !== statusKey));
   if (![idKey,dateKey,amountKey,statusKey].every(Boolean)) throw new Error('4つの必須列を指定してください');
   const frequencies = new Map();
   for (const source of rows) {
@@ -126,6 +129,7 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     if (!status) flags.push('支払状況が空欄');
     else if (REVIEW.test(status)) flags.push('キャンセル・返金・未決済等の確認が必要');
     else if (!PAID.has(status.toLowerCase())) flags.push('支払済みと判定できない状態');
+    if (bookingHeaderPresent) flags.push('予約ステータス列が存在しますが未指定です');
     if (bookingStatusKey && !bookingStatus) flags.push('予約ステータスが空欄');
     else if (bookingStatusKey && BOOKING_REVIEW.test(bookingStatus)) flags.push('予約キャンセル・取消等の確認が必要');
     if (id && frequencies.get(id) > 1) flags.push('ファイル内の取引ID重複');
