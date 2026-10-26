@@ -218,3 +218,34 @@ test('unknown booking status is review-only even when payment is explicitly paid
   assert.equal(findings[1].ready, true);
   assert.match(reportCSV(findings), /予約未確定または未確認のステータス/);
 });
+
+test('reservation and application timestamps cannot silently become journal dates', () => {
+  // The STORES reservation-list FAQ names these timestamps, but does not establish
+  // that any of them is a settlement date or a valid accounting recognition date.
+  const csv = [
+    '予約ID,申込日時,予約日時,希望の予約日時,来客日時,来客／キャンセル日時,決済日,決済金額,支払ステータス,ステータス',
+    'D1,2026/10/01 09:00,2026/10/02 10:00,2026/10/02 10:00,2026/10/03 11:00,2026/10/03 11:00,2026/10/04,1200,決済済,確定'
+  ].join('\n');
+  const rows = objectRows(csv).rows;
+  const base = {id:'予約ID',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス'};
+  for (const date of ['申込日時','予約日時','希望の予約日時','来客日時','来客／キャンセル日時']) {
+    const findings = analyze(rows, {...base,date});
+    assert.equal(findings[0].ready, false, date);
+    assert.match(findings[0].flags.join(' / '), /会計取引日とする根拠が未確認/, date);
+    assert.match(reportCSV(findings), /要確認/, date);
+    assert.throws(() => ledgerCSV(findings,'普通預金','売上高',true), /出力可能な候補がありません/, date);
+  }
+});
+
+test('explicit payment-date column still permits a structurally valid candidate', () => {
+  const rows = objectRows([
+    '予約ID,申込日時,決済日,決済金額,支払ステータス,ステータス',
+    'D2,2026/10/01,2026/10/04,1200,決済済,確定'
+  ].join('\n')).rows;
+  const mapping = {id:'予約ID',date:'決済日',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス'};
+  const findings = analyze(rows, mapping);
+  assert.equal(findings[0].ready, true);
+  const journal = parseCSV(ledgerCSV(findings,'普通預金','売上高',true));
+  assert.equal(journal[1][1], '2026/10/04');
+  // This does not validate accounting policy or actual STORES CSV field names.
+});
