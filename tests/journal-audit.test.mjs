@@ -4,7 +4,7 @@ import {analyze, ledgerCSV, MF_HEADERS, objectRows, parseCSV, stringifyCSV} from
 import {auditJournalCSV} from '../src/journal-audit.mjs';
 
 const mapping={id:'取引ID',date:'決済日',amount:'金額',status:'支払状況'};
-const data=analyze(objectRows('取引ID,決済日,金額,支払状況\\nT1,2026/10/26,1200,決済済').rows,mapping);
+const data=analyze(objectRows('取引ID,決済日,金額,支払状況\nT1,2026/10/26,1200,決済済').rows,mapping);
 const draft=()=>ledgerCSV(data,'普通預金','売上高',true);
 
 test('generated journal has valid structure but unverified tax and duplicate-import warnings',()=>{
@@ -32,8 +32,8 @@ test('journal preflight rejects wrong schema, empty journals and malformed CSV s
   rows[0][1]='予約日時';
   assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' '),/27列ヘッダー/);
   assert.match(auditJournalCSV(stringifyCSV([MF_HEADERS])).errors.join(' '),/仕訳候補がありません/);
-  assert.match(auditJournalCSV('a,b\\n"x"junk,y').errors.join(' '),/CSV解析エラー/);
-  assert.match(auditJournalCSV('a,b\\nc,d').errors.join(' '),/27列ヘッダー/);
+  assert.match(auditJournalCSV('a,b\n"x"junk,y').errors.join(' '),/CSV解析エラー/);
+  assert.match(auditJournalCSV('a,b\nc,d').errors.join(' '),/27列ヘッダー/);
 });
 
 test('preflight warns only for missing tax classifications and transaction numbers',()=>{
