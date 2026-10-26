@@ -20,7 +20,7 @@ test('source row references use physical line numbers with quoted CRLF and blank
    'A2,2026/10/02,0,未決済,確認\r\n' +
    'A3,2026/10/03,1300,決済済,通常';
  const parsed=objectRows(csv);
- assert.deepEqual(parsed.rows.map(row=>row.__line),[2,5,6]);
+ assert.deepEqual(analyze(parsed.rows,map).map(row=>row.line),[2,5,6]);
  const findings=analyze(parsed.rows,map);
  assert.deepEqual(findings.map(row=>row.line),[2,5,6]);
  const report=parseCSV(reportCSV(findings));
@@ -33,8 +33,27 @@ test('source line tracking supports LF and lone CR inside quoted cells',()=>{
    'B2,2026/10/02,1200,決済済,"上\r下"\r' +
    'B3,2026/10/03,1200,決済済,通常';
  const parsed=objectRows(csv);
- assert.deepEqual(parsed.rows.map(row=>row.__line),[2,4,6]);
+ assert.deepEqual(analyze(parsed.rows,map).map(row=>row.line),[2,4,6]);
  assert.deepEqual(parseCSV(csv).map(row=>row[0]),['予約ID','B1','B2','B3']);
+});
+
+test('CSV __line header remains user data and cannot overwrite physical line metadata',()=>{
+ const csv = [
+  '予約ID,決済日,決済金額,決済状況,__line',
+  'A1,2026/10/01,1200,決済済,=1+1',
+  'A2,2026/10/02,1300,決済済,"first\\nsecond"',
+  'A3,2026/10/03,1400,決済済,normal'
+ ].join('\\n').replaceAll('\\\\n','\\n');
+ const parsed=objectRows(csv);
+ assert.deepEqual(parsed.headers,['予約ID','決済日','決済金額','決済状況','__line']);
+ assert.deepEqual(parsed.rows.map(row=>row.__line),['=1+1','first\\nsecond','normal']);
+ const findings=analyze(parsed.rows,{...map,description:'__line'});
+ assert.deepEqual(findings.map(row=>row.line),[2,3,5]);
+ assert.deepEqual(findings.map(row=>row.ready),[true,true,true]);
+ assert.equal(findings[0].description,"'=1+1");
+ assert.deepEqual(parseCSV(reportCSV(findings)).slice(1).map(row=>row[0]),['2','3','5']);
+ // The reserved-looking header is also usable as a normal mapped CSV field.
+ assert.equal(analyze(parsed.rows,{...map,id:'__line'})[0].id,'=1+1');
 });
 
 test('reject malformed quotes and bad row width',()=>{
