@@ -1,7 +1,16 @@
 name: Unit and browser tests
 on:
+  # Feature branches are validated by the pull_request event, not twice on push + PR.
   push:
+    branches: [main]
   pull_request:
+
+# Superseded PR commits should not consume runner time or create noisy failures.
+# Never cancel a main-branch verification when another commit arrives.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
