@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseCSV,stringifyCSV,objectRows,normalizeDate,parseYen,analyze,ledgerCSV,reportCSV,MF_HEADERS,priorIdSet} from '../src/core.mjs';
+import {parseCSV,stringifyCSV,objectRows,normalizeDate,parseYen,analyze,ledgerCSV,reportCSV,MF_HEADERS,priorIdSet,suggestColumns} from '../src/core.mjs';
 const map = {id:'予約ID',date:'決済日',amount:'決済金額',status:'決済状況',description:'メニュー'};
 const sample = `予約ID,決済日,決済金額,決済状況,メニュー
 A1,2026/10/01,"1,200",決済済,カット
@@ -81,4 +81,37 @@ test('Money Forward official A-AA journal schema and empty optional tail',()=>{
  assert.equal(row[16],'1200');
  assert.equal(row[18],'予約 TX-001 カット');
  assert.deepEqual(row.slice(22),['','','','','']);
+});
+
+test('STORES reservation and payment status are mapped independently',()=>{
+ const suggestion = suggestColumns(['予約ID','予約日時','支払ステータス','ステータス','金額']);
+ assert.equal(suggestion.status,'支払ステータス');
+ assert.equal(suggestion.bookingStatus,'ステータス');
+ assert.equal(suggestion.date,''); // booking date is not a confirmed payment/transaction date
+ assert.equal(suggestColumns(['ステータス']).status,'');
+});
+
+test('paid but cancelled bookings must never become journal candidates',()=>{
+ const csv = [
+  '予約ID,決済日,決済金額,支払ステータス,ステータス,メニュー',
+  'B1,2026/10/01,1000,決済済,キャンセル済,返金対象',
+  'B2,2026/10/02,2000,支払済,予約確定,通常',
+  'B3,2026/10/03,3000,決済済,,不明な予約状態',
+  'B4,2026/10/04,4000,返金済,予約確定,返金',
+  'B5,2026/10/05,5000,paid,取消,取消済'
+ ].join('\\n');
+ const mapping={id:'予約ID',date:'決済日',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス',description:'メニュー'};
+ const findings = analyze(objectRows(csv).rows,mapping);
+ assert.deepEqual(findings.map(x=>x.ready),[false,true,false,false,false]);
+ assert.match(findings[0].flags.join(','),/予約キャンセル/);
+ assert.match(findings[2].flags.join(','),/予約ステータスが空欄/);
+ assert.match(findings[3].flags.join(','),/返金/);
+ assert.match(findings[4].flags.join(','),/予約キャンセル/);
+ const ledger=parseCSV(ledgerCSV(findings,'普通預金','売上高',true));
+ assert.equal(ledger.length,2);
+ assert.match(ledger[1][18],/B2/);
+ const report=parseCSV(reportCSV(findings));
+ assert.equal(report[0][5],'予約状況');
+ assert.equal(report[1][5],'キャンセル済');
+ assert.throws(()=>analyze(objectRows(csv).rows,{...mapping,bookingStatus:'支払ステータス'}),/別の列/);
 });
