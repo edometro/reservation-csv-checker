@@ -68,3 +68,29 @@ test('MF optional description is limited to 200 characters',()=>{
   rows[1][18]='あ'.repeat(201);
   assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' '),/摘要は200文字以内/);
 });
+
+
+test('preflight blocks identical journal rows to prevent duplicate entries within one import',()=>{
+  const rows=parseCSV(draft());
+  rows.push([...rows[1]]);
+  const audit=auditJournalCSV(stringifyCSV(rows));
+  assert.equal(audit.rowCount,2);
+  assert.match(audit.errors.join(' '),/3行目: 2行目と完全に同一の仕訳行が重複/);
+  // One row can be repeated more than once; always reference the first occurrence.
+  rows.push([...rows[1]]);
+  assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' '),/4行目: 2行目と完全に同一/);
+});
+
+test('preflight allows same-day same-amount entries with distinct descriptions',()=>{
+  const rows=parseCSV(draft());
+  const second=[...rows[1]];
+  second[18]='予約 T2';
+  rows.push(second);
+  const audit=auditJournalCSV(stringifyCSV(rows));
+  assert.equal(audit.rowCount,2);
+  assert.deepEqual(audit.errors,[]);
+  // Repeated transaction numbers can represent different lines of one journal entry.
+  rows[1][0]='123';
+  rows[2][0]='123';
+  assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
+});
