@@ -71,7 +71,8 @@ test('Money Forward official A-AA journal schema and empty optional tail',()=>{
  ];
  assert.equal(official.length,27);
  assert.deepEqual(MF_HEADERS,official);
- const data=analyze(objectRows('予約ID,決済日,決済金額,決済状況,メニュー\\nTX-001,2026/10/26,1200,決済済,カット'.replace('\\n','\n')).rows,map);
+ const csv = `予約ID,決済日,決済金額,決済状況,メニュー\nTX-001,2026/10/26,1200,決済済,カット`;
+ const data=analyze(objectRows(csv).rows,map);
  const [header,row]=parseCSV(ledgerCSV(data,'普通預金','売上高',true));
  assert.equal(header.length,27);
  assert.equal(row.length,27);
