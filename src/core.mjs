@@ -77,18 +77,23 @@ export function objectRows(csvText) {
 
 export function normalizeDate(value) {
   const s = String(value ?? '').trim();
-  const m = /^(\d{4})[-\/.年](\d{1,2})[-\/.月](\d{1,2})(?:日)?(?:\s.*)?$/.exec(s);
+  // Reject arbitrary trailing text rather than silently converting it into a transaction date.
+  const m = /^(\d{4})[-\/.年](\d{1,2})[-\/.月](\d{1,2})(?:日)?(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(s);
   if (!m) return null;
   const y = +m[1], mo = +m[2], day = +m[3];
+  if (m[4] !== undefined && (+m[4] > 23 || +m[5] > 59 || (m[6] !== undefined && +m[6] > 59))) return null;
   const d = new Date(Date.UTC(y, mo - 1, day));
   if (d.getUTCFullYear() !== y || d.getUTCMonth() !== mo - 1 || d.getUTCDate() !== day) return null;
-  return `${y}/${String(mo).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+  return [y, String(mo).padStart(2,'0'), String(day).padStart(2,'0')].join('/');
 }
 
 export function parseYen(value) {
-  const s = String(value ?? '').trim().replace(/[¥￥,\s]/g,'');
-  if (!/^\d+$/.test(s)) return null;
-  const n = Number(s);
+  const s = String(value ?? '').trim();
+  // Only accept plain integer yen or correctly grouped thousands separators.
+  // Removing commas/spaces unconditionally can turn malformed source data into a wrong amount.
+  const m = /^(?:[¥￥]\s*)?(\d+|\d{1,3}(?:,\d{3})+)$/.exec(s);
+  if (!m) return null;
+  const n = Number(m[1].replaceAll(',', ''));
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
