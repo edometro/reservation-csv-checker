@@ -1,10 +1,16 @@
 import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns} from './core.mjs';
 import {createUploadController} from './upload-controller.mjs';
+import {createAnalysisController} from './analysis-controller.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
 const MAPPING = ['id','date','amount','status','bookingStatus','description'];
+const analysisController = createAnalysisController({
+  onResult: renderFindings,
+  onError: error => alertMessage(error.message ?? String(error))
+});
 function invalidateResults(){
+  analysisController.invalidate();
   findings = null;
   $('resultsection').hidden=true;
   $('ledgersection').hidden=true;
@@ -54,16 +60,8 @@ $('file').addEventListener('change',e=>{
   void uploader.loadFile(file);
 });
 $('demo').addEventListener('click',()=>uploader.loadText(sample,'合成サンプル（実顧客データではありません）'));
-$('analyze').addEventListener('click',async()=>{
- try{
-   if(!current)throw new Error('CSVを選択してください');
-   invalidateResults();
-   const mapping={};for(const field of MAPPING)mapping[field]=$(`map-${field}`).value;
-   if(!['id','date','amount','status'].every(field=>mapping[field])) throw new Error('必須列をすべて指定してください');
-   if(new Set([mapping.id,mapping.date,mapping.amount,mapping.status]).size!==4)throw new Error('異なる4つの必須列を指定してください');
-   let priorKeys=new Set(); const prior=$('prior').files[0];
-   if(prior){const h=$('priorheader').value.trim() || mapping.id;priorKeys=priorIdSet(await readFile(prior),h);}
-   findings=analyze(current.rows,mapping,priorKeys);
+function renderFindings(result){
+   findings=result;
    $('total').textContent=findings.length;
    const ok=findings.filter(r=>r.ready).length;
    $('ok').textContent=ok;$('review').textContent=findings.length-ok;
@@ -77,7 +75,23 @@ $('analyze').addEventListener('click',async()=>{
    $('resultsection').hidden=false;$('ledgersection').hidden=false;
    $('confirm').checked=false;$('downloadledger').disabled=true;
    clearMessage();$('resultsection').scrollIntoView({behavior:'smooth',block:'start'});
- }catch(err){alertMessage(err.message);}
+}
+$('analyze').addEventListener('click',()=>{
+  invalidateResults();
+  void analysisController.run(async()=>{
+    if(!current)throw new Error('CSVを選択してください');
+    const rows=current.rows; // Snapshot the current CSV before awaiting prior-file reads.
+    const mapping={};for(const field of MAPPING)mapping[field]=$('map-'+field).value;
+    if(!['id','date','amount','status'].every(field=>mapping[field])) throw new Error('必須列をすべて指定してください');
+    if(new Set([mapping.id,mapping.date,mapping.amount,mapping.status]).size!==4)throw new Error('異なる4つの必須列を指定してください');
+    let priorKeys=new Set();
+    const prior=$('prior').files[0];
+    if(prior){
+      const h=$('priorheader').value.trim() || mapping.id;
+      priorKeys=priorIdSet(await readFile(prior),h);
+    }
+    return analyze(rows,mapping,priorKeys);
+  });
 });
 function download(text,filename){const blob=new Blob(['\uFEFF',text],{type:'text/csv;charset=utf-8'});const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}
 for(const field of MAPPING){
