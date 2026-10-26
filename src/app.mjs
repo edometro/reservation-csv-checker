@@ -1,6 +1,7 @@
 import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns} from './core.mjs';
 import {createUploadController} from './upload-controller.mjs';
 import {createAnalysisController} from './analysis-controller.mjs';
+import {readCSVFile} from './csv-file.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
@@ -19,12 +20,6 @@ function invalidateResults(){
 }
 function alertMessage(text){$('feedback').textContent=text;$('feedback').hidden=false;}
 function clearMessage(){$('feedback').hidden=true;}
-async function readFile(file){
- const buffer = await file.arrayBuffer();
- if (buffer.byteLength > 12 * 1024 * 1024) throw new Error('試作版ではCSVを12MB以下にしてください');
- try{return new TextDecoder('utf-8',{fatal:true}).decode(buffer);}
- catch{return new TextDecoder('shift_jis',{fatal:true}).decode(buffer);}
-}
 function applyCSV(text,label){
  const parsed=objectRows(text);
  if(parsed.rows.length>50000) throw new Error('試作版では50,000件以下にしてください');
@@ -41,7 +36,7 @@ function applyCSV(text,label){
  clearMessage();
 }
 const uploader = createUploadController({
-  readFile,
+  readFile: readCSVFile,
   applyCSV,
   reset() {
     current = null;
@@ -88,7 +83,7 @@ $('analyze').addEventListener('click',()=>{
     const prior=$('prior').files[0];
     if(prior){
       const h=$('priorheader').value.trim() || mapping.id;
-      priorKeys=priorIdSet(await readFile(prior),h);
+      priorKeys=priorIdSet(await readCSVFile(prior),h);
     }
     return analyze(rows,mapping,priorKeys);
   });
