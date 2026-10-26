@@ -118,6 +118,10 @@ export function parseYen(value) {
 const PAID = new Set(['paid','payment completed','支払済','支払い済み','決済済','決済完了','入金済','入金済み']);
 const REVIEW = /キャンセル|cancel|返金|refund|未払|未決済|支払待|現地|未収/i;
 const BOOKING_REVIEW = /キャンセル|取消|取り消|中止|無効|cancel|refund/i;
+// STORES documents 確定 / キャンセル / 承認待ち as reservation statuses.
+// Fail closed for unconfirmed or unknown statuses even when payment is marked paid.
+// Other service-specific statuses need explicit validation against real CSV samples.
+const BOOKING_CONFIRMED = new Set(['確定', '予約確定', 'confirmed']);
 function excelSafe(s) {
   const v = String(s ?? '').replace(/[\r\n\t]+/g, ' ').trim();
   return /^[=+\-@]/.test(v) ? `'${v}` : v;
@@ -155,6 +159,9 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     if (bookingHeaderPresent) flags.push('予約ステータス列が存在しますが未指定です');
     if (bookingStatusKey && !bookingStatus) flags.push('予約ステータスが空欄');
     else if (bookingStatusKey && BOOKING_REVIEW.test(bookingStatus)) flags.push('予約キャンセル・取消等の確認が必要');
+    else if (bookingStatusKey && !BOOKING_CONFIRMED.has(bookingStatus.toLowerCase())) {
+      flags.push('予約未確定または未確認のステータス（承認待ち等）');
+    }
     if (id && frequencies.get(id) > 1) flags.push('ファイル内の取引ID重複');
     if (id && priorKeys.has(id)) flags.push('過去出力との取引ID重複（参考）');
     return {line: source.__line ?? i+2, id, date, amount, status, bookingStatus, flags,
