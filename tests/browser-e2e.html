@@ -38,8 +38,10 @@
       check(el('demo') && el('analyze'), 'production UI did not load');
 
       // Real browser DOM events, module imports and asynchronous analysis.
-      el('demo').click();
-      check(!el('mappingsection').hidden, 'demo mapping not shown');
+      await until(() => {
+        el('demo').click();
+        return !el('mappingsection').hidden;
+      }, 'demo mapping after app handlers are installed');
       el('analyze').click();
       await until(() => !el('resultsection').hidden, 'demo analysis');
       check(el('total').textContent === '5', 'demo row count');
