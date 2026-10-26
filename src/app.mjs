@@ -2,7 +2,7 @@ import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet} from './core.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
-const MAPPING = {id:['予約ID','取引ID','オーダー番号','注文ID','予約番号'],date:['決済日','支払日','購入日時','入金日','取引日','予約日時'],amount:['決済金額','金額','売上金額','支払金額','決済額'],status:['決済状況','支払状況','ステータス','支払いステータス'],description:['メニュー','商品名','摘要','予約メニュー']};
+const MAPPING = {id:['予約ID','取引ID','オーダー番号','注文ID','予約番号'],date:['決済日','支払日','購入日時','入金日','取引日'],amount:['決済金額','金額','売上金額','支払金額','決済額'],status:['決済状況','支払状況','ステータス','支払いステータス'],description:['メニュー','商品名','摘要','予約メニュー']};
 function alertMessage(text){$('feedback').textContent=text;$('feedback').hidden=false;}
 function clearMessage(){$('feedback').hidden=true;}
 async function readFile(file){
