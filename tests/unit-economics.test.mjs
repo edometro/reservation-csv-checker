@@ -29,5 +29,5 @@ test('reject non-integer and invalid financial assumptions',()=>{
   assert.throws(()=>customersNeeded({...base,monthlyPriceYen:2980.5}),/安全な整数/);
   assert.throws(()=>customersNeeded({...base,variableCostYen:-1}),/安全な整数/);
   assert.throws(()=>projectedMonthlyProfit({customers:NaN,monthlyPriceYen:2980,variableCostYen:300,fixedCostYen:10000}),/安全な整数/);
-  assert.throws(()=>customersNeeded({...base,targetProfitYen:Number.MAX_SAFE_INTEGER}),/安全な整数範囲/);
+  assert.throws(()=>projectedMonthlyProfit({customers:Number.MAX_SAFE_INTEGER,monthlyPriceYen:Number.MAX_SAFE_INTEGER,variableCostYen:0,fixedCostYen:0}),/安全な整数範囲/);
 });
