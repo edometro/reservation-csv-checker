@@ -13,6 +13,30 @@ test('CSV quoting, CRLF, embedded newlines, escaped quotes',()=>{
  assert.deepEqual(rows,[['a','b'],['a,b','line1\nline2'],['"ok"','z']]);
  assert.deepEqual(parseCSV(stringifyCSV(rows)),rows);
 });
+test('source row references use physical line numbers with quoted CRLF and blank records',()=>{
+ const csv = '予約ID,決済日,決済金額,決済状況,メニュー\\r\\n' +
+   'A1,2026/10/01,1200,決済済,"1行目\\r\\n2行目"\\r\\n' +
+   '\\r\\n' +
+   'A2,2026/10/02,0,未決済,確認\\r\\n' +
+   'A3,2026/10/03,1300,決済済,通常';
+ const parsed=objectRows(csv);
+ assert.deepEqual(parsed.rows.map(row=>row.__line),[2,5,6]);
+ const findings=analyze(parsed.rows,map);
+ assert.deepEqual(findings.map(row=>row.line),[2,5,6]);
+ const report=parseCSV(reportCSV(findings));
+ assert.deepEqual(report.slice(1).map(row=>row[0]),['2','5','6']);
+});
+
+test('source line tracking supports LF and lone CR inside quoted cells',()=>{
+ const csv='予約ID,決済日,決済金額,決済状況,メニュー\\n' +
+   'B1,2026/10/01,1200,決済済,"上\\n下"\\n' +
+   'B2,2026/10/02,1200,決済済,"上\\r下"\\r' +
+   'B3,2026/10/03,1200,決済済,通常';
+ const parsed=objectRows(csv);
+ assert.deepEqual(parsed.rows.map(row=>row.__line),[2,4,6]);
+ assert.deepEqual(parseCSV(csv).map(row=>row[0]),['予約ID','B1','B2','B3']);
+});
+
 test('reject malformed quotes and bad row width',()=>{
  assert.throws(()=>parseCSV('a,b\n"oops,b'),/引用符/);
  assert.throws(()=>parseCSV('a,b\nc'),/列数/);
