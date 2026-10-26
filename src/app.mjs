@@ -1,4 +1,5 @@
 import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns} from './core.mjs';
+import {createUploadController} from './upload-controller.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
@@ -33,8 +34,26 @@ function applyCSV(text,label){
  $('fileinfo').textContent=`${label} / ${current.rows.length}レコード / ${current.headers.length}列`;
  clearMessage();
 }
-$('file').addEventListener('change',async e=>{try{if(!e.target.files.length)return;applyCSV(await readFile(e.target.files[0]),e.target.files[0].name);}catch(err){alertMessage(err.message);}});
-$('demo').addEventListener('click',()=>{try{applyCSV(sample,'合成サンプル（実顧客データではありません）');}catch(err){alertMessage(err.message);}});
+const uploader = createUploadController({
+  readFile,
+  applyCSV,
+  reset() {
+    current = null;
+    invalidateResults();
+    $('mappingsection').hidden = true;
+    $('fileinfo').textContent = '';
+    $('prior').value = '';
+    $('priorheader').value = '';
+    clearMessage();
+  },
+  onError: error => alertMessage(error.message ?? String(error))
+});
+$('file').addEventListener('change',e=>{
+  const file = e.target.files[0] ?? null;
+  e.target.value = ''; // Allow selecting the same file again after a failed load.
+  void uploader.loadFile(file);
+});
+$('demo').addEventListener('click',()=>uploader.loadText(sample,'合成サンプル（実顧客データではありません）'));
 $('analyze').addEventListener('click',async()=>{
  try{
    if(!current)throw new Error('CSVを選択してください');
@@ -67,5 +86,5 @@ for(const field of MAPPING){
 $('prior').addEventListener('change',invalidateResults);
 $('priorheader').addEventListener('input',invalidateResults);
 $('downloadreport').addEventListener('click',()=>{if(findings)download(reportCSV(findings),'validation-report.csv');});
-$('confirm').addEventListener('change',e=>{$('downloadledger').disabled=!e.target.checked;});
+$('confirm').addEventListener('change',e=>{$('downloadledger').disabled=!e.target.checked || !findings;});
 $('downloadledger').addEventListener('click',()=>{try{if(!findings)throw new Error('先に検査してください');download(ledgerCSV(findings,$('debit').value,$('credit').value,$('confirm').checked),'mf-journal-candidates.csv');clearMessage();}catch(err){alertMessage(err.message);}});
