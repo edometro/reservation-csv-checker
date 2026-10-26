@@ -22,8 +22,17 @@ export function auditJournalCSV(csvText) {
   if (!rows.length) errors.push('仕訳候補がありません');
 
   let missingTax = 0, missingNumber = 0;
+  const seenEntries = new Map();
   rows.forEach((row, index) => {
     const line = index + 2;
+    // Money Forward imports every row as a new entry. Reject exact duplicates
+    // within one export; matching amounts alone may be legitimate transactions.
+    const entryKey = JSON.stringify(row);
+    if (seenEntries.has(entryKey)) {
+      errors.push(`${line}行目: ${seenEntries.get(entryKey)}行目と完全に同一の仕訳行が重複しています（二重取り込みリスク）`);
+    } else {
+      seenEntries.set(entryKey, line);
+    }
     if (normalizeDate(row[1]) !== row[1]) errors.push(`${line}行目: 取引日がyyyy/MM/dd形式ではありません`);
     for (const col of [2, 10]) {
       const account = row[col].trim();
