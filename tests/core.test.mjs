@@ -99,7 +99,7 @@ test('paid but cancelled bookings must never become journal candidates',()=>{
   'B3,2026/10/03,3000,決済済,,不明な予約状態',
   'B4,2026/10/04,4000,返金済,予約確定,返金',
   'B5,2026/10/05,5000,paid,取消,取消済'
- ].join('\\n');
+ ].join('\n');
  const mapping={id:'予約ID',date:'決済日',amount:'決済金額',status:'支払ステータス',bookingStatus:'ステータス',description:'メニュー'};
  const findings = analyze(objectRows(csv).rows,mapping);
  assert.deepEqual(findings.map(x=>x.ready),[false,true,false,false,false]);
