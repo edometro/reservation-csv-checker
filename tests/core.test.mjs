@@ -144,6 +144,24 @@ test('paid but cancelled bookings must never become journal candidates',()=>{
  assert.throws(()=>analyze(objectRows(csv).rows,{...mapping,bookingStatus:'決済金額'}),/別の列/);
 });
 
+test('core rejects reusing a CSV column for different mandatory financial fields',()=>{
+  // The browser checks this already, but future integrations can call analyze() directly.
+  // Every pair of mandatory fields must be mapped to distinct source columns.
+  const rows=objectRows([
+    '予約ID,決済日,決済金額,決済状況',
+    'A1,2026/10/01,1200,決済済'
+  ].join('\n')).rows;
+  const keys=['id','date','amount','status'];
+  const valid={id:'予約ID',date:'決済日',amount:'決済金額',status:'決済状況'};
+  for(let i=0;i<keys.length;i++){
+    for(let j=i+1;j<keys.length;j++){
+      const invalid={...valid,[keys[j]]:valid[keys[i]]};
+      assert.throws(()=>analyze(rows,invalid),/異なる4つの必須列/,keys[i]+' / '+keys[j]);
+    }
+  }
+  assert.equal(analyze(rows,valid)[0].ready,true);
+});
+
 test('strict yen parsing preserves only well-formed integer amounts',()=>{
   for (const [input, expected] of [
     ['1200',1200],['1,200',1200],['￥12,345',12345],['¥ 1,234,567',1234567],

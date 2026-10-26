@@ -156,6 +156,11 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     COLUMN_SUGGESTIONS.bookingStatus.some(header =>
       Object.prototype.hasOwnProperty.call(row, header) && header !== statusKey));
   if (![idKey,dateKey,amountKey,statusKey].every(Boolean)) throw new Error('4つの必須列を指定してください');
+  // Validate here too, not only in the UI: callers may use analyze() directly.
+  // Reusing one CSV column for different financial fields can produce plausible but wrong journal candidates.
+  if (new Set([idKey,dateKey,amountKey,statusKey]).size !== 4) {
+    throw new Error('異なる4つの必須列を指定してください');
+  }
   const frequencies = new Map();
   for (const source of rows) {
     const id = String(source[idKey] ?? '').trim();
