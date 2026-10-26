@@ -24,10 +24,28 @@ export function suggestColumns(headers) {
     [field, names.find(name => headers.includes(name)) ?? '']));
 }
 
-export function parseCSV(input) {
+// Guard untrusted input before building a potentially huge row/column structure.
+// The generic parser keeps unlimited defaults for trusted, generated CSV output.
+export const MAX_INPUT_ROWS = 50000;
+export const MAX_INPUT_COLUMNS = 200;
+
+export function parseCSV(input, {maxRows = Infinity, maxColumns = Infinity} = {}) {
   const csv = String(input).replace(/^\uFEFF/, '');
   const rows = [];
   let record = [], cell = '', inQuotes = false, afterQuote = false;
+  function pushCell() {
+    record.push(cell);
+    if (record.length > maxColumns) throw new Error('CSVの列数上限を超えました');
+    cell = ''; afterQuote = false;
+  }
+  function pushRecord() {
+    pushCell();
+    if (!(record.length === 1 && record[0] === '')) {
+      if (rows.length >= maxRows) throw new Error('CSVの行数上限を超えました');
+      rows.push(record);
+    }
+    record = [];
+  }
   for (let i = 0; i < csv.length; i++) {
     const c = csv[i];
     if (inQuotes) {
@@ -35,12 +53,10 @@ export function parseCSV(input) {
       else if (c === '"') { inQuotes = false; afterQuote = true; }
       else cell += c;
     } else if (c === ',') {
-      record.push(cell); cell = ''; afterQuote = false;
+      pushCell();
     } else if (c === '\n' || c === '\r') {
       if (c === '\r' && csv[i + 1] === '\n') i++;
-      record.push(cell); cell = ''; afterQuote = false;
-      if (!(record.length === 1 && record[0] === '')) rows.push(record);
-      record = [];
+      pushRecord();
     } else if (afterQuote) {
       throw new Error('CSV書式エラー: 閉じ引用符の直後に不正な文字');
     } else if (c === '"') {
@@ -49,8 +65,7 @@ export function parseCSV(input) {
     } else cell += c;
   }
   if (inQuotes) throw new Error('CSV書式エラー: 閉じられていない引用符');
-  record.push(cell);
-  if (!(record.length === 1 && record[0] === '')) rows.push(record);
+  pushRecord();
   if (!rows.length) throw new Error('CSVファイルが空です');
   const width = rows[0].length;
   if (rows.some((row, idx) => idx > 0 && row.length !== width)) throw new Error('CSVの列数が行ごとに異なります');
@@ -66,7 +81,10 @@ export function stringifyCSV(rows) {
 }
 
 export function objectRows(csvText) {
-  const [header, ...records] = parseCSV(csvText);
+  const [header, ...records] = parseCSV(csvText, {
+    maxRows: MAX_INPUT_ROWS + 1, // includes header
+    maxColumns: MAX_INPUT_COLUMNS
+  });
   const keys = header.map(x => x.trim());
   if (keys.some(x => !x) || new Set(keys).size !== keys.length) {
     throw new Error('ヘッダーが空欄、または重複しています');
