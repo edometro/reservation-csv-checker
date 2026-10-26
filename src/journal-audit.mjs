@@ -17,7 +17,7 @@ export function auditJournalCSV(csvText) {
   const errors = [];
   const warnings = [];
   if (header.length !== MF_HEADERS.length || header.some((name, i) => name !== MF_HEADERS[i])) {
-    errors.push('マネーフォワード仕訳帳の27列ヘッダーと一致しません');
+    return {rowCount: rows.length, errors: ['マネーフォワード仕訳帳の27列ヘッダーと一致しません'], warnings};
   }
   if (!rows.length) errors.push('仕訳候補がありません');
 
