@@ -30,7 +30,7 @@
         <label>予約ステータス <span class="muted">任意・強く推奨</span><select id="map-bookingStatus"></select></label>
         <label>メニュー・摘要 <span class="muted">任意</span><select id="map-description"></select></label>
       </div>
-      <p class="fine">※ STORES予約の「ステータス」は予約状態、「支払ステータス」は支払い状態です。混同しないでください。予約ステータスを指定しない場合、キャンセル済み予約を検出できません。また「予約日時」は決済日とは限りません。取引日・取引IDの根拠が不明な場合、仕訳候補を実務に使用しないでください。</p><details class="detail"><summary>過去ファイルと重複チェックする（任意）</summary><p>以前取り込んだ元CSVを選ぶと、同じ取引IDを照合します。会計ソフト内の登録済み仕訳を直接確認する機能ではありません。</p><label>過去CSV <input type="file" id="prior" accept=".csv,text/csv"></label><label>過去CSV内のID列名 <input id="priorheader" type="text" placeholder="例：予約ID"></label></details>
+      <p class="fine">※ STORES予約の「ステータス」は予約状態、「支払ステータス」は支払い状態です。混同しないでください。予約ステータスを指定しない場合、キャンセル済み予約を検出できません。また「予約日時」や「購入日時」は会計上の取引日とは限りません。取引日・取引IDの根拠が不明な場合、仕訳候補を実務に使用しないでください。</p><details class="detail"><summary>過去ファイルと重複チェックする（任意）</summary><p>以前取り込んだ元CSVを選ぶと、同じ取引IDを照合します。会計ソフト内の登録済み仕訳を直接確認する機能ではありません。</p><label>過去CSV <input type="file" id="prior" accept=".csv,text/csv"></label><label>過去CSV内のID列名 <input id="priorheader" type="text" placeholder="例：予約ID"></label></details>
       <button id="analyze" type="button" class="primary">CSVを検査する</button>
     </section>
     <section id="resultsection" class="panel" hidden>
