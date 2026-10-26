@@ -2,6 +2,7 @@ import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns} from '
 import {createUploadController} from './upload-controller.mjs';
 import {createAnalysisController} from './analysis-controller.mjs';
 import {readCSVFile} from './csv-file.mjs';
+import {auditJournalCSV} from './journal-audit.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
@@ -17,6 +18,8 @@ function invalidateResults(){
   $('ledgersection').hidden=true;
   $('confirm').checked=false;
   $('downloadledger').disabled=true;
+  $('journalaudit').hidden=true;
+  $('journalaudit').textContent='';
 }
 function alertMessage(text){$('feedback').textContent=text;$('feedback').hidden=false;}
 function clearMessage(){$('feedback').hidden=true;}
@@ -69,6 +72,7 @@ function renderFindings(result){
    }
    $('resultsection').hidden=false;$('ledgersection').hidden=false;
    $('confirm').checked=false;$('downloadledger').disabled=true;
+   refreshJournalAudit();
    clearMessage();$('resultsection').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('analyze').addEventListener('click',()=>{
@@ -88,6 +92,27 @@ $('analyze').addEventListener('click',()=>{
     return analyze(rows,mapping,priorKeys);
   });
 });
+function refreshJournalAudit(){
+  const panel=$('journalaudit');
+  if(!findings){panel.hidden=true;$('downloadledger').disabled=true;return;}
+  panel.hidden=false;
+  let valid=false;
+  try{
+    // Inspect the exact generated CSV, not an independent approximation of it.
+    const draft=ledgerCSV(findings,$('debit').value,$('credit').value,true);
+    const audit=auditJournalCSV(draft);
+    valid=audit.errors.length===0;
+    panel.textContent=[
+      `仕訳候補 ${audit.rowCount}件：${valid?'列・日付・貸借金額の形式検査は通過':'形式検査で問題を検出'}`,
+      ...audit.errors.map(message=>'【要修正】'+message),
+      ...audit.warnings.map(message=>'【未設定】'+message),
+      '【要手動確認】仕訳日・科目の実在・税区分・収益認識・返金/手数料・過去インポートは自動検証できません。'
+    ].join('\\n');
+  }catch(error){
+    panel.textContent='【要修正】'+error.message;
+  }
+  $('downloadledger').disabled=!valid || !$('confirm').checked;
+}
 function download(text,filename){const blob=new Blob(['\uFEFF',text],{type:'text/csv;charset=utf-8'});const href=URL.createObjectURL(blob);const a=document.createElement('a');a.href=href;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}
 for(const field of MAPPING){
   $('map-'+field).addEventListener('change',invalidateResults);
@@ -95,5 +120,11 @@ for(const field of MAPPING){
 $('prior').addEventListener('change',invalidateResults);
 $('priorheader').addEventListener('input',invalidateResults);
 $('downloadreport').addEventListener('click',()=>{if(findings)download(reportCSV(findings),'validation-report.csv');});
-$('confirm').addEventListener('change',e=>{$('downloadledger').disabled=!e.target.checked || !findings;});
-$('downloadledger').addEventListener('click',()=>{try{if(!findings)throw new Error('先に検査してください');download(ledgerCSV(findings,$('debit').value,$('credit').value,$('confirm').checked),'mf-journal-candidates.csv');clearMessage();}catch(err){alertMessage(err.message);}});
+for(const field of ['debit','credit']){
+  $(field).addEventListener('input',()=>{
+    $('confirm').checked=false;
+    refreshJournalAudit();
+  });
+}
+$('confirm').addEventListener('change',refreshJournalAudit);
+$('downloadledger').addEventListener('click',()=>{try{if(!findings)throw new Error('先に検査してください');const csv=ledgerCSV(findings,$('debit').value,$('credit').value,$('confirm').checked);const audit=auditJournalCSV(csv);if(audit.errors.length)throw new Error('仕訳候補CSVの自動チェックに失敗: '+audit.errors.join(' / '));download(csv,'mf-journal-candidates.csv');clearMessage();}catch(err){alertMessage(err.message);}});
