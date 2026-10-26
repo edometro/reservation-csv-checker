@@ -14,10 +14,10 @@ test('CSV quoting, CRLF, embedded newlines, escaped quotes',()=>{
  assert.deepEqual(parseCSV(stringifyCSV(rows)),rows);
 });
 test('source row references use physical line numbers with quoted CRLF and blank records',()=>{
- const csv = '予約ID,決済日,決済金額,決済状況,メニュー\\r\\n' +
-   'A1,2026/10/01,1200,決済済,"1行目\\r\\n2行目"\\r\\n' +
-   '\\r\\n' +
-   'A2,2026/10/02,0,未決済,確認\\r\\n' +
+ const csv = '予約ID,決済日,決済金額,決済状況,メニュー\r\n' +
+   'A1,2026/10/01,1200,決済済,"1行目\r\n2行目"\r\n' +
+   '\r\n' +
+   'A2,2026/10/02,0,未決済,確認\r\n' +
    'A3,2026/10/03,1300,決済済,通常';
  const parsed=objectRows(csv);
  assert.deepEqual(parsed.rows.map(row=>row.__line),[2,5,6]);
@@ -28,9 +28,9 @@ test('source row references use physical line numbers with quoted CRLF and blank
 });
 
 test('source line tracking supports LF and lone CR inside quoted cells',()=>{
- const csv='予約ID,決済日,決済金額,決済状況,メニュー\\n' +
-   'B1,2026/10/01,1200,決済済,"上\\n下"\\n' +
-   'B2,2026/10/02,1200,決済済,"上\\r下"\\r' +
+ const csv='予約ID,決済日,決済金額,決済状況,メニュー\n' +
+   'B1,2026/10/01,1200,決済済,"上\n下"\n' +
+   'B2,2026/10/02,1200,決済済,"上\r下"\r' +
    'B3,2026/10/03,1200,決済済,通常';
  const parsed=objectRows(csv);
  assert.deepEqual(parsed.rows.map(row=>row.__line),[2,4,6]);
