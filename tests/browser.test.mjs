@@ -131,8 +131,15 @@ test('real Chromium UI: CSV validation, journal download and no uploads', {timeo
     throw error;
   } finally {
     if (socket) socket.close();
-    if (chrome && chrome.exitCode === null) chrome.kill('SIGKILL');
-    await new Promise(resolve => server.close(resolve));
-    await rm(profile, {recursive:true, force:true});
+    // Wait for Chrome to actually exit before deleting its profile. Otherwise
+    // Chrome's child processes can recreate files during recursive removal.
+    if (chrome && chrome.exitCode === null && chrome.signalCode === null) {
+      await new Promise(resolveExit => {
+        chrome.once('close', resolveExit);
+        chrome.kill('SIGKILL');
+      });
+    }
+    await new Promise(resolveClose => server.close(resolveClose));
+    await rm(profile, {recursive:true, force:true, maxRetries:5, retryDelay:100});
   }
 });
