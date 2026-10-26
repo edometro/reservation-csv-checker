@@ -41,12 +41,12 @@ test('CSV __line header remains user data and cannot overwrite physical line met
  const csv = [
   '予約ID,決済日,決済金額,決済状況,__line',
   'A1,2026/10/01,1200,決済済,=1+1',
-  'A2,2026/10/02,1300,決済済,"first\\nsecond"',
+  'A2,2026/10/02,1300,決済済,"first\nsecond"',
   'A3,2026/10/03,1400,決済済,normal'
- ].join('\\n').replaceAll('\\\\n','\\n');
+ ].join('\n');
  const parsed=objectRows(csv);
  assert.deepEqual(parsed.headers,['予約ID','決済日','決済金額','決済状況','__line']);
- assert.deepEqual(parsed.rows.map(row=>row.__line),['=1+1','first\\nsecond','normal']);
+ assert.deepEqual(parsed.rows.map(row=>row.__line),['=1+1','first\nsecond','normal']);
  const findings=analyze(parsed.rows,{...map,description:'__line'});
  assert.deepEqual(findings.map(row=>row.line),[2,3,5]);
  assert.deepEqual(findings.map(row=>row.ready),[true,true,true]);
