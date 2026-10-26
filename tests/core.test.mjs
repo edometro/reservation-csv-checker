@@ -359,3 +359,27 @@ test('control characters in source transaction IDs are quarantined before journa
   assert.deepEqual(report.slice(1).map(r=>r[1]),['PAY 001','PAY-002','PAY 003','PAY 004','PAY-005']);
   assert.ok(!/[\u0000-\u001F\u007F]/.test(report[3][1]));
 });
+
+
+test('whitespace-padded transaction IDs are review-only and never silently exported',()=>{
+  const csv=[
+    '予約ID,決済日,決済金額,決済状況',
+    ' PAY-001,2026/10/01,1200,決済済',
+    'PAY-001 ,2026/10/02,1300,決済済',
+    'PAY-002,2026/10/03,1400,決済済'
+  ].join('\n');
+  const mapping={id:'予約ID',date:'決済日',amount:'決済金額',status:'決済状況'};
+  const findings=analyze(objectRows(csv).rows,mapping);
+  assert.deepEqual(findings.map(row=>row.ready),[false,false,true]);
+  for(const row of findings.slice(0,2)){
+    assert.match(row.flags.join(' / '),/取引IDの前後に空白/);
+    assert.match(row.flags.join(' / '),/ファイル内の取引ID重複/);
+  }
+  const journal=parseCSV(ledgerCSV(findings,'普通預金','売上高',true));
+  assert.equal(journal.length,2);
+  assert.match(journal[1][18],/PAY-002/);
+  assert.doesNotMatch(journal[1][18],/PAY-001/);
+  const report=parseCSV(reportCSV(findings));
+  assert.deepEqual(report.slice(1).map(row=>row[6]),['要確認','要確認','候補']);
+  assert.match(report[1][7],/取引IDの前後に空白/);
+});
