@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test",
     "serve": "python3 -m http.server 8000",
-    "pricing": "node scripts/pricing-scenarios.mjs"
+    "pricing": "node scripts/pricing-scenarios.mjs",
+    "retention": "node scripts/retention-scenarios.mjs"
   },
   "engines": {
     "node": ">=20"
