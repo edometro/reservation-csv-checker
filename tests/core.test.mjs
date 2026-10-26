@@ -57,3 +57,27 @@ test('prevent spreadsheet injection in text fields',()=>{
  const report=parseCSV(reportCSV(a));
  assert.match(report[1][1],/^'/);
 });
+
+// Official Money Forward journal-import field list (A-AA), updated 2026-07-09.
+// https://biz.moneyforward.com/support/account/guide/import-books/ib01.html
+test('Money Forward official A-AA journal schema and empty optional tail',()=>{
+ const official = [
+  '取引No','取引日','借方勘定科目','借方補助科目','借方部門','借方取引先',
+  '借方税区分','借方インボイス','借方金額(円)','借方税額',
+  '貸方勘定科目','貸方補助科目','貸方部門','貸方取引先',
+  '貸方税区分','貸方インボイス','貸方金額(円)','貸方税額',
+  '摘要','仕訳メモ','タグ','MF仕訳タイプ',
+  '決算整理仕訳','作成日時','作成者','最終更新日時','最終更新者'
+ ];
+ assert.equal(official.length,27);
+ assert.deepEqual(MF_HEADERS,official);
+ const data=analyze(objectRows('予約ID,決済日,決済金額,決済状況,メニュー\\nTX-001,2026/10/26,1200,決済済,カット'.replace('\\n','\n')).rows,map);
+ const [header,row]=parseCSV(ledgerCSV(data,'普通預金','売上高',true));
+ assert.equal(header.length,27);
+ assert.equal(row.length,27);
+ assert.equal(row[1],'2026/10/26');
+ assert.equal(row[8],'1200');
+ assert.equal(row[16],'1200');
+ assert.equal(row[18],'予約 TX-001 カット');
+ assert.deepEqual(row.slice(22),['','','','','']);
+});
