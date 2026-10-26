@@ -119,3 +119,42 @@ test('paid but cancelled bookings must never become journal candidates',()=>{
  assert.throws(()=>analyze(objectRows(csv).rows,{...mapping,bookingStatus:'支払ステータス'}),/別の列/);
  assert.throws(()=>analyze(objectRows(csv).rows,{...mapping,bookingStatus:'決済金額'}),/別の列/);
 });
+
+test('strict yen parsing preserves only well-formed integer amounts',()=>{
+  for (const [input, expected] of [
+    ['1200',1200],['1,200',1200],['￥12,345',12345],['¥ 1,234,567',1234567],
+    ['1,,200',null],['12,34',null],['1,23,456',null],['1 200',null],
+    ['1,200円',null],['+1200',null],['1.200',null],['0',null],
+    ['9007199254740992',null],['=1+1',null]
+  ]) assert.equal(parseYen(input),expected,input);
+});
+
+test('strict date parsing rejects junk suffixes and invalid times',()=>{
+  for (const [input, expected] of [
+    ['2026/10/01','2026/10/01'],
+    ['2026-10-01 09:30','2026/10/01'],
+    ['2026年10月1日 23:59:59','2026/10/01'],
+    ['2026/10/01T12:05','2026/10/01'],
+    ['2026/10/01 cancelled',null],
+    ['2026/10/01 24:00',null],
+    ['2026/10/01 12:60',null],
+    ['2026/10/01 12:30:60',null],
+    ['2026/10/01 12:30 extra',null]
+  ]) assert.equal(normalizeDate(input),expected,input);
+});
+
+test('invalid source amount and date are review-only, not journal candidates',()=>{
+  const csv = [
+    '予約ID,決済日,決済金額,決済状況,メニュー',
+    'S1,2026/10/01,"1,,200",決済済,金額不正',
+    'S2,2026/10/02 garbage,1200,決済済,日付不正',
+    'S3,2026/10/03,"1,200",決済済,正常'
+  ].join('\n');
+  const result = analyze(objectRows(csv).rows,map);
+  assert.deepEqual(result.map(r=>r.ready),[false,false,true]);
+  assert.match(result[0].flags.join(','),/金額/);
+  assert.match(result[1].flags.join(','),/日付/);
+  const journal=parseCSV(ledgerCSV(result,'普通預金','売上高',true));
+  assert.equal(journal.length,2);
+  assert.match(journal[1][18],/S3/);
+});
