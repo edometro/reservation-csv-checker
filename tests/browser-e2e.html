@@ -90,6 +90,17 @@
       check(el('map-status').value === '支払ステータス', 'payment status mapped incorrectly');
       check(el('map-bookingStatus').value === 'ステータス', 'booking status mapped incorrectly');
       check(el('resultsection').hidden, 'old demo results remain visible');
+      // A user can accidentally map one column to two financial meanings.
+      // The UI must refuse analysis and keep any previous export disabled.
+      el('map-amount').value = el('map-id').value;
+      el('map-amount').dispatchEvent(new Event('change', {bubbles:true}));
+      el('analyze').click();
+      await until(() => !el('feedback').hidden, 'duplicate mandatory mapping error');
+      check(el('feedback').textContent.includes('異なる4つの必須列'), 'duplicate mapping was accepted');
+      check(el('resultsection').hidden && el('downloadledger').disabled,
+        'invalid mapping exposed a journal export');
+      el('map-amount').value = '決済金額';
+      el('map-amount').dispatchEvent(new Event('change', {bubbles:true}));
       el('analyze').click();
       await until(() => !el('resultsection').hidden, 'synthetic analysis');
       check(el('ok').textContent === '1' && el('review').textContent === '3', 'cancelled, pending or unknown paid booking not blocked');
