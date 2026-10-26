@@ -241,5 +241,15 @@ export function reportCSV(analysis) {
 export function priorIdSet(csvText, idHeader) {
   const {headers, rows} = objectRows(csvText);
   if (!headers.includes(idHeader)) throw new Error('過去ファイルに指定した取引ID列がありません');
-  return new Set(rows.map(r => String(r[idHeader] ?? '').trim()).filter(Boolean));
+  const ids = new Set();
+  for (const row of rows) {
+    const rawId = String(row[idHeader] ?? '');
+    // An altered reconciliation key can create false matches (or hide real ones).
+    // Do not normalize identifiers in the reference CSV without telling the user.
+    if (rawId && (rawId !== rawId.trim() || /[\u0000-\u001F\u007F]/.test(rawId))) {
+      throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 取引IDに前後の空白または制御文字があります（元データを確認してください）`);
+    }
+    if (rawId) ids.add(rawId);
+  }
+  return ids;
 }
