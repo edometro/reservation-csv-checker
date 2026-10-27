@@ -116,6 +116,18 @@
       "kind": "official_capability",
       "url": "https://biz.moneyforward.com/support/account/news/new-feature/2025112501.html",
       "summary": "2025-11-25公開。MF会計のSTORESレジ・ネットショップ連携で2025-12-01以降の売上明細の税区分取得が可能。STORES予約を含むと断定しない。"
+    },
+    {
+      "id": "O015",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28712681987097",
+      "summary": "2026-08-04更新。予約一覧の一括CSVは予約申込月と予約履行月で別の集計が可能。無絞込の個別出力は当月〜3か月先を含み得る。Excelの先頭0欠落への公式注意あり。月次入金照合の需要証拠ではない。"
+    },
+    {
+      "id": "O016",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28712690043033",
+      "summary": "2025-04-07更新。予約一覧の主な出力項目は予約ページID/タイトル・申込日時/予約日時・金額・予約/支払ステータス等。予約ページIDを予約一意IDや決済IDと同一視できず、主な項目の列挙は完全なCSV仕様ではない。アンケート回答は個別出力のみ。"
     }
   ]
 }
