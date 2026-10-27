@@ -14,7 +14,7 @@ const firsthand = n => ({
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, 1);
-  assert.equal(result.official_capability, 14);
+  assert.equal(result.official_capability, 16);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
   assert.equal(result.consentedInterviews, 0);
@@ -88,7 +88,7 @@ test('MF built-in bank import and auto rules are official alternatives, not paid
     assert.equal(matches[0].kind, 'official_capability');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 14);
+  assert.equal(summary.official_capability, 16);
   assert.equal(summary.firsthand_workflow, 1);
   assert.equal(summary.missing.firsthandCases, 4);
   assert.equal(summary.missing.interviews, 5);
@@ -113,9 +113,30 @@ test('STORES POS, shop, reservation and MF payout claims stay distinct from paid
       '公式の連携・価格情報は顧客の支払意思ではない');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 14);
+  assert.equal(summary.official_capability, 16);
   assert.equal(summary.firsthand_workflow, 1);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
+  assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+
+test('booking CSV export month and key caveats are official evidence, not new customers', () => {
+  const expectedOfficialUrls = [
+    'https://reserve-faq.stores.jp/hc/ja/articles/28712681987097',
+    'https://reserve-faq.stores.jp/hc/ja/articles/28712690043033'
+  ];
+  for (const url of expectedOfficialUrls) {
+    const entries = saved.sources.filter(item => item.url === url);
+    assert.equal(entries.length, 1, '同じ予約CSV仕様を複数件に数えない');
+    assert.equal(entries[0].kind, 'official_capability',
+      'CSV出力仕様は本人の作業体験談ではない');
+  }
+  const summary = summarizeDemandEvidence(saved);
+  assert.equal(summary.official_capability, 16);
+  assert.equal(summary.firsthand_workflow, 1);
+  assert.equal(summary.consentedInterviews, 0);
+  assert.equal(summary.confirmedWillingness, 0);
+  assert.equal(summary.realCsvCompatibilityVerified, false);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
 });
