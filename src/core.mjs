@@ -252,6 +252,9 @@ export function priorIdSet(csvText, idHeader) {
   const reportHeaders = ['元CSV行','取引ID','取引日','金額','支払状況','予約状況','判定','理由'];
   const isValidationReport = headers.length === reportHeaders.length &&
     reportHeaders.every((name, i) => headers[i] === name);
+  if (isValidationReport && idHeader !== '取引ID') {
+    throw new Error('検査レポートを比較する場合は「取引ID」列を指定してください');
+  }
   for (const row of rows) {
     const rawId = String(row[idHeader] ?? '');
     if (isValidationReport && /^'[=+\-@]/u.test(rawId)) {
@@ -261,6 +264,19 @@ export function priorIdSet(csvText, idHeader) {
     // Do not normalize identifiers in the reference CSV without telling the user.
     if (rawId && (rawId !== rawId.trim() || /[\u0000-\u001F\u007F]/.test(rawId))) {
       throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 取引IDに前後の空白または制御文字があります（元データを確認してください）`);
+    }
+    if (isValidationReport) {
+      // A validation report includes rejected/unfinished rows as well as candidates.
+      // Counting a previously unpaid or cancelled row as "already exported" would
+      // falsely block it when its status changes to paid in the next CSV.
+      const verdict = String(row['判定'] ?? '');
+      if (verdict !== '候補' && verdict !== '要確認') {
+        throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 検査レポートの判定が不正です（候補／要確認のみ対応）`);
+      }
+      if (verdict !== '候補') continue;
+      if (!rawId) {
+        throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 候補の取引IDが空欄です`);
+      }
     }
     if (rawId) ids.add(rawId);
   }
