@@ -50,6 +50,13 @@ export function auditJournalCSV(csvText) {
         errors.push(`${line}行目: ${MF_HEADERS[col]}が不正です`);
       }
     }
+    // Official MF journal import accepts only an empty cell or the literal 0
+    // for both tax-amount columns; positive tax figures are not imported here.
+    for (const col of [9, 17]) {
+      if (row[col] !== '' && row[col] !== '0') {
+        errors.push(`${line}行目: ${MF_HEADERS[col]}は空欄または0のみ指定できます`);
+      }
+    }
     const debit = parseYen(row[8]), credit = parseYen(row[16]);
     if (debit === null || credit === null || debit !== credit) {
       errors.push(`${line}行目: 借方・貸方金額が不正、または一致しません`);
@@ -70,5 +77,8 @@ export function auditJournalCSV(csvText) {
 
   if (missingTax) warnings.push(`借方または貸方の税区分が未設定: ${missingTax}件（会計・税務上の判断が必要）`);
   if (missingNumber) warnings.push(`取引Noが未設定: ${missingNumber}件（会計側の二重取り込みを防止できません）`);
+  // Even a populated transaction number is NOT an idempotency key: MF assigns
+  // a new number if it already exists and imports the journal again.
+  if (rows.length) warnings.push('再インポートすると取引Noの指定・再利用に関係なく新規仕訳が登録されます（会計側の登録履歴を確認してください）');
   return {rowCount: rows.length, errors, warnings};
 }
