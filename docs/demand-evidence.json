@@ -146,6 +146,32 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/28701429334297",
       "summary": "2026-02-03更新。STORES予約の支払方法は事前カード決済、回数券、月謝、現地払い。現地払いはSTORES予約上で決済しない。フロー別需要のセグメント化に使う公式仕様。"
+    },
+    {
+      "id": "U002",
+      "kind": "firsthand_workflow",
+      "url": "https://stores.fun/cases/posts/mimosaeyedesign-cross",
+      "summary": "STORES公式掲載の事業者インタビュー（販促媒体による選択バイアスあり）。予約・レジ・STORES決済とfreee会計を併用。本人は売上と決済手数料が別項目で連携され、会計への再入力・修正がほぼ不要になったと述べる。月次照合時間・有料CSVツールへの支払意思は未確認。追加サービスへの需要ではなく既存代替策の有効性を示す反証候補。",
+      "accountingSoftware": "freee",
+      "observedWork": "予約・レジのデータ再入力の省略、STORES決済からfreeeへの売上・決済手数料連携と月末のまとめ入力",
+      "interviewedAt": "2025-04",
+      "publishedAt": "未記載（取材2025-04、2026-10-28確認）",
+      "sourceContext": "STORES公式の販促目的の導入事例。本人の一人称回答に限り一次体験談と扱い、販売者による要約・効果保証とは区別する。",
+      "demandDirection": "既存代替策による作業削減（追加ツール需要を裏付けない）",
+      "targetMfUser": false
+    },
+    {
+      "id": "U003",
+      "kind": "firsthand_workflow",
+      "url": "https://stores.fun/cases/posts/noue-cross",
+      "summary": "STORES公式掲載の事業者インタビュー（販促媒体による選択バイアスあり）。本人はレセプションの伝票作成、予約の手打ち、レジの金額合わせ等が不要になり、スタッフ全体で1日約1時間を確保したと述べる。これは月次入金照合の時間ではなく、会計ソフト名も不明。支払意思は未確認。",
+      "accountingSoftware": "未公表",
+      "observedWork": "レセプションの会計、伝票作成、予約の手入力、レジ金額合わせの削減（スタッフ全体で約1時間/日と本人申告）",
+      "interviewedAt": "2025-07",
+      "publishedAt": "未記載（取材2025-07、2026-10-28確認）",
+      "sourceContext": "STORES公式の販促目的の導入事例。本人の一人称回答に限り一次体験談と扱い、販売者による要約・効果保証とは区別する。",
+      "demandDirection": "既存POS/予約連携による作業削減。月次照合・MF利用は未確認。",
+      "targetMfUser": false
     }
   ]
 }
