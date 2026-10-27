@@ -3,6 +3,7 @@ import {createUploadController} from './upload-controller.mjs';
 import {createAnalysisController} from './analysis-controller.mjs';
 import {readCSVFile} from './csv-file.mjs';
 import {auditJournalCSV} from './journal-audit.mjs';
+import {summarizeReviewReasons, reviewReasonsCSV} from './review-summary.mjs';
 const $ = id => document.getElementById(id);
 let current = null, findings = null;
 const sample = '予約ID,決済日,決済金額,決済状況,メニュー\nD001,2026/10/01,1200,決済済,カット\nD002,2026/10/02,3000,未決済,カラー\nD003,2026/10/03,2000,キャンセル,ネイル\nD004,2026/10/04,850,paid,体験\nD004,2026/10/04,850,paid,体験';
@@ -67,6 +68,16 @@ function renderFindings(result){
    $('candidate-yen').textContent=summary.candidateYen.toLocaleString('ja-JP')+' 円';
    $('review-yen').textContent=summary.reviewYen.toLocaleString('ja-JP')+' 円';
    $('unknown-amounts').textContent=String(summary.unknownAmountCount)+' 件';
+   const reasonSummary=summarizeReviewReasons(findings);
+   $('reason-summary').hidden=reasonSummary.length===0;
+   const reasonBody=$('reason-preview');reasonBody.replaceChildren();
+   for(const item of reasonSummary){
+     const tr=document.createElement('tr');
+     for(const value of [item.reason, String(item.count), item.amountYen.toLocaleString('ja-JP')+' 円', String(item.unknownAmountCount)]){
+       const td=document.createElement('td');td.textContent=value;tr.append(td);
+     }
+     reasonBody.append(tr);
+   }
    const tbody=$('preview');tbody.replaceChildren();
    for(const item of findings.slice(0,200)){
      const tr=document.createElement('tr');
@@ -124,6 +135,7 @@ for(const field of MAPPING){
 $('prior').addEventListener('change',invalidateResults);
 $('priorheader').addEventListener('input',invalidateResults);
 $('downloadreport').addEventListener('click',()=>{if(findings)download(reportCSV(findings),'validation-report.csv');});
+$('downloadreasons').addEventListener('click',()=>{if(findings)download(reviewReasonsCSV(findings),'review-reasons-summary.csv');});
 for(const field of ['debit','credit']){
   $(field).addEventListener('input',()=>{
     $('confirm').checked=false;
