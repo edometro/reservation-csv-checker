@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-10-27",
+  "interviews": {
+    "consented": 0,
+    "specificWillingness": 0
+  },
+  "realCsvCompatibilityVerified": false,
+  "sources": [
+    {
+      "id": "U001",
+      "kind": "firsthand_workflow",
+      "url": "https://kapa-shokai.com/fromstorestofreee/",
+      "summary": "STORES予約の入金CSVを手動で修正しfreeeへ読み込み、銀行入金と照合した公開体験談。MFへの支払意思は不明。",
+      "accountingSoftware": "freee",
+      "observedWork": "CSV列名・日時の修正と入金照合",
+      "publishedAt": "2024-11-19"
+    },
+    {
+      "id": "O001",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/52258293899673",
+      "summary": "STORES予約単体からfreee・マネーフォワード会計への売上・決済の自動連携は非対応。販売需要の証拠ではない。"
+    },
+    {
+      "id": "O002",
+      "kind": "official_capability",
+      "url": "https://stores.fun/regi/functions",
+      "summary": "STORESレジは会計ソフト連携とSTORES予約との連携を紹介。予約単体との差を確認する必要がある。"
+    },
+    {
+      "id": "S001",
+      "kind": "seller_claim",
+      "url": "https://booth.pm/ja/items/8776730",
+      "summary": "STORES予約→freee CSV整形ツールが500円で掲載。販売ページの説明であり購入件数は未検証。"
+    },
+    {
+      "id": "S002",
+      "kind": "seller_claim",
+      "url": "https://coconala.com/services/4246060",
+      "summary": "STORES予約CSVをfreee・MF用に整理するサービスの掲載を確認。閲覧時は受付終了・当該商品の販売実績0件表示であり、需要の証明にも不存在の証明にもならない。"
+    },
+    {
+      "id": "E001",
+      "kind": "editorial",
+      "url": "https://nagiworksmedia.com/articles/stores-reservation-accounting",
+      "summary": "予約・決済・銀行入金の区別を整理した編集記事。執筆者自身が実操作の体験談ではないと明記。"
+    }
+  ]
+}
