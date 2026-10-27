@@ -7,8 +7,10 @@ import {MF_HEADERS, MAX_INPUT_ROWS, normalizeDate, parseCSV, parseYen} from './c
  */
 export function auditJournalCSV(csvText) {
   let parsed;
+  // Preserve physical CSV line numbers even when quoted fields contain newlines.
+  const recordLines = [];
   try {
-    parsed = parseCSV(csvText, {maxRows: MAX_INPUT_ROWS + 1, maxColumns: MF_HEADERS.length});
+    parsed = parseCSV(csvText, {maxRows: MAX_INPUT_ROWS + 1, maxColumns: MF_HEADERS.length, recordLines});
   } catch (error) {
     return {rowCount: 0, errors: [`CSV解析エラー: ${error.message}`], warnings: []};
   }
@@ -24,7 +26,7 @@ export function auditJournalCSV(csvText) {
   let missingTax = 0, missingNumber = 0;
   const seenEntries = new Map();
   rows.forEach((row, index) => {
-    const line = index + 2;
+    const line = recordLines[index + 1];
     // CSV quoting is not spreadsheet formula escaping. Fail closed even when
     // an optional column contains a formula-like value: users may inspect or
     // edit this CSV in spreadsheet software before importing it.
