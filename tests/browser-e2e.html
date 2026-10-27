@@ -95,6 +95,22 @@
       check(el('journalaudit').textContent.includes('税区分が未設定'), 'tax warning missing');
       check(el('journalaudit').textContent.includes('取引Noが未設定'), 'duplicate import warning missing');
       check(el('downloadledger').disabled, 'unconfirmed download enabled');
+      // Verify the actual browser export is gated by the selected accounting year.
+      el('fiscal-start').value = '2026-10-02';
+      el('fiscal-start').dispatchEvent(new Event('input', {bubbles:true}));
+      check(el('downloadledger').disabled, 'partial fiscal-year range was accepted');
+      check(el('journalaudit').textContent.includes('開始日と終了日を両方'),
+        'missing fiscal-year end was not detected');
+      el('fiscal-end').value = '2027-09-30';
+      el('fiscal-end').dispatchEvent(new Event('input', {bubbles:true}));
+      check(el('journalaudit').textContent.includes('範囲外'),
+        'out-of-year journal candidate was not blocked');
+      el('confirm').click();
+      check(el('downloadledger').disabled, 'confirmation bypassed fiscal-year check');
+      el('fiscal-start').value = '2026-10-01';
+      el('fiscal-start').dispatchEvent(new Event('input', {bubbles:true}));
+      check(!el('confirm').checked, 'fiscal-year edit did not revoke confirmation');
+      check(!el('journalaudit').textContent.includes('範囲外'), 'valid year still flagged');
       el('confirm').click();
       check(!el('downloadledger').disabled, 'confirmed download disabled');
       el('downloadledger').click();
