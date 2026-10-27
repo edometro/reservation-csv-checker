@@ -172,6 +172,24 @@
       "sourceContext": "STORES公式の販促目的の導入事例。本人の一人称回答に限り一次体験談と扱い、販売者による要約・効果保証とは区別する。",
       "demandDirection": "既存POS/予約連携による作業削減。月次照合・MF利用は未確認。",
       "targetMfUser": false
+    },
+    {
+      "id": "O020",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/guide/books2/bo01.html",
+      "summary": "2026-09-30更新。MFクラウド会計の仕訳帳に既存仕訳の重複チェックがあり、日付・取引No・日数誤差・金額誤差で候補を絞り込み、確認後一括削除可能。既存競合機能であり、CSV取込時の自動重複排除を意味しない。"
+    },
+    {
+      "id": "O021",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/guide/import-books/ib01.html",
+      "summary": "2026-10-28確認。MFクラウド会計の仕訳帳インポートは指定サンプルフォーマットが必要で、インポートするたび新規仕訳が登録され既存仕訳を更新しない。取込後の重複チェックと取込前の重複防止を混同しない。"
+    },
+    {
+      "id": "O022",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/guide/import/im02.html",
+      "summary": "2026-10-28確認。MFクラウド会計の「エクセルに手入力した取引明細」インポートは日付と入金/出金の一方が必須。重複チェックはなく再取込で新しい仕訳候補となる。仕訳帳CSVの取込経路とは別。"
     }
   ]
 }
