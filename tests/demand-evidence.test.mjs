@@ -14,7 +14,7 @@ const firsthand = n => ({
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, 1);
-  assert.equal(result.official_capability, 7);
+  assert.equal(result.official_capability, 14);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
   assert.equal(result.consentedInterviews, 0);
@@ -88,10 +88,34 @@ test('MF built-in bank import and auto rules are official alternatives, not paid
     assert.equal(matches[0].kind, 'official_capability');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 7);
+  assert.equal(summary.official_capability, 14);
   assert.equal(summary.firsthand_workflow, 1);
   assert.equal(summary.missing.firsthandCases, 4);
   assert.equal(summary.missing.interviews, 5);
   assert.equal(summary.missing.willingness, 3);
+  assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('STORES POS, shop, reservation and MF payout claims stay distinct from paid demand', () => {
+  const expectedOfficialUrls = [
+    'https://biz.moneyforward.com/support/account/faq/specificinformation/sp07.html',
+    'https://biz.moneyforward.com/support/account/news/new-feature/20240521.html',
+    'https://biz.moneyforward.com/support/account/news/new-feature/20240112.html',
+    'https://regi-faq.stores.jp/hc/ja/articles/4408633607833',
+    'https://reserve-faq.stores.jp/hc/ja/articles/53033661487001',
+    'https://stores.fun/regi/pricing',
+    'https://biz.moneyforward.com/support/account/news/new-feature/2025112501.html'
+  ];
+  for (const url of expectedOfficialUrls) {
+    const entries = saved.sources.filter(item => item.url === url);
+    assert.equal(entries.length, 1, '連携範囲の公式出典を重複して数えない');
+    assert.equal(entries[0].kind, 'official_capability',
+      '公式の連携・価格情報は顧客の支払意思ではない');
+  }
+  const summary = summarizeDemandEvidence(saved);
+  assert.equal(summary.official_capability, 14);
+  assert.equal(summary.firsthand_workflow, 1);
+  assert.equal(summary.consentedInterviews, 0);
+  assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
 });
