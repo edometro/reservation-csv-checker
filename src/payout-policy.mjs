@@ -45,6 +45,12 @@ export function classifyPayoutFeeScenario({
     return {status: 'CARRIED_OVER', transferFeeYen: 0,
       adminFeeYen: 0, totalFeesYen: 0};
   }
+  // FAQでは手数料を上回らない小額の振込可否・処理方法が不明。
+  // 振込が成立したものとして扱わない。
+  if (payoutAmountYen <= 550 && transferUnderThreshold) {
+    return {status: 'REQUIRES_CONFIRMATION', transferFeeYen: null,
+      adminFeeYen: null, totalFeesYen: null};
+  }
   const adminFeeYen = payoutAmountYen < THRESHOLD ? SMALL_TRANSFER_ADMIN_FEE : 0;
   return {status: 'FEE_SCENARIO', transferFeeYen: TRANSFER_FEE,
     adminFeeYen, totalFeesYen: TRANSFER_FEE + adminFeeYen};
