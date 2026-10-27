@@ -54,7 +54,7 @@ test('renaming the ID and original-line headers together still rejects a recogni
 });
 
 test('ordinary source CSV with similar financial fields remains valid for exact ID matching', () => {
-  const csv = '予約ID,取引日,金額,支払状況,予約状況,理由\\nA-1,2026/10/01,1200,決済済,確定,通常\\n';
+  const csv = '予約ID,取引日,金額,支払状況,予約状況,理由\nA-1,2026/10/01,1200,決済済,確定,通常\n';
   assert.deepEqual([...priorIdSet(csv, '予約ID')], ['A-1']);
 });
 
