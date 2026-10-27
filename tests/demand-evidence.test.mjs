@@ -14,7 +14,7 @@ const firsthand = n => ({
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, 1);
-  assert.equal(result.official_capability, 4);
+  assert.equal(result.official_capability, 7);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
   assert.equal(result.consentedInterviews, 0);
@@ -74,4 +74,24 @@ test('invalid aggregate numbers and unsubstantiated firsthand records are reject
   data.sources.pop();
   data.checkedAt='2026-02-30';
   assert.throws(() => summarizeDemandEvidence(data), /調査日/);
+});
+
+test('MF built-in bank import and auto rules are official alternatives, not paid demand', () => {
+  const officialUrls = [
+    'https://biz.moneyforward.com/support/account/guide/journal02/jo01.html',
+    'https://biz.moneyforward.com/support/account/guide/import/im01.html',
+    'https://biz.moneyforward.com/support/account/guide/journal02/jo24.html'
+  ];
+  for (const url of officialUrls) {
+    const matches = saved.sources.filter(item => item.url === url);
+    assert.equal(matches.length, 1, '公式の同じ根拠を二重計上しない');
+    assert.equal(matches[0].kind, 'official_capability');
+  }
+  const summary = summarizeDemandEvidence(saved);
+  assert.equal(summary.official_capability, 7);
+  assert.equal(summary.firsthand_workflow, 1);
+  assert.equal(summary.missing.firsthandCases, 4);
+  assert.equal(summary.missing.interviews, 5);
+  assert.equal(summary.missing.willingness, 3);
+  assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
 });
