@@ -42,6 +42,12 @@
         <div><b id="unknown-amounts">0 件</b><span>金額を読み取れない行数（上記合計に含まない）</span></div>
       </div>
       <p class="fine">※ 金額は選択したCSVの列を機械的に合計した参考値です。要確認行の金額は未決済・返金・重複を含むため売上ではありません。候補金額も会計上の売上・入金額を保証しません。</p>
+      <details id="reason-summary" class="detail" open hidden>
+        <summary>要確認理由の内訳（理由別の件数・金額）</summary>
+        <p class="fine">同じ行が複数の理由に該当します。理由別の件数・金額は重複するため合算できません。売上・入金額ではありません。金額不明の行は対象金額に含みません。</p>
+        <div class="tablewrap"><table><thead><tr><th>要確認理由</th><th>該当件数</th><th>対象金額</th><th>金額不明件数</th></tr></thead><tbody id="reason-preview"></tbody></table></div>
+        <button id="downloadreasons" type="button" class="secondary">理由別サマリーCSVを保存（取引IDなし）</button>
+      </details>
       <div class="tablewrap"><table><thead><tr><th>行</th><th>取引ID</th><th>日付</th><th>金額</th><th>支払状況</th><th>予約状況</th><th>判定</th></tr></thead><tbody id="preview"></tbody></table></div>
       <button id="downloadreport" type="button" class="secondary">検査レポートをCSVで保存</button>
     </section>
