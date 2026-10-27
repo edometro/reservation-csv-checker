@@ -14,7 +14,7 @@ const firsthand = n => ({
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, 1);
-  assert.equal(result.official_capability, 2);
+  assert.equal(result.official_capability, 4);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
   assert.equal(result.consentedInterviews, 0);
