@@ -11,9 +11,10 @@ test('generated journal has valid structure but unverified tax and duplicate-imp
   const audit=auditJournalCSV(draft());
   assert.equal(audit.rowCount,1);
   assert.deepEqual(audit.errors,[]);
-  assert.equal(audit.warnings.length,2);
+  assert.equal(audit.warnings.length,3);
   assert.match(audit.warnings.join(' '),/税区分が未設定/);
   assert.match(audit.warnings.join(' '),/取引Noが未設定/);
+  assert.match(audit.warnings.join(' '),/再インポートすると取引Noの指定・再利用に関係なく/);
 });
 
 test('journal preflight catches date, account and unbalanced amounts',()=>{
@@ -36,14 +37,15 @@ test('journal preflight rejects wrong schema, empty journals and malformed CSV s
   assert.match(auditJournalCSV('a,b\nc,d').errors.join(' '),/27列ヘッダー/);
 });
 
-test('preflight warns only for missing tax classifications and transaction numbers',()=>{
+test('preflight always warns about reimports even when tax classifications and transaction number are filled',()=>{
   const rows=parseCSV(draft());
   rows[1][0]='123456789';
   rows[1][6]='仮の借方税区分';
   rows[1][14]='仮の貸方税区分';
   const audit=auditJournalCSV(stringifyCSV(rows));
   assert.deepEqual(audit.errors,[]);
-  assert.deepEqual(audit.warnings,[]);
+  assert.equal(audit.warnings.length,1);
+  assert.match(audit.warnings[0],/再インポートすると取引Noの指定・再利用に関係なく/);
   // This is a structural check only: values may still be invalid in the actual accounting software.
 });
 
@@ -131,4 +133,37 @@ test('preflight permits normal text and escaped formula-looking descriptions',()
   assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
   rows[1][19]='\n-1+2'; // quoted multiline field must not bypass the guard
   assert.match(auditJournalCSV(stringifyCSV(rows)).errors.join(' / '),/仕訳メモに数式として解釈/);
+});
+
+test('MF tax amount columns only permit empty or literal zero per official import specification',()=>{
+  const rows=parseCSV(draft());
+  rows[1][9]='0';
+  rows[1][17]='';
+  assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
+  rows[1][17]='0';
+  assert.deepEqual(auditJournalCSV(stringifyCSV(rows)).errors,[]);
+  rows[1][9]='100';
+  rows[1][17]='-1';
+  let errors=auditJournalCSV(stringifyCSV(rows)).errors.join(' / ');
+  assert.match(errors,/2行目: 借方税額は空欄または0/);
+  assert.match(errors,/2行目: 貸方税額は空欄または0/);
+  rows[1][9]='0.0';
+  rows[1][17]=' 0 ';
+  errors=auditJournalCSV(stringifyCSV(rows)).errors.join(' / ');
+  assert.match(errors,/借方税額は空欄または0/);
+  assert.match(errors,/貸方税額は空欄または0/);
+});
+
+test('reimport warning remains when transaction number is present, including a reused number',()=>{
+  const rows=parseCSV(draft());
+  rows[1][0]='123';
+  rows[1][6]='仮の借方税区分';
+  rows[1][14]='仮の貸方税区分';
+  const first=auditJournalCSV(stringifyCSV(rows));
+  assert.deepEqual(first.errors,[]);
+  assert.deepEqual(first.warnings.filter(w=>/再インポート/.test(w)).length,1);
+  assert.doesNotMatch(first.warnings.join(' / '),/取引Noが未設定/);
+  // Reusing the same number does not make an import idempotent.
+  const again=auditJournalCSV(stringifyCSV(rows));
+  assert.match(again.warnings.join(' / '),/新規仕訳が登録/);
 });
