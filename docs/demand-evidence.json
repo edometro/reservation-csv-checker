@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-27",
+  "checkedAt": "2026-10-28",
   "interviews": {
     "consented": 0,
     "specificWillingness": 0
@@ -44,6 +44,18 @@
       "kind": "editorial",
       "url": "https://nagiworksmedia.com/articles/stores-reservation-accounting",
       "summary": "予約・決済・銀行入金の区別を整理した編集記事。執筆者自身が実操作の体験談ではないと明記。"
+    },
+    {
+      "id": "O003",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713301405977",
+      "summary": "2026-08-04更新。入金履歴の内訳は予約と回数券・月謝の別ダウンロード。両方の確認が必要。公式仕様であり利用者需要の証拠ではない。"
+    },
+    {
+      "id": "O004",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28752603270297",
+      "summary": "2026-09-24更新。STORES予約APIはビジネスプラン以上、予約・顧客情報の参照専用。入金内訳APIは公開概要から確認できない。公式仕様であり需要証拠ではない。"
     }
   ]
 }
