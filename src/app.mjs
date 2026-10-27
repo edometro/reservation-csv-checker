@@ -105,7 +105,7 @@ function refreshJournalAudit(){
     panel.textContent=[
       `仕訳候補 ${audit.rowCount}件：${valid?'列・日付・貸借金額の形式検査は通過':'形式検査で問題を検出'}`,
       ...audit.errors.map(message=>'【要修正】'+message),
-      ...audit.warnings.map(message=>'【未設定】'+message),
+      ...audit.warnings.map(message=>'【注意】'+message),
       '【要手動確認】仕訳日・科目の実在・税区分・収益認識・返金/手数料・過去インポートは自動検証できません。'
     ].join('\n');
   }catch(error){
