@@ -318,8 +318,19 @@ export function priorIdSet(csvText, idHeader) {
   // A report with reordered/renamed/extra columns must not silently fall back
   // to generic source-CSV mode: that would count "要確認" IDs as already exported
   // and incorrectly block a booking that was paid only later.
-  const looksLikeValidationReport = headers.includes('取引ID') &&
-    (headers.includes('判定') || headers.includes('元CSV行'));
+  // A user may rename the "取引ID" column while editing a prior report.
+  // Requiring that header to identify reports would silently fall back to generic
+  // CSV mode and count previously unpaid "要確認" rows as already exported.
+  // Detect recognizable report layouts even if one or two headers were renamed.
+  // The signature is deliberately conservative: unrelated generic CSVs should
+  // not be rejected merely for having a "理由" or "判定" column.
+  const reportSignatureColumns = ['元CSV行','取引日','金額','支払状況','予約状況','判定','理由'];
+  const signatureCount = reportSignatureColumns.filter(name => headers.includes(name)).length;
+  const reportMarkerCount = ['元CSV行','判定','理由'].filter(name => headers.includes(name)).length;
+  const looksLikeValidationReport =
+    (headers.includes('取引ID') &&
+      (headers.includes('判定') || headers.includes('元CSV行'))) ||
+    (signatureCount >= 5 && reportMarkerCount >= 2);
   if (looksLikeValidationReport && !isValidationReport) {
     throw new Error('過去CSVの検査レポート形式が変更されています（元の8列・列順を変更せず指定してください）');
   }
