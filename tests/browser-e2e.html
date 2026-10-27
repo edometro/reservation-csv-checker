@@ -50,6 +50,9 @@
       check(el('candidate-yen').textContent === '1,200 円', 'demo candidate total');
       check(el('review-yen').textContent === '6,700 円', 'demo review total');
       check(el('unknown-amounts').textContent === '0 件', 'demo unreadable amount count');
+      check(el('reason-preview').rows.length === 2, 'review reason breakdown missing');
+      check(el('reason-preview').textContent.includes('ファイル内の取引ID重複'),
+        'duplicate reason not shown');
 
       // Exercise the actual browser download path and inspect its Blob.
       let downloaded;
@@ -58,6 +61,19 @@
         downloaded = blob;
         return originalCreate(blob);
       };
+      el('downloadreasons').click();
+      await until(() => downloaded instanceof win.Blob, 'review summary download Blob');
+      const reasonRows = parseCSV((await downloaded.text()).replace(/^\uFEFF/, ''));
+      check(reasonRows.length === 3, 'reason CSV must have header and two reasons');
+      const reasonMap = new Map(reasonRows.slice(1).map(row => [row[0], row]));
+      check(reasonMap.get('キャンセル・返金・未決済等の確認が必要')?.[1] === '2',
+        'payment review reason count');
+      check(reasonMap.get('キャンセル・返金・未決済等の確認が必要')?.[2] === '5000',
+        'payment review reason amount');
+      check(reasonMap.get('ファイル内の取引ID重複')?.[2] === '1700',
+        'duplicate review reason amount');
+      check(!reasonRows.flat().join(',').includes('D004'), 'review summary leaks transaction IDs');
+      downloaded = undefined;
       el('debit').value = '普通預金';
       el('credit').value = '売上高';
       el('debit').dispatchEvent(new Event('input', {bubbles:true}));
