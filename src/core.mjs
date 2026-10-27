@@ -175,6 +175,20 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
       !COLUMN_SUGGESTIONS.status.includes(statusKey)) {
     throw new Error('予約ステータスの列を支払ステータスとして指定できません（別の支払状況列を選択してください）');
   }
+  // A manually chosen, unrelated column can contain values like "paid" or
+  // "確定". When a recognized status column exists, do not let that unrelated
+  // column bypass an actual unpaid/cancelled state in the same CSV.
+  // For CSVs without recognized headers, manual mappings remain supported.
+  const hasHeader = header => rows.some(row =>
+    Object.prototype.hasOwnProperty.call(row, header));
+  const paymentHeaders = COLUMN_SUGGESTIONS.status.filter(hasHeader);
+  if (paymentHeaders.length && !paymentHeaders.includes(statusKey)) {
+    throw new Error('支払ステータス列が存在します。支払状況には該当する列を指定してください');
+  }
+  const bookingHeaders = COLUMN_SUGGESTIONS.bookingStatus.filter(hasHeader);
+  if (bookingStatusKey && bookingHeaders.length && !bookingHeaders.includes(bookingStatusKey)) {
+    throw new Error('予約ステータス列が存在します。予約状況には該当する列を指定してください');
+  }
   const frequencies = new Map();
   for (const source of rows) {
     const id = String(source[idKey] ?? '').trim();
