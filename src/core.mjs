@@ -241,6 +241,29 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
   });
 }
 
+
+/**
+ * Exact, review-only amount breakdown for the local CSV inspection screen.
+ * A row marked for review may be unpaid, refunded, cancelled, or duplicated:
+ * reviewYen must never be presented as revenue or added to candidateYen.
+ * BigInt avoids silently rounding totals above Number.MAX_SAFE_INTEGER.
+ */
+export function summarizeAnalysis(findings) {
+  let candidateCount = 0, reviewCount = 0, unknownAmountCount = 0;
+  let candidateYen = 0n, reviewYen = 0n;
+  for (const row of findings) {
+    if (row.ready) candidateCount++;
+    else reviewCount++;
+    if (!Number.isSafeInteger(row.amount) || row.amount <= 0) {
+      unknownAmountCount++;
+      continue;
+    }
+    if (row.ready) candidateYen += BigInt(row.amount);
+    else reviewYen += BigInt(row.amount);
+  }
+  return {candidateCount, reviewCount, candidateYen, reviewYen, unknownAmountCount};
+}
+
 export function ledgerCSV(analysis, debit, credit, confirmation) {
   if (!confirmation) throw new Error('内容の確認と仕訳方針の承認が必要です');
   const d = String(debit ?? '').trim(), c = String(credit ?? '').trim();
