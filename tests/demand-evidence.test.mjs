@@ -13,7 +13,7 @@ const firsthand = n => ({
 
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 1);
+  assert.equal(result.firsthand_workflow, 3);
   assert.equal(result.official_capability, 19);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
@@ -21,7 +21,7 @@ test('tracked evidence keeps real users separate from seller and official claims
   assert.equal(result.confirmedWillingness, 0);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
   assert.deepEqual(result.missing, {
-    firsthandCases: 4, interviews: 5, willingness: 3, realCsvCompatibility: 1
+    firsthandCases: 2, interviews: 5, willingness: 3, realCsvCompatibility: 1
   });
 });
 
@@ -31,13 +31,13 @@ test('seller and official entries cannot satisfy the firsthand target', () => {
     data.sources.push({id: 'S'+(n+10), kind: 'seller_claim',
       url: 'https://example.org/seller-'+n, summary: '宣伝'});
   }
-  assert.equal(summarizeDemandEvidence(data).firsthand_workflow, 1);
-  assert.equal(summarizeDemandEvidence(data).missing.firsthandCases, 4);
+  assert.equal(summarizeDemandEvidence(data).firsthand_workflow, 3);
+  assert.equal(summarizeDemandEvidence(data).missing.firsthandCases, 2);
 });
 
 test('five actual stories alone do not constitute customer interviews or compatibility', () => {
   const data = clone();
-  data.sources.push(...[2,3,4,5].map(firsthand));
+  data.sources.push(...[4,5].map(firsthand));
   const result = summarizeDemandEvidence(data);
   assert.equal(result.firsthand_workflow, 5);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
@@ -47,7 +47,7 @@ test('five actual stories alone do not constitute customer interviews or compati
 
 test('only complete requirements allow human Go review, never auto-launch', () => {
   const data = clone();
-  data.sources.push(...[2,3,4,5].map(firsthand));
+  data.sources.push(...[4,5].map(firsthand));
   data.interviews = {consented: 5, specificWillingness: 3};
   data.realCsvCompatibilityVerified = true;
   assert.equal(summarizeDemandEvidence(data).decision, 'READY_FOR_HUMAN_GO_REVIEW');
@@ -89,8 +89,8 @@ test('MF built-in bank import and auto rules are official alternatives, not paid
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, 19);
-  assert.equal(summary.firsthand_workflow, 1);
-  assert.equal(summary.missing.firsthandCases, 4);
+  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.missing.firsthandCases, 2);
   assert.equal(summary.missing.interviews, 5);
   assert.equal(summary.missing.willingness, 3);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
@@ -114,7 +114,7 @@ test('STORES POS, shop, reservation and MF payout claims stay distinct from paid
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, 19);
-  assert.equal(summary.firsthand_workflow, 1);
+  assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
@@ -134,7 +134,7 @@ test('booking CSV export month and key caveats are official evidence, not new cu
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, 19);
-  assert.equal(summary.firsthand_workflow, 1);
+  assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
@@ -155,7 +155,34 @@ test('payment-rail official facts never count as user pain or paid willingness',
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, 19);
-  assert.equal(summary.firsthand_workflow, 1);
+  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.consentedInterviews, 0);
+  assert.equal(summary.confirmedWillingness, 0);
+  assert.equal(summary.realCsvCompatibilityVerified, false);
+  assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('vendor-hosted interviews count as unique first-person workflow reports, not MF demand', () => {
+  const expected = [
+    ['https://stores.fun/cases/posts/mimosaeyedesign-cross', 'freee', '2025-04'],
+    ['https://stores.fun/cases/posts/noue-cross', '未公表', '2025-07']
+  ];
+  for (const [url, software, interviewedAt] of expected) {
+    const entries = saved.sources.filter(source => source.url === url);
+    assert.equal(entries.length, 1, '同じ販促インタビューを複数件に数えない');
+    assert.equal(entries[0].kind, 'firsthand_workflow', '本人の一人称の具体的な作業のみ計上');
+    assert.equal(entries[0].accountingSoftware, software);
+    assert.equal(entries[0].interviewedAt, interviewedAt, '取材時期と公開日を混同しない');
+    assert.match(entries[0].sourceContext, /販促目的/);
+    assert.equal(entries[0].targetMfUser, false);
+    assert.ok(entries[0].observedWork);
+  }
+  const mfCases = saved.sources.filter(source =>
+    source.kind === 'firsthand_workflow' && source.targetMfUser === true);
+  assert.equal(mfCases.length, 0, 'MF併用の一次体験談はまだ未確認');
+  const summary = summarizeDemandEvidence(saved);
+  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.missing.firsthandCases, 2);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
