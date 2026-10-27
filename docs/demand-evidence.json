@@ -128,6 +128,24 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/28712690043033",
       "summary": "2025-04-07更新。予約一覧の主な出力項目は予約ページID/タイトル・申込日時/予約日時・金額・予約/支払ステータス等。予約ページIDを予約一意IDや決済IDと同一視できず、主な項目の列挙は完全なCSV仕様ではない。アンケート回答は個別出力のみ。"
+    },
+    {
+      "id": "O017",
+      "kind": "official_capability",
+      "url": "https://support.coiney.com/hc/ja/articles/115007912688",
+      "summary": "2026-10-02更新。STORES決済のクレジット売上はMFクラウドに自動連携可能。STORES予約の事前決済が同じ連携対象とは示されない。2025-09-18以降の請求書決済には一部制限。顧客需要の証拠ではない。"
+    },
+    {
+      "id": "O018",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/53034030789913",
+      "summary": "2026-07-22更新。STORESレジの予約タブ以外からの会計は予約と連動しない。入金待ちのオーダーは決済失敗の可能性があってもレジ販売実績に計上され得る。既存オーダーを後から予約へ紐付けられない。顧客の実体験・支払意思ではない。"
+    },
+    {
+      "id": "O019",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28701429334297",
+      "summary": "2026-02-03更新。STORES予約の支払方法は事前カード決済、回数券、月謝、現地払い。現地払いはSTORES予約上で決済しない。フロー別需要のセグメント化に使う公式仕様。"
     }
   ]
 }
