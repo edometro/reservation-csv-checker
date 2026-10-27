@@ -214,6 +214,16 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     if (!date) flags.push('日付形式エラー');
     if (dateSourceNeedsReview) flags.push('予約・申込・来客・購入日時を会計取引日とする根拠が未確認');
     if (amount == null) flags.push('金額形式エラーまたは0円');
+    // Multiple recognized status columns may disagree (including a blank vs paid).
+    // Do not trust the manually selected one while another source column says otherwise.
+    if (paymentHeaders.length > 1 &&
+        new Set(paymentHeaders.map(header => String(source[header] ?? '').trim())).size > 1) {
+      flags.push('複数の支払ステータス列の値が一致しません（元CSVを確認してください）');
+    }
+    if (bookingHeaders.length > 1 &&
+        new Set(bookingHeaders.map(header => String(source[header] ?? '').trim())).size > 1) {
+      flags.push('複数の予約ステータス列の値が一致しません（元CSVを確認してください）');
+    }
     if (!status) flags.push('支払状況が空欄');
     else if (REVIEW.test(status)) flags.push('キャンセル・返金・未決済等の確認が必要');
     else if (!PAID.has(status.toLowerCase())) flags.push('支払済みと判定できない状態');
