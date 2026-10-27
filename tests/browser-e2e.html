@@ -74,6 +74,19 @@
         'duplicate review reason amount');
       check(!reasonRows.flat().join(',').includes('D004'), 'review summary leaks transaction IDs');
       downloaded = undefined;
+      check(!el('downloadreview').disabled, 'review-only export should be enabled');
+      el('downloadreview').click();
+      await until(() => downloaded instanceof win.Blob, 'review-only download Blob');
+      const reviewRows = parseCSV((await downloaded.text()).replace(/^\uFEFF/, ''));
+      check(reviewRows.length === 5, 'review-only CSV must have header and four review rows');
+      check(reviewRows[0][0] === '元CSV行' && reviewRows[0][6] === '判定',
+        'review-only CSV must keep original report schema');
+      check(reviewRows.slice(1).every(row => row[6] === '要確認'),
+        'review-only export included a candidate');
+      check(!reviewRows.flat().join(',').includes('D001'), 'review-only CSV leaked a candidate');
+      check(reviewRows.slice(1).filter(row => row[1] === 'D004').length === 2,
+        'review-only CSV lost duplicate rows');
+      downloaded = undefined;
       el('debit').value = '普通預金';
       el('credit').value = '売上高';
       el('debit').dispatchEvent(new Event('input', {bubbles:true}));
@@ -132,6 +145,7 @@
       await until(() => !el('feedback').hidden, 'malformed file error');
       check(el('resultsection').hidden && el('ledgersection').hidden, 'stale result exposed after upload failure');
       check(el('downloadledger').disabled, 'stale export enabled after upload failure');
+      check(el('downloadreview').disabled, 'stale review-only export enabled after upload failure');
 
       // No external resources loaded by the app during the test.
       const resources = [

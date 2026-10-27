@@ -49,7 +49,9 @@
         <button id="downloadreasons" type="button" class="secondary">理由別サマリーCSVを保存（取引IDなし）</button>
       </details>
       <div class="tablewrap"><table><thead><tr><th>行</th><th>取引ID</th><th>日付</th><th>金額</th><th>支払状況</th><th>予約状況</th><th>判定</th></tr></thead><tbody id="preview"></tbody></table></div>
-      <button id="downloadreport" type="button" class="secondary">検査レポートをCSVで保存</button>
+      <button id="downloadreport" type="button" class="secondary">検査レポートをCSVで保存（全件）</button>
+      <button id="downloadreview" type="button" class="secondary" disabled>要確認だけをCSVで保存</button>
+      <p class="fine">※ 要確認だけのCSVには取引ID・金額・支払状況などの明細が含まれます。共有時は個人情報・取引情報に注意してください。元CSV行番号は維持します。</p>
     </section>
     <section id="ledgersection" class="panel" hidden>
       <div class="step-head"><span class="step">4</span><div><h2>仕訳候補CSVを作る</h2><p>マネーフォワード会計の「仕訳帳」インポート用の列構成に合わせます。税区分等は未設定のため、そのまま本番投入せず必ず確認してください。</p></div></div>

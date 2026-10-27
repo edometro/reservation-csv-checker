@@ -1,4 +1,4 @@
-import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns,summarizeAnalysis} from './core.mjs';
+import {objectRows,analyze,ledgerCSV,reportCSV,reviewOnlyCSV,priorIdSet,suggestColumns,summarizeAnalysis} from './core.mjs';
 import {createUploadController} from './upload-controller.mjs';
 import {createAnalysisController} from './analysis-controller.mjs';
 import {readCSVFile} from './csv-file.mjs';
@@ -19,6 +19,7 @@ function invalidateResults(){
   $('ledgersection').hidden=true;
   $('confirm').checked=false;
   $('downloadledger').disabled=true;
+  $('downloadreview').disabled=true;
   $('journalaudit').hidden=true;
   $('journalaudit').textContent='';
 }
@@ -65,6 +66,7 @@ function renderFindings(result){
    const summary=summarizeAnalysis(findings);
    $('ok').textContent=summary.candidateCount;
    $('review').textContent=summary.reviewCount;
+   $('downloadreview').disabled=summary.reviewCount===0;
    $('candidate-yen').textContent=summary.candidateYen.toLocaleString('ja-JP')+' 円';
    $('review-yen').textContent=summary.reviewYen.toLocaleString('ja-JP')+' 円';
    $('unknown-amounts').textContent=String(summary.unknownAmountCount)+' 件';
@@ -135,6 +137,7 @@ for(const field of MAPPING){
 $('prior').addEventListener('change',invalidateResults);
 $('priorheader').addEventListener('input',invalidateResults);
 $('downloadreport').addEventListener('click',()=>{if(findings)download(reportCSV(findings),'validation-report.csv');});
+$('downloadreview').addEventListener('click',()=>{if(findings?.some(row=>!row.ready))download(reviewOnlyCSV(findings),'review-only-report.csv');});
 $('downloadreasons').addEventListener('click',()=>{if(findings)download(reviewReasonsCSV(findings),'review-reasons-summary.csv');});
 for(const field of ['debit','credit']){
   $(field).addEventListener('input',()=>{
