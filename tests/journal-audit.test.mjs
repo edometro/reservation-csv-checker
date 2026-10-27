@@ -72,7 +72,7 @@ test('MF optional description is limited to 200 characters',()=>{
 
 test('journal audit reports physical source lines after quoted multiline cells',()=>{
   const rows=parseCSV(draft());
-  rows[1][18]='予約 T1\\n補足'.replace('\\n','\n');
+  rows[1][18]='予約 T1\n補足';
   rows.push([...rows[1]]); // Starts at physical line 4, not logical row 3.
   const invalid=[...rows[1]];
   invalid[18]='別取引';
