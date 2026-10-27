@@ -93,12 +93,12 @@ test('ledger format and confirmation',()=>{
  assert.equal(result[1][10],'売上高');
 });
 test('prevent spreadsheet injection in text fields',()=>{
- const a=analyze([{予約ID:'=1+1',決済日:'2026/10/01',決済金額:'100',決済状況:'paid',メニュー:'@malicious'}],map);
+ const a=analyze([{予約ID:'SAFE-001',決済日:'2026/10/01',決済金額:'100',決済状況:'paid',メニュー:'@malicious'}],map);
  const ledger=parseCSV(ledgerCSV(a,'普通預金','売上高',true));
- assert.match(ledger[1][18],/予約 =1\+1/);
+ assert.match(ledger[1][18],/予約 SAFE-001 '@malicious/);
  assert.throws(()=>ledgerCSV(a,'=NOW()','売上高',true),/形式/);
  const report=parseCSV(reportCSV(a));
- assert.match(report[1][1],/^'/);
+ assert.equal(report[1][1],'SAFE-001');
 });
 
 // Official Money Forward journal-import field list (A-AA), updated 2026-07-09.
@@ -396,4 +396,39 @@ test('prior CSV rejects control characters and reports physical source line',()=
  const csv='予約ID,備考\nA1,"改行\n入り"\n"A2\\t",ok\n'.replace('A2\\t','A2\t');
  assert.throws(()=>priorIdSet(csv,'予約ID'),/過去CSV4行目.*制御文字/);
  assert.throws(()=>priorIdSet('予約ID,備考\n"A\\n2",ok\n'.replace('A\\n2','A\n2'),'予約ID'),/過去CSV2行目.*制御文字/);
+});
+
+test('formula-leading IDs are review-only and cannot silently break prior-report matching',()=>{
+ const csv=[
+   '予約ID,決済日,決済金額,決済状況',
+   '=PAY-001,2026/10/01,1200,paid',
+   '+PAY-002,2026/10/02,1300,paid',
+   '-PAY-003,2026/10/03,1400,paid',
+   '@PAY-004,2026/10/04,1500,paid',
+   'SAFE-005,2026/10/05,1600,paid'
+ ].join('\n');
+ const findings=analyze(objectRows(csv).rows,map);
+ assert.deepEqual(findings.map(row=>row.ready),[false,false,false,false,true]);
+ for (const row of findings.slice(0,4)) {
+   assert.match(row.flags.join(' / '),/照合キーを安全に再利用できません/);
+ }
+ const journal=parseCSV(ledgerCSV(findings,'普通預金','売上高',true));
+ assert.equal(journal.length,2);
+ assert.match(journal[1][18],/SAFE-005/);
+ const report=parseCSV(reportCSV(findings));
+ assert.deepEqual(report.slice(1,5).map(row=>row[1]),["'=PAY-001","'+PAY-002","'-PAY-003","'@PAY-004"]);
+ assert.deepEqual(report.slice(1).map(row=>row[6]),['要確認','要確認','要確認','要確認','候補']);
+ assert.throws(()=>priorIdSet(reportCSV(findings),'取引ID'),/過去CSV2行目.*数式対策で変換/);
+ // The original source file still preserves the exact IDs if explicitly used as prior data.
+ assert.ok(priorIdSet(csv,'予約ID').has('=PAY-001'));
+});
+
+test('safe IDs remain exactly reusable when a validation report is the prior CSV',()=>{
+ const csv='予約ID,決済日,決済金額,決済状況\nSAFE-001,2026/10/01,1200,paid';
+ const report=reportCSV(analyze(objectRows(csv).rows,map));
+ const prior=priorIdSet(report,'取引ID');
+ assert.deepEqual([...prior],['SAFE-001']);
+ assert.match(analyze(objectRows(csv).rows,map,prior)[0].flags.join(' / '),/過去出力との取引ID重複/);
+ // A literal apostrophe prefix is ambiguous only in our report format, not in raw source CSV.
+ assert.ok(priorIdSet("予約ID,備考\n'=PAY-001,ok",'予約ID').has("'=PAY-001"));
 });
