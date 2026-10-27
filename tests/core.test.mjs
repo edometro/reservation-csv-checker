@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseCSV,stringifyCSV,objectRows,normalizeDate,parseYen,analyze,ledgerCSV,reportCSV,MF_HEADERS,priorIdSet,suggestColumns} from '../src/core.mjs';
+import {parseCSV,stringifyCSV,objectRows,normalizeDate,parseYen,analyze,ledgerCSV,reportCSV,reviewOnlyCSV,MF_HEADERS,priorIdSet,suggestColumns} from '../src/core.mjs';
 const map = {id:'予約ID',date:'決済日',amount:'決済金額',status:'決済状況',description:'メニュー'};
 const sample = `予約ID,決済日,決済金額,決済状況,メニュー
 A1,2026/10/01,"1,200",決済済,カット
@@ -25,6 +25,35 @@ test('source row references use physical line numbers with quoted CRLF and blank
  assert.deepEqual(findings.map(row=>row.line),[2,5,6]);
  const report=parseCSV(reportCSV(findings));
  assert.deepEqual(report.slice(1).map(row=>row[0]),['2','5','6']);
+});
+
+test('review-only export keeps original source lines, safe ID escaping and only review rows',()=>{
+ const csv = [
+  '予約ID,決済日,決済金額,決済状況,メニュー',
+  'OK,2026/10/01,1200,決済済,通常',
+  '"=BAD",2026/10/02,500,決済済,数式風ID',
+  'WAIT,2026/10/03,1000,未決済,"改行',
+  'メモ"',
+  'OK2,2026/10/04,2000,決済済,通常'
+ ].join('\\n');
+ const findings=analyze(objectRows(csv).rows,map);
+ assert.deepEqual(findings.map(r=>r.line),[2,3,4,6]);
+ assert.deepEqual(findings.map(r=>r.ready),[true,false,false,true]);
+ const full=parseCSV(reportCSV(findings));
+ const review=parseCSV(reviewOnlyCSV(findings));
+ assert.deepEqual(review[0],full[0]);
+ assert.deepEqual(review.slice(1),[full[2],full[3]]);
+ assert.deepEqual(review.slice(1).map(row=>row[0]),['3','4']);
+ assert.equal(review[1][1],"'=BAD");
+ assert.equal(review[2][6],'要確認');
+ assert.match(review[2][7],/未決済/);
+});
+
+test('review-only export is header-only if all rows pass and does not mutate findings',()=>{
+ const findings=analyze(objectRows('予約ID,決済日,決済金額,決済状況\\nA,2026/10/01,1200,決済済').rows,map);
+ const before=JSON.stringify(findings);
+ assert.equal(parseCSV(reviewOnlyCSV(findings)).length,1);
+ assert.equal(JSON.stringify(findings),before);
 });
 
 test('source line tracking supports LF and lone CR inside quoted cells',()=>{

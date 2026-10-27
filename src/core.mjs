@@ -296,6 +296,14 @@ export function reportCSV(analysis) {
   ])]);
 }
 
+/** Export only actionable review rows using the same safe schema as the full report.
+ * This is a local detail report containing transaction IDs; do not publish it.
+ * Keep original source line numbers so users can return to the input CSV.
+ */
+export function reviewOnlyCSV(analysis) {
+  return reportCSV(analysis.filter(row => !row.ready));
+}
+
 export function priorIdSet(csvText, idHeader) {
   const {headers, rows} = objectRows(csvText);
   if (!headers.includes(idHeader)) throw new Error('過去ファイルに指定した取引ID列がありません');
