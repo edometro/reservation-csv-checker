@@ -56,6 +56,24 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/28752603270297",
       "summary": "2026-09-24更新。STORES予約APIはビジネスプラン以上、予約・顧客情報の参照専用。入金内訳APIは公開概要から確認できない。公式仕様であり需要証拠ではない。"
+    },
+    {
+      "id": "O005",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/guide/journal02/jo01.html",
+      "summary": "2026-10-28閲覧。MFクラウド会計は連携した銀行・カード明細から仕訳候補を作成できる。STORES予約内訳との突合機能を証明するものではなく、顧客需要の証拠でもない。"
+    },
+    {
+      "id": "O006",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/guide/import/im01.html",
+      "summary": "2026-10-28閲覧。MFクラウド会計は銀行明細CSV/ANSER形式を取り込める。銀行CSV取込単体では差別化しづらい。STORES入金内訳CSVの直接対応を示すものではない。"
+    },
+    {
+      "id": "O007",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/guide/journal02/jo24.html",
+      "summary": "2026-10-28閲覧。MFクラウド会計は銀行・カード明細に対して自動仕訳ルールを設定できる。既存代替機能の確認であり、顧客の支払意思を示さない。"
     }
   ]
 }
