@@ -77,6 +77,12 @@ python3 -m http.server 8000
 - [STORES予約 会計ソフト連携の状況](https://reserve-faq.stores.jp/hc/ja/articles/52258293899673)
 - [マネーフォワード会計 仕訳帳インポート仕様](https://biz.moneyforward.com/support/account/guide/import-books/ib01.html)
 
+## 2026年振込手数料の公式仕様と入金照合の検証
+
+[STORES予約の2026年振込手数料・決済料率・入金内訳の検証メモ](docs/STORES_PAYOUT_RECONCILIATION_2026-10-27.md) を追加。2026年8月25日振込分から振込手数料275円、1万円未満でも振込する設定では事務手数料275円が追加されます。予約一覧の金額合計だけから銀行入金額を確定できません。
+
+`node --test tests/payout-policy.test.mjs` は**公式ルールの合成シナリオ**のみを検証する研究用テストです。実入金照合・自動仕訳は実装しておらず、実CSV適合も未検証です。
+
 ## 有料需要の検証（優先作業）
 
 細かなCSV防御修正を積み重ねても、売れる事業になるとは限りません。現在は顧客需要と実CSV適合の検証を優先します。
