@@ -47,6 +47,9 @@
       check(el('total').textContent === '5', 'demo row count');
       check(el('ok').textContent === '1', 'demo safe candidate count');
       check(el('review').textContent === '4', 'demo review count');
+      check(el('candidate-yen').textContent === '1,200 円', 'demo candidate total');
+      check(el('review-yen').textContent === '6,700 円', 'demo review total');
+      check(el('unknown-amounts').textContent === '0 件', 'demo unreadable amount count');
 
       // Exercise the actual browser download path and inspect its Blob.
       let downloaded;
@@ -104,6 +107,8 @@
       el('analyze').click();
       await until(() => !el('resultsection').hidden, 'synthetic analysis');
       check(el('ok').textContent === '1' && el('review').textContent === '3', 'cancelled, pending or unknown paid booking not blocked');
+      check(el('candidate-yen').textContent === '1,500 円', 'booking candidate total');
+      check(el('review-yen').textContent === '4,000 円', 'booking review total');
       check(el('preview').textContent.includes('キャンセル済'), 'booking status not shown in UI');
 
       // Invalid replacement must clear previous results and disable export.

@@ -36,6 +36,12 @@
     <section id="resultsection" class="panel" hidden>
       <div class="step-head"><span class="step">3</span><div><h2>検査結果</h2><p>「候補」は形式と支払ステータスの簡易検査を通過しただけです。取引の実態や仕訳の正しさを保証しません。</p></div></div>
       <div class="stats"><div><b id="total">0</b><span>総レコード数</span></div><div><b id="ok">0</b><span>候補</span></div><div><b id="review">0</b><span>要確認</span></div></div>
+      <div class="stats money-stats" aria-label="金額の内訳">
+        <div><b id="candidate-yen">0 円</b><span>候補行の金額合計（売上確定額ではありません）</span></div>
+        <div><b id="review-yen">0 円</b><span>要確認行の金額合計（未決済・取消・重複を含むため売上に加算しない）</span></div>
+        <div><b id="unknown-amounts">0 件</b><span>金額を読み取れない行数（上記合計に含まない）</span></div>
+      </div>
+      <p class="fine">※ 金額は選択したCSVの列を機械的に合計した参考値です。要確認行の金額は未決済・返金・重複を含むため売上ではありません。候補金額も会計上の売上・入金額を保証しません。</p>
       <div class="tablewrap"><table><thead><tr><th>行</th><th>取引ID</th><th>日付</th><th>金額</th><th>支払状況</th><th>予約状況</th><th>判定</th></tr></thead><tbody id="preview"></tbody></table></div>
       <button id="downloadreport" type="button" class="secondary">検査レポートをCSVで保存</button>
     </section>

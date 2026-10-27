@@ -1,4 +1,4 @@
-import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns} from './core.mjs';
+import {objectRows,analyze,ledgerCSV,reportCSV,priorIdSet,suggestColumns,summarizeAnalysis} from './core.mjs';
 import {createUploadController} from './upload-controller.mjs';
 import {createAnalysisController} from './analysis-controller.mjs';
 import {readCSVFile} from './csv-file.mjs';
@@ -61,8 +61,12 @@ $('demo').addEventListener('click',()=>uploader.loadText(sample,'合成サンプ
 function renderFindings(result){
    findings=result;
    $('total').textContent=findings.length;
-   const ok=findings.filter(r=>r.ready).length;
-   $('ok').textContent=ok;$('review').textContent=findings.length-ok;
+   const summary=summarizeAnalysis(findings);
+   $('ok').textContent=summary.candidateCount;
+   $('review').textContent=summary.reviewCount;
+   $('candidate-yen').textContent=summary.candidateYen.toLocaleString('ja-JP')+' 円';
+   $('review-yen').textContent=summary.reviewYen.toLocaleString('ja-JP')+' 円';
+   $('unknown-amounts').textContent=String(summary.unknownAmountCount)+' 件';
    const tbody=$('preview');tbody.replaceChildren();
    for(const item of findings.slice(0,200)){
      const tr=document.createElement('tr');
