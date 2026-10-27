@@ -35,7 +35,7 @@ test('review-only export keeps original source lines, safe ID escaping and only 
   'WAIT,2026/10/03,1000,未決済,"改行',
   'メモ"',
   'OK2,2026/10/04,2000,決済済,通常'
- ].join('\\n');
+ ].join('\n');
  const findings=analyze(objectRows(csv).rows,map);
  assert.deepEqual(findings.map(r=>r.line),[2,3,4,6]);
  assert.deepEqual(findings.map(r=>r.ready),[true,false,false,true]);
@@ -50,7 +50,7 @@ test('review-only export keeps original source lines, safe ID escaping and only 
 });
 
 test('review-only export is header-only if all rows pass and does not mutate findings',()=>{
- const findings=analyze(objectRows('予約ID,決済日,決済金額,決済状況\\nA,2026/10/01,1200,決済済').rows,map);
+ const findings=analyze(objectRows('予約ID,決済日,決済金額,決済状況\nA,2026/10/01,1200,決済済').rows,map);
  const before=JSON.stringify(findings);
  assert.equal(parseCSV(reviewOnlyCSV(findings)).length,1);
  assert.equal(JSON.stringify(findings),before);
