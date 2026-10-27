@@ -432,3 +432,39 @@ test('safe IDs remain exactly reusable when a validation report is the prior CSV
  // A literal apostrophe prefix is ambiguous only in our report format, not in raw source CSV.
  assert.ok(priorIdSet("予約ID,備考\n'=PAY-001,ok",'予約ID').has("'=PAY-001"));
 });
+
+
+test('past validation report matches only candidates, not previously unpaid review rows',()=>{
+  const previous = [
+    '予約ID,決済日,決済金額,決済状況',
+    'WAIT-001,2026/10/01,1200,未決済',
+    'PAID-002,2026/10/01,1300,決済済'
+  ].join('\n');
+  const priorFindings = analyze(objectRows(previous).rows,map);
+  assert.deepEqual(priorFindings.map(row=>row.ready),[false,true]);
+  const report = reportCSV(priorFindings);
+  const ids = priorIdSet(report,'取引ID');
+  assert.deepEqual([...ids],['PAID-002']);
+  const next = [
+    '予約ID,決済日,決済金額,決済状況',
+    'WAIT-001,2026/10/02,1200,決済済',
+    'PAID-002,2026/10/02,1300,決済済'
+  ].join('\n');
+  const findings = analyze(objectRows(next).rows,map,ids);
+  assert.equal(findings[0].ready,true,'previously unpaid booking must not be flagged as exported');
+  assert.equal(findings[1].ready,false);
+  assert.match(findings[1].flags.join(' / '),/過去出力との取引ID重複/);
+});
+
+test('prior validation reports reject invalid verdicts, empty candidate IDs and wrong ID column',()=>{
+  const report = reportCSV(analyze(objectRows(
+    '予約ID,決済日,決済金額,決済状況\nPAID-001,2026/10/01,1200,決済済'
+  ).rows,map));
+  assert.throws(()=>priorIdSet(report,'元CSV行'),/「取引ID」列を指定/);
+  const rows = parseCSV(report);
+  rows[1][6] = '処理済み';
+  assert.throws(()=>priorIdSet(stringifyCSV(rows),'取引ID'),/過去CSV2行目.*判定が不正/);
+  rows[1][6] = '候補';
+  rows[1][1] = '';
+  assert.throws(()=>priorIdSet(stringifyCSV(rows),'取引ID'),/過去CSV2行目.*取引IDが空欄/);
+});
