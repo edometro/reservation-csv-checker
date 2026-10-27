@@ -167,6 +167,14 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
   if (new Set([idKey,dateKey,amountKey,statusKey]).size !== 4) {
     throw new Error('異なる4つの必須列を指定してください');
   }
+  // STORES reservation exports have both 「ステータス」 (booking) and
+  // 「支払ステータス」 (payment). A manual mapping must not turn a booking
+  // state into proof of payment, even when its cell happens to say "paid".
+  // Generic booking-status labels are ambiguous for other CSV sources too.
+  if (COLUMN_SUGGESTIONS.bookingStatus.includes(statusKey) &&
+      !COLUMN_SUGGESTIONS.status.includes(statusKey)) {
+    throw new Error('予約ステータスの列を支払ステータスとして指定できません（別の支払状況列を選択してください）');
+  }
   const frequencies = new Map();
   for (const source of rows) {
     const id = String(source[idKey] ?? '').trim();
