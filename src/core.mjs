@@ -181,6 +181,9 @@ export function analyze(rows, mapping, priorKeys = new Set()) {
     const bookingStatus = bookingStatusKey ? String(source[bookingStatusKey] ?? '').trim() : '';
     const flags = [];
     if (!id) flags.push('取引IDなし');
+    // A spreadsheet-safe report prefixes formula-leading IDs with an apostrophe.
+    // The resulting ID cannot be used as an exact key for subsequent CSV reconciliation.
+    if (/^[=+\-@]/u.test(id)) flags.push('取引IDが数式として解釈される可能性があります（照合キーを安全に再利用できません）');
     // Trimming changes the reconciliation key; quarantine rather than silently rewriting it.
     if (rawId !== id) flags.push('取引IDの前後に空白があります（元IDと照合キーが異なります）');
     // Do not silently rewrite identifiers containing tabs, line breaks, NUL, etc.
@@ -242,8 +245,18 @@ export function priorIdSet(csvText, idHeader) {
   const {headers, rows} = objectRows(csvText);
   if (!headers.includes(idHeader)) throw new Error('過去ファイルに指定した取引ID列がありません');
   const ids = new Set();
+  // Our validation report escapes formula-like IDs for spreadsheet safety.
+  // It is impossible to distinguish the escaped ID from a genuine ID starting
+  // with an apostrophe. Reject ambiguous prior reports rather than silently
+  // missing a duplicate or stripping a legitimate character.
+  const reportHeaders = ['元CSV行','取引ID','取引日','金額','支払状況','予約状況','判定','理由'];
+  const isValidationReport = headers.length === reportHeaders.length &&
+    reportHeaders.every((name, i) => headers[i] === name);
   for (const row of rows) {
     const rawId = String(row[idHeader] ?? '');
+    if (isValidationReport && /^'[=+\-@]/u.test(rawId)) {
+      throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 検査レポートの取引IDが数式対策で変換されている可能性があります（元CSVの取引ID列を確認してください）`);
+    }
     // An altered reconciliation key can create false matches (or hide real ones).
     // Do not normalize identifiers in the reference CSV without telling the user.
     if (rawId && (rawId !== rawId.trim() || /[\u0000-\u001F\u007F]/.test(rawId))) {
