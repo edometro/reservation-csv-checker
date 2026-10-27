@@ -111,6 +111,18 @@
       el('fiscal-start').dispatchEvent(new Event('input', {bubbles:true}));
       check(!el('confirm').checked, 'fiscal-year edit did not revoke confirmation');
       check(!el('journalaudit').textContent.includes('範囲外'), 'valid year still flagged');
+      // A month-scoped export must reject a different month, even within the
+      // selected fiscal year, and changing the month revokes confirmation.
+      el('target-month').value = '2026-11';
+      el('target-month').dispatchEvent(new Event('input', {bubbles:true}));
+      check(el('journalaudit').textContent.includes('対象月（2026-11）の範囲外'),
+        'out-of-month candidate was not blocked');
+      el('confirm').click();
+      check(el('downloadledger').disabled, 'confirmation bypassed month guard');
+      el('target-month').value = '2026-10';
+      el('target-month').dispatchEvent(new Event('input', {bubbles:true}));
+      check(!el('confirm').checked, 'target-month edit did not revoke confirmation');
+      check(!el('journalaudit').textContent.includes('範囲外'), 'valid month still flagged');
       el('confirm').click();
       check(!el('downloadledger').disabled, 'confirmed download disabled');
       el('downloadledger').click();

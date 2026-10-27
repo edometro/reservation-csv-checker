@@ -117,7 +117,7 @@ function refreshJournalAudit(){
   try{
     // Inspect the exact generated CSV, not an independent approximation of it.
     const draft=ledgerCSV(findings,$('debit').value,$('credit').value,true);
-    const audit=auditJournalCSV(draft, {fiscalYearStart:$('fiscal-start').value, fiscalYearEnd:$('fiscal-end').value});
+    const audit=auditJournalCSV(draft, {fiscalYearStart:$('fiscal-start').value, fiscalYearEnd:$('fiscal-end').value, targetMonth:$('target-month').value});
     valid=audit.errors.length===0;
     panel.textContent=[
       `仕訳候補 ${audit.rowCount}件：${valid?'列・日付・貸借金額の形式検査は通過':'形式検査で問題を検出'}`,
@@ -139,11 +139,11 @@ $('priorheader').addEventListener('input',invalidateResults);
 $('downloadreport').addEventListener('click',()=>{if(findings)download(reportCSV(findings),'validation-report.csv');});
 $('downloadreview').addEventListener('click',()=>{if(findings?.some(row=>!row.ready))download(reviewOnlyCSV(findings),'review-only-report.csv');});
 $('downloadreasons').addEventListener('click',()=>{if(findings)download(reviewReasonsCSV(findings),'review-reasons-summary.csv');});
-for(const field of ['debit','credit','fiscal-start','fiscal-end']){
+for(const field of ['debit','credit','fiscal-start','fiscal-end','target-month']){
   $(field).addEventListener('input',()=>{
     $('confirm').checked=false;
     refreshJournalAudit();
   });
 }
 $('confirm').addEventListener('change',refreshJournalAudit);
-$('downloadledger').addEventListener('click',()=>{try{if(!findings)throw new Error('先に検査してください');const csv=ledgerCSV(findings,$('debit').value,$('credit').value,$('confirm').checked);const audit=auditJournalCSV(csv, {fiscalYearStart:$('fiscal-start').value, fiscalYearEnd:$('fiscal-end').value});if(audit.errors.length)throw new Error('仕訳候補CSVの自動チェックに失敗: '+audit.errors.join(' / '));download(csv,'mf-journal-candidates.csv');clearMessage();}catch(err){alertMessage(err.message);}});
+$('downloadledger').addEventListener('click',()=>{try{if(!findings)throw new Error('先に検査してください');const csv=ledgerCSV(findings,$('debit').value,$('credit').value,$('confirm').checked);const audit=auditJournalCSV(csv, {fiscalYearStart:$('fiscal-start').value, fiscalYearEnd:$('fiscal-end').value, targetMonth:$('target-month').value});if(audit.errors.length)throw new Error('仕訳候補CSVの自動チェックに失敗: '+audit.errors.join(' / '));download(csv,'mf-journal-candidates.csv');clearMessage();}catch(err){alertMessage(err.message);}});
