@@ -77,6 +77,16 @@ python3 -m http.server 8000
 - [STORES予約 会計ソフト連携の状況](https://reserve-faq.stores.jp/hc/ja/articles/52258293899673)
 - [マネーフォワード会計 仕訳帳インポート仕様](https://biz.moneyforward.com/support/account/guide/import-books/ib01.html)
 
+## 有料需要の検証（優先作業）
+
+細かなCSV防御修正を積み重ねても、売れる事業になるとは限りません。現在は顧客需要と実CSV適合の検証を優先します。
+
+- [14日間の検証計画・Go/No-go基準](docs/DEMAND_VALIDATION_SPRINT_2026-10-27.md)
+- [出典を分類した検証台帳](docs/demand-evidence.json)（公開一次体験談と販売者の広告を混同しない）
+- `npm run demand` で**証拠不足の状態も含めて**再現可能な集計を表示します。出力は事業の売上・顧客数ではありません。
+
+第三者への営業、実顧客CSV取得、有料契約、公開デプロイは個別承認があるまで実施しません。
+
 ## 事業仮説と検証基準
 
 対象候補：STORES予約を利用し、マネーフォワード会計への手入力・CSV加工をしている小規模事業者。商品仮説：初期版は買い切り、実務の継続照合が成立すればサブスクリプション版を検討。
