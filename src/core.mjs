@@ -262,6 +262,19 @@ export function priorIdSet(csvText, idHeader) {
     if (rawId && (rawId !== rawId.trim() || /[\u0000-\u001F\u007F]/.test(rawId))) {
       throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 取引IDに前後の空白または制御文字があります（元データを確認してください）`);
     }
+    if (isValidationReport) {
+      // A validation report includes rejected/unfinished rows as well as candidates.
+      // Counting a previously unpaid or cancelled row as "already exported" would
+      // falsely block it when its status changes to paid in the next CSV.
+      const verdict = String(row['判定'] ?? '');
+      if (verdict !== '候補' && verdict !== '要確認') {
+        throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 検査レポートの判定が不正です（候補／要確認のみ対応）`);
+      }
+      if (verdict !== '候補') continue;
+      if (!rawId) {
+        throw new Error(`過去CSV${row[SOURCE_LINE]}行目: 候補の取引IDが空欄です`);
+      }
+    }
     if (rawId) ids.add(rawId);
   }
   return ids;
