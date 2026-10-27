@@ -252,6 +252,9 @@ export function priorIdSet(csvText, idHeader) {
   const reportHeaders = ['元CSV行','取引ID','取引日','金額','支払状況','予約状況','判定','理由'];
   const isValidationReport = headers.length === reportHeaders.length &&
     reportHeaders.every((name, i) => headers[i] === name);
+  if (isValidationReport && idHeader !== '取引ID') {
+    throw new Error('検査レポートを比較する場合は「取引ID」列を指定してください');
+  }
   for (const row of rows) {
     const rawId = String(row[idHeader] ?? '');
     if (isValidationReport && /^'[=+\-@]/u.test(rawId)) {
