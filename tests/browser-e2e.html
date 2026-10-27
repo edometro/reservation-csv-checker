@@ -77,7 +77,7 @@
       check(!el('downloadreview').disabled, 'review-only export should be enabled');
       el('downloadreview').click();
       await until(() => downloaded instanceof win.Blob, 'review-only download Blob');
-      const reviewRows = parseCSV((await downloaded.text()).replace(/^\\uFEFF/, ''));
+      const reviewRows = parseCSV((await downloaded.text()).replace(/^\uFEFF/, ''));
       check(reviewRows.length === 5, 'review-only CSV must have header and four review rows');
       check(reviewRows[0][0] === '元CSV行' && reviewRows[0][6] === '判定',
         'review-only CSV must keep original report schema');
