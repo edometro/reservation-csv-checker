@@ -307,6 +307,14 @@ export function priorIdSet(csvText, idHeader) {
   const reportHeaders = ['元CSV行','取引ID','取引日','金額','支払状況','予約状況','判定','理由'];
   const isValidationReport = headers.length === reportHeaders.length &&
     reportHeaders.every((name, i) => headers[i] === name);
+  // A report with reordered/renamed/extra columns must not silently fall back
+  // to generic source-CSV mode: that would count "要確認" IDs as already exported
+  // and incorrectly block a booking that was paid only later.
+  const looksLikeValidationReport = headers.includes('取引ID') &&
+    (headers.includes('判定') || headers.includes('元CSV行'));
+  if (looksLikeValidationReport && !isValidationReport) {
+    throw new Error('過去CSVの検査レポート形式が変更されています（元の8列・列順を変更せず指定してください）');
+  }
   if (isValidationReport && idHeader !== '取引ID') {
     throw new Error('検査レポートを比較する場合は「取引ID」列を指定してください');
   }
