@@ -70,6 +70,21 @@ test('MF optional description is limited to 200 characters',()=>{
 });
 
 
+test('journal audit reports physical source lines after quoted multiline cells',()=>{
+  const rows=parseCSV(draft());
+  rows[1][18]='予約 T1\\n補足'.replace('\\n','\n');
+  rows.push([...rows[1]]); // Starts at physical line 4, not logical row 3.
+  const invalid=[...rows[1]];
+  invalid[18]='別取引';
+  invalid[16]='999';
+  rows.push(invalid); // Starts at physical line 6, not logical row 4.
+  const audit=auditJournalCSV(stringifyCSV(rows));
+  assert.equal(audit.rowCount,3);
+  assert.match(audit.errors.join(' / '),/4行目: 2行目と完全に同一の仕訳行が重複/);
+  assert.match(audit.errors.join(' / '),/6行目: 借方・貸方金額が不正/);
+  assert.doesNotMatch(audit.errors.join(' / '),/3行目: 2行目と完全に同一/);
+});
+
 test('preflight blocks identical journal rows to prevent duplicate entries within one import',()=>{
   const rows=parseCSV(draft());
   rows.push([...rows[1]]);
