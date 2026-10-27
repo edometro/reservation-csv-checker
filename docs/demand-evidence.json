@@ -74,6 +74,48 @@
       "kind": "official_capability",
       "url": "https://biz.moneyforward.com/support/account/guide/journal02/jo24.html",
       "summary": "2026-10-28閲覧。MFクラウド会計は銀行・カード明細に対して自動仕訳ルールを設定できる。既存代替機能の確認であり、顧客の支払意思を示さない。"
+    },
+    {
+      "id": "O008",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/faq/specificinformation/sp07.html",
+      "summary": "2026-10-16更新。MF会計API連携対応一覧にSTORESレジとSTORESネットショップは掲載されるがSTORES予約は掲載されない。全ての連携経路の不存在を証明しない。"
+    },
+    {
+      "id": "O009",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/news/new-feature/20240521.html",
+      "summary": "2024-05-21公開。MF会計はSTORESレジの売上明細を取得可能。STORES予約の事前決済・入金内訳を含むことは未確認。"
+    },
+    {
+      "id": "O010",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/news/new-feature/20240112.html",
+      "summary": "2024-01-12公開。MF会計が「STORES」から振り込まれる売上・手数料の取得に対応。ただし「STORES」がSTORES予約を含むか公式記事では不明。"
+    },
+    {
+      "id": "O011",
+      "kind": "official_capability",
+      "url": "https://regi-faq.stores.jp/hc/ja/articles/4408633607833",
+      "summary": "2026-06-30更新。STORESレジ店舗売上CSVにはSTORES予約・ネットショップ等の他サービス売上は含まれない。データ分析CSVとは別。"
+    },
+    {
+      "id": "O012",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/53033661487001",
+      "summary": "2025-12-04更新。STORESデータ分析は連携利用時に予約のオンライン決済売上を反映し得るが、従業員別売上には回数券・月謝利用予約が含まれない。入金内訳との一致は未検証。"
+    },
+    {
+      "id": "O013",
+      "kind": "official_capability",
+      "url": "https://stores.fun/regi/pricing",
+      "summary": "2026-10-28閲覧。STORESスタンダードは年契約の月額換算3300円税込、月契約3960円税込。POS・予約等のパッケージ。月額2980円の未検証仮説に対する価格競合。"
+    },
+    {
+      "id": "O014",
+      "kind": "official_capability",
+      "url": "https://biz.moneyforward.com/support/account/news/new-feature/2025112501.html",
+      "summary": "2025-11-25公開。MF会計のSTORESレジ・ネットショップ連携で2025-12-01以降の売上明細の税区分取得が可能。STORES予約を含むと断定しない。"
     }
   ]
 }
