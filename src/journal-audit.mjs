@@ -5,7 +5,7 @@ import {MF_HEADERS, MAX_INPUT_ROWS, normalizeDate, parseCSV, parseYen} from './c
  * Passing this audit does NOT establish the correctness of tax treatment,
  * recognition timing, account names, or the absence of prior imports.
  */
-export function auditJournalCSV(csvText) {
+export function auditJournalCSV(csvText, {fiscalYearStart = '', fiscalYearEnd = ''} = {}) {
   let parsed;
   // Preserve physical CSV line numbers even when quoted fields contain newlines.
   const recordLines = [];
@@ -22,6 +22,24 @@ export function auditJournalCSV(csvText) {
     return {rowCount: rows.length, errors: ['マネーフォワード仕訳帳の27列ヘッダーと一致しません'], warnings};
   }
   if (!rows.length) errors.push('仕訳候補がありません');
+
+  // MF imports only into the accounting year currently selected in the account.
+  // This optional user-supplied range cannot establish the correct recognition date.
+  let fiscalRange = null;
+  if (fiscalYearStart || fiscalYearEnd) {
+    if (!fiscalYearStart || !fiscalYearEnd) {
+      errors.push('会計年度の開始日と終了日を両方指定してください');
+    } else {
+      const validFormat = /^\d{4}-\d{2}-\d{2}$/;
+      const start = validFormat.test(fiscalYearStart) ? normalizeDate(fiscalYearStart) : null;
+      const end = validFormat.test(fiscalYearEnd) ? normalizeDate(fiscalYearEnd) : null;
+      if (!start || !end || start > end) {
+        errors.push('会計年度の期間が不正です（有効な開始日・終了日を順に指定してください）');
+      } else {
+        fiscalRange = {start, end};
+      }
+    }
+  }
 
   let missingTax = 0, missingNumber = 0;
   const seenEntries = new Map();
@@ -44,6 +62,9 @@ export function auditJournalCSV(csvText) {
       seenEntries.set(entryKey, line);
     }
     if (normalizeDate(row[1]) !== row[1]) errors.push(`${line}行目: 取引日がyyyy/MM/dd形式ではありません`);
+    else if (fiscalRange && (row[1] < fiscalRange.start || row[1] > fiscalRange.end)) {
+      errors.push(`${line}行目: 取引日が指定した会計年度（${fiscalRange.start}〜${fiscalRange.end}）の範囲外です`);
+    }
     for (const col of [2, 10]) {
       const account = row[col].trim();
       if (!account || account.length > 30 || /^[=+\-@]/.test(account) || /[\r\n]/.test(account)) {
