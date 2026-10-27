@@ -37,6 +37,14 @@ test('zero yen is unknown rather than pretending to pay a negative balance', () 
   });
 });
 
+test('amount not exceeding the fee is not treated as a confirmed transfer', () => {
+  for (const amount of [1, 274, 275, 549, 550]) {
+    assert.equal(evaluate(amount, true).status, 'REQUIRES_CONFIRMATION');
+    assert.equal(evaluate(amount, false).status, 'CARRIED_OVER');
+  }
+  assert.equal(evaluate(551, true).totalFeesYen, 550);
+});
+
 test('invalid dates, amounts and unknown payout preference are rejected', () => {
   for (const date of ['2026-02-30', '2026-8-25', '', 'not-a-date']) {
     assert.throws(() => evaluate(10000, false, date), /振込日/);
