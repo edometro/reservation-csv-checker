@@ -13,7 +13,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
   const snapshot = {
     checkedAt: registry.checkedAt,
     firsthandWorkflows: summary.firsthand_workflow,
-    targetMfFirsthandWorkflows: registry.sources.filter(s => s.kind === 'firsthand_workflow' && s.targetMfUser === true).length,
+    targetMfFirsthandWorkflows: summary.targetMfReconciliationWorkflows,
     consentedInterviews: summary.consentedInterviews,
     specificWillingness: summary.confirmedWillingness,
     realCsvCompatibilityVerified: summary.realCsvCompatibilityVerified,
