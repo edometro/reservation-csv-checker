@@ -37,16 +37,16 @@ test('tracked evidence keeps real users separate from seller and official claims
 
 test('M2: interview month and crawl date do not substitute for a published period', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 5);
-  assert.equal(result.publicationDatedFirsthandWorkflows, 3);
+  assert.equal(result.firsthand_workflow, 7);
+  assert.equal(result.publicationDatedFirsthandWorkflows, 5);
   assert.deepEqual(result.publicationMissingIds.sort(), ['U002', 'U003']);
-  assert.equal(result.missing.firsthandCases, 2);
+  assert.equal(result.missing.firsthandCases, 0);
   const data = clone();
   const u2 = data.sources.find(s => s.id === 'U002');
   u2.publishedAt = '2025-04'; // Example: only if actual publication month is verified.
-  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 4);
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 6);
   u2.publishedAt = '未記載（取材2025-04）';
-  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 3);
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 5);
 });
 
 test('2024 independent STORES booking receipt workload is not MF reconciliation demand', () => {
@@ -262,12 +262,12 @@ test('refund deadline is a documented CSV reconciliation gap, never a paying use
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
-test('Issue #3: five general stories are not qualified STORES Reservation + MF payout users', () => {
+test('Issue #3: seven general stories are not qualified STORES Reservation + MF payout users', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 5);
+  assert.equal(result.firsthand_workflow, 7);
   assert.equal(result.targetMfReconciliationWorkflows, 0);
   assert.deepEqual(result.targetMfEvidenceIds, []);
-  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005']);
+  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005', 'U006', 'U007']);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 

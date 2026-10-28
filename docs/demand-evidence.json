@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-28",
+  "checkedAt": "2026-10-29",
   "interviews": {
     "consented": 0,
     "specificWillingness": 0
@@ -304,6 +304,30 @@
       "publishedAt": "2023-07-04",
       "sourceContext": "ITreviewの企業所属確認済み・有償利用者による本人投稿。STORES販売者の宣伝ではないが匿名の自己申告であり、現在の機能の証明ではない。",
       "demandDirection": "予約受付の実作業・価格感度の参考。入金照合・MF会計・月次作業時間・2,980円への購入意思は不明。",
+      "targetMfUser": false
+    },
+    {
+      "id": "U006",
+      "kind": "firsthand_workflow",
+      "url": "https://www.itreview.jp/products/coubic/reviews/115327",
+      "summary": "ITreviewの2022-06-30投稿日付き本人レビュー。以前のLINE公式アカウント経由の予約では、オプション選択ができず予約後に電話で内容を説明・確認していた。STORES予約のオプション予約で当該電話作業が減ったとの本人報告。会計ソフト・MF月次入金照合・支払意思は未公表であり、2026年の仕様や有料需要の根拠にはしない。",
+      "accountingSoftware": "未公表",
+      "observedWork": "LINE予約時のオプション内容を予約後に電話で説明・確認していた作業が、STORES予約のオプション予約で削減された（本人申告）。",
+      "publishedAt": "2022-06-30",
+      "sourceContext": "ITreview本人投稿。STORES予約利用者（20-50人規模・卸売系、無償利用）のレビュー。匿名投稿のため個人の厳密な一意性は検証不能。",
+      "demandDirection": "予約受付の電話作業削減。入金照合・MF需要の証拠ではない。",
+      "targetMfUser": false
+    },
+    {
+      "id": "U007",
+      "kind": "firsthand_workflow",
+      "url": "https://www.itreview.jp/products/coubic/reviews/106305",
+      "summary": "ITreviewの2022-04-24投稿日付き本人レビュー。診療所の利用者はSTORES予約とGoogle Calendarを連携してオフライン予約と突合。連携反映が遅く電話予約と重なるケースを経験。会計ソフト・MF月次入金照合・支払意思は未公表。2026年の不具合継続は推定しない。",
+      "accountingSoftware": "未公表",
+      "observedWork": "STORES予約をGoogle Calendarに連携し、電話等のオフライン予約と照合。連携遅延時に予約が重なった本人の実務経験。",
+      "publishedAt": "2022-04-24",
+      "sourceContext": "ITreview本人投稿。診療所（20人未満・有償利用）のレビュー。U006とは業種・契約・日付・URLが異なるが、匿名投稿の本人一意性は完全検証不能。",
+      "demandDirection": "予約カレンダー突合の運用課題。月次入金照合・MF会計・追加CSV製品需要は未確認。",
       "targetMfUser": false
     }
   ]
