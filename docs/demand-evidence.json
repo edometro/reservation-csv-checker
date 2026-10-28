@@ -190,6 +190,24 @@
       "kind": "official_capability",
       "url": "https://biz.moneyforward.com/support/account/guide/import/im02.html",
       "summary": "2026-10-28確認。MFクラウド会計の「エクセルに手入力した取引明細」インポートは日付と入金/出金の一方が必須。重複チェックはなく再取込で新しい仕訳候補となる。仕訳帳CSVの取込経路とは別。"
+    },
+    {
+      "id": "O023",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/60506686975257--%E9%87%8D%E8%A6%81-8%E6%9C%8825%E6%97%A5%E3%81%AE%E5%85%A5%E9%87%91%E5%88%86%E3%82%88%E3%82%8A%E6%8C%AF%E8%BE%BC%E6%89%8B%E6%95%B0%E6%96%99%E3%81%8C%E7%99%BA%E7%94%9F%E3%81%97%E3%81%BE%E3%81%99",
+      "summary": "2026-07-28更新。STORES予約は2026-08-25振込分から振込ごと275円（税込）。1万円未満を実際に振り込む設定では事務手数料275円追加、既定設定では未満の振込を繰越。売上日ではなく振込日で適用。顧客需要の証拠ではない。"
+    },
+    {
+      "id": "O024",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/60471336981913",
+      "summary": "2026-07-31更新。STORES予約の1万円未満の振込設定と、設定変更の適用境界（月次23日まで当月、24日以降翌月、週次日曜変更は次回火曜・月曜以降は翌週）。FAQには当時の提供予定の注意書きあり。実CSVの列は未確認。"
+    },
+    {
+      "id": "O025",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28776381557657",
+      "summary": "2026-07-31更新。STORES予約の事前決済手数料は新決済サービス移行後は全カード非課税、旧Stripe適用中は2026-04-01以降全カード課税。移行は2026年2〜8月に事業者別。2026-08-25以降の振込・事務手数料は課税。MFの仕訳税区分を自動確定できる証拠ではない。"
     }
   ]
 }
