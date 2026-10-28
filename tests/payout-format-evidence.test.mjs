@@ -7,7 +7,9 @@ const sample = role => ({
   sourceKind: 'official_public_sample', sourceUrl: 'https://example.org/official-public-sample.csv',
   observedAt: '2026-10-29', fileFormat: 'csv',
   headers: ['payout_reference', 'transaction_id', 'amount'],
-  identifierColumns: ['payout_reference', 'transaction_id'], rowGrain: 'payment'
+  identifierColumns: ['payout_reference', 'transaction_id'], rowGrain: 'payment',
+  payoutJoin: {column: 'payout_reference', semanticKey: 'payout_identity',
+    evidenceNote: 'synthetic fixture only; no actual STORES export was observed'}
 });
 const both = () => PAYOUT_BREAKDOWN_ROLES.map(sample);
 const check = entries => assessPayoutFormatEvidence(entries);
@@ -69,4 +71,43 @@ test('duplicate role, unknown role, and missing official URL are rejected', () =
 test('empty input and invalid type fail closed', () => {
   assert.deepEqual(check([]).blockers, PAYOUT_BREAKDOWN_ROLES.map(role => 'MISSING:' + role));
   assert.throws(() => check(null), /配列/);
+});
+
+test('separate transaction identifiers without a documented payout join are insufficient', () => {
+  const entries = both();
+  delete entries[0].payoutJoin;
+  const result = check(entries);
+  assert.ok(result.blockers.includes('payout_reservations:PAYOUT_JOIN_UNPROVEN'));
+  assert.equal(result.realCsvCompatibilityVerified, false);
+});
+
+test('a join column must occur in actual headers and declared identifier columns', () => {
+  const entries = both();
+  entries[1].payoutJoin.column = 'invented_payout_id';
+  assert.ok(check(entries).blockers.includes('payout_passes_subscriptions:PAYOUT_JOIN_UNPROVEN'));
+  entries[1].payoutJoin.column = 'payout_reference';
+  entries[1].identifierColumns = ['transaction_id'];
+  assert.ok(check(entries).blockers.includes('payout_passes_subscriptions:PAYOUT_JOIN_UNPROVEN'));
+});
+
+test('distinct payout identities are not silently joined by similar-looking IDs', () => {
+  const entries = both();
+  entries[1].payoutJoin.semanticKey = 'different_payout_identity';
+  assert.ok(check(entries).blockers.includes('PAYOUT_JOIN_SEMANTICS_MISMATCH'));
+});
+
+test('different column names can describe one payout only as an explicit manual-review claim', () => {
+  const entries = both();
+  entries[1].headers[0] = 'settlement_reference';
+  entries[1].identifierColumns[0] = 'settlement_reference';
+  entries[1].payoutJoin.column = 'settlement_reference';
+  const result = check(entries);
+  assert.equal(result.state, 'READY_FOR_MANUAL_SCHEMA_REVIEW');
+  assert.equal(result.realCsvCompatibilityVerified, false);
+});
+
+test('a bare join name without provenance explanation is not evidence', () => {
+  const entries = both();
+  entries[0].payoutJoin.evidenceNote = '';
+  assert.ok(check(entries).blockers.includes('payout_reservations:PAYOUT_JOIN_UNPROVEN'));
 });
