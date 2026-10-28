@@ -244,3 +244,35 @@ test('refund deadline is a documented CSV reconciliation gap, never a paying use
   assert.equal(result.realCsvCompatibilityVerified, false);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
+
+test('Issue #3: five general stories are not qualified STORES Reservation + MF payout users', () => {
+  const result = summarizeDemandEvidence(saved);
+  assert.equal(result.firsthand_workflow, 5);
+  assert.equal(result.targetMfReconciliationWorkflows, 0);
+  assert.deepEqual(result.targetMfEvidenceIds, []);
+  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005']);
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('Issue #3: MF mentions require firsthand monthly payout work and publication date', () => {
+  const data = clone();
+  const item = {...firsthand(999), targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    publishedAt: '2026-10-29'};
+  data.sources.push(item);
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.monthlyPayoutReconciliationWork = 'STORES予約の内訳と銀行着金を月末に本人が突合した';
+  assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 1);
+  item.accountingSoftware = 'freee';
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.accountingSoftware = 'マネーフォワード クラウド会計';
+  item.publishedAt = '';
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+});
+
+test('Issue #3: seller claims never count as qualified target users even if flagged', () => {
+  const data = clone();
+  data.sources.push({id: 'S-target', kind: 'seller_claim', url: 'https://example.org/seller-target',
+    summary: '宣伝', targetMfUser: true});
+  assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 0);
+});
