@@ -6,16 +6,19 @@ import {summarizeDemandEvidence} from '../src/demand-evidence.mjs';
 const saved = JSON.parse(await readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8'));
 const clone = () => structuredClone(saved);
 const baselineFirsthand = saved.sources.filter(s => s.kind === 'firsthand_workflow').length;
-const baselineMissing = Math.max(0, 5 - baselineFirsthand);
+const baselinePublished = saved.sources.filter(s => s.kind === 'firsthand_workflow' &&
+  /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '')).length;
+const baselineMissing = Math.max(0, 5 - baselinePublished);
 const addToFive = data => {
-  const needed = Math.max(0, 5 - data.sources.filter(s => s.kind === 'firsthand_workflow').length);
+  const needed = Math.max(0, 5 - data.sources.filter(s => s.kind === 'firsthand_workflow' &&
+    /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '')).length);
   data.sources.push(...Array.from({length: needed}, (_, i) => firsthand(1000 + i)));
 };
 // The evidence registry grows over time: assert its classification, not a stale snapshot total.
 const firsthand = n => ({
   id: 'U'+n, kind: 'firsthand_workflow',
   url: 'https://example.org/workflow-'+n, summary: '本人の手作業の説明',
-  accountingSoftware: 'freee', observedWork: '月次のCSV加工'
+  accountingSoftware: 'freee', observedWork: '月次のCSV加工', publishedAt: '2026-10-29'
 });
 
 test('tracked evidence keeps real users separate from seller and official claims', () => {
@@ -30,6 +33,20 @@ test('tracked evidence keeps real users separate from seller and official claims
   assert.deepEqual(result.missing, {
     firsthandCases: baselineMissing, interviews: 5, willingness: 3, realCsvCompatibility: 1
   });
+});
+
+test('M2: interview month and crawl date do not substitute for a published period', () => {
+  const result = summarizeDemandEvidence(saved);
+  assert.equal(result.firsthand_workflow, 5);
+  assert.equal(result.publicationDatedFirsthandWorkflows, 3);
+  assert.deepEqual(result.publicationMissingIds.sort(), ['U002', 'U003']);
+  assert.equal(result.missing.firsthandCases, 2);
+  const data = clone();
+  const u2 = data.sources.find(s => s.id === 'U002');
+  u2.publishedAt = '2025-04'; // Example: only if actual publication month is verified.
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 4);
+  u2.publishedAt = '未記載（取材2025-04）';
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 3);
 });
 
 test('2024 independent STORES booking receipt workload is not MF reconciliation demand', () => {
@@ -58,7 +75,7 @@ test('five actual stories alone do not constitute customer interviews or compati
   const data = clone();
   addToFive(data);
   const result = summarizeDemandEvidence(data);
-  assert.equal(result.firsthand_workflow, 5);
+  assert.equal(result.publicationDatedFirsthandWorkflows, 5);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
   assert.equal(result.missing.interviews, 5);
   assert.equal(result.missing.realCsvCompatibility, 1);

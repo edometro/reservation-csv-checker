@@ -13,6 +13,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
   const snapshot = {
     checkedAt: registry.checkedAt,
     firsthandWorkflows: summary.firsthand_workflow,
+    publicationDatedFirsthandWorkflows: summary.publicationDatedFirsthandWorkflows,
     targetMfFirsthandWorkflows: summary.targetMfReconciliationWorkflows,
     consentedInterviews: summary.consentedInterviews,
     specificWillingness: summary.confirmedWillingness,
@@ -34,7 +35,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
     }
     seen.add(m.id);
     // Completion requires more than counts; never infer "done" from numeric progress.
-    if (m.status === 'done' && ((m.id === 'M2' && summary.firsthand_workflow < 5) ||
+    if (m.status === 'done' && ((m.id === 'M2' && summary.publicationDatedFirsthandWorkflows < 5) ||
         (m.id === 'M4' && summary.consentedInterviews < 5) ||
         (m.id === 'M5' && (summary.confirmedWillingness < 3 || !summary.realCsvCompatibilityVerified)))) {
       throw new Error(`${m.id}は完了と記録されていますが必須証拠が不足しています`);

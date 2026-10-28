@@ -8,7 +8,7 @@ const registry = {
   realCsvCompatibilityVerified: false,
   sources: Array.from({length: 5}, (_, i) => ({id: `U${i}`, kind: 'firsthand_workflow',
     url: `https://example.org/review/${i}`, summary: '本人の具体的な作業',
-    accountingSoftware: '未公表', observedWork: '予約受付'}))
+    accountingSoftware: '未公表', observedWork: '予約受付', publishedAt: '2026-10-28'}))
 };
 const baseline = () => ({
   evidenceSnapshot: {}, commercialGate: {status: 'INSUFFICIENT_EVIDENCE'},
@@ -27,7 +27,19 @@ test('期限翌日にblockedもoverdue、doneは維持、次期限は最古の�
     ['done', 'done', 'overdue', 'overdue', 'blocked']);
   assert.equal(result.nextDue.id, 'M3');
   assert.equal(result.snapshot.targetMfFirsthandWorkflows, 0);
+  assert.equal(result.snapshot.publicationDatedFirsthandWorkflows, 5);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('M2: 取材時期だけの5件を完了と誤判定しない', () => {
+  const undated = structuredClone(registry);
+  undated.sources[0].publishedAt = '未記載（取材2026-10）';
+  const ledger = baseline();
+  assert.throws(() => evaluateMilestones(ledger, undated, '2026-10-29'), /M2.*不足/);
+  ledger.milestones[1].status = 'in_progress';
+  const result = evaluateMilestones(ledger, undated, '2026-11-01');
+  assert.equal(result.nextDue.id, 'M2');
+  assert.equal(result.milestones[1].effectiveStatus, 'overdue');
 });
 
 test('期限当日はoverdueにせず、翌日から判定', () => {

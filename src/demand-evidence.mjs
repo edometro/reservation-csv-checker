@@ -6,6 +6,9 @@ const TYPES = new Set(SOURCE_KINDS);
 const validDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) &&
   !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s;
 const countMissing = (actual, required) => Math.max(0, required - actual);
+// Interview dates and crawl dates are not publication dates. Month precision is allowed.
+const validPublicationPeriod = value => validDate(value) ||
+  (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && validDate(value + '-01'));
 
 export function summarizeDemandEvidence(registry) {
   if (!registry || !Array.isArray(registry.sources)) {
@@ -14,6 +17,7 @@ export function summarizeDemandEvidence(registry) {
   if (!validDate(registry.checkedAt)) throw new Error('調査日が不正です');
   const ids = new Set(), urls = new Set();
   const targetMfEvidenceIds = [], nonTargetFirsthandIds = [];
+  const publicationDatedIds = [], publicationMissingIds = [];
   const counts = Object.fromEntries(SOURCE_KINDS.map(kind => [kind, 0]));
   for (const item of registry.sources) {
     if (!item || !TYPES.has(item.kind)) throw new Error('不明な証拠区分です');
@@ -33,6 +37,8 @@ export function summarizeDemandEvidence(registry) {
       throw new Error('実利用者の体験談には会計ソフト名と観察できた作業が必要です');
     }
     if (item.kind === 'firsthand_workflow') {
+      if (validPublicationPeriod(item.publishedAt)) publicationDatedIds.push(item.id);
+      else publicationMissingIds.push(item.id);
       if (item.targetMfUser === true) {
         // Generic MF users and STORES recommendations are not payout-reconciliation evidence.
         const softwareMatches = /マネーフォワード|Money\s*Forward|MF\s*クラウド/i.test(item.accountingSoftware);
@@ -60,13 +66,16 @@ export function summarizeDemandEvidence(registry) {
     throw new Error('実CSVの適合確認状況が不正です');
   }
   const missing = {
-    firsthandCases: countMissing(counts.firsthand_workflow, 5),
+    firsthandCases: countMissing(publicationDatedIds.length, 5),
     interviews: countMissing(interviews.consented, 5),
     willingness: countMissing(interviews.specificWillingness, 3),
     realCsvCompatibility: registry.realCsvCompatibilityVerified ? 0 : 1
   };
   return {
     ...counts,
+    publicationDatedFirsthandWorkflows: publicationDatedIds.length,
+    publicationDatedIds,
+    publicationMissingIds,
     // Diagnostic only: five general stories are not five qualified target users.
     targetMfReconciliationWorkflows: targetMfEvidenceIds.length,
     targetMfEvidenceIds,
