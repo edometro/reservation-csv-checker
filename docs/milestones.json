@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-28",
+  "timezone": "Asia/Tokyo",
+  "purpose": "予約売上チェッカーの期限・証拠・遅延管理。需要の証拠は docs/demand-evidence.json を唯一の集計元とする。",
+  "statusPolicy": "各定期実行で日本時間の当日と dueDate を比較し、未達で当日が期限を過ぎた場合は blocked を含め overdue に更新する。blockedReason は別フィールドで維持する。達成は証拠リンクと判定条件の全充足を確認したときのみ。",
+  "evidenceSnapshot": {
+    "checkedAt": "2026-10-28",
+    "firsthandWorkflows": 3,
+    "targetMfFirsthandWorkflows": 0,
+    "consentedInterviews": 0,
+    "specificWillingness": 0,
+    "realCsvCompatibilityVerified": false,
+    "officialCapabilities": 35,
+    "sellerClaims": 2,
+    "editorial": 1,
+    "sourceCount": 41
+  },
+  "commercialGate": {
+    "status": "INSUFFICIENT_EVIDENCE",
+    "requires": {
+      "firsthandWorkflows": 5,
+      "consentedInterviews": 5,
+      "specificWillingness": 3,
+      "realCsvCompatibilityVerified": true
+    },
+    "note": "全条件達成後も人間のGo判断が必要。販売・決済・外部送信・顧客CSV収集・公開デプロイは個別承認制。"
+  },
+  "milestones": [
+    {
+      "id": "M1",
+      "dueDate": "2026-10-29",
+      "title": "対象顧客・質問票・評価基準・代替策の確定",
+      "status": "done",
+      "completedAt": "2026-10-28",
+      "acceptance": [
+        "対象顧客と除外条件を明文化",
+        "実作業・時間・代替策・価格の質問票を完成",
+        "痛みと支払意思の判定ルールを明文化",
+        "既存代替策を比較"
+      ],
+      "actual": "仮説ペルソナ、実施前質問票、判定条件、競合対照表をdocs/MILESTONES.mdに確定。需要の確認ではない。",
+      "evidence": [
+        "docs/MILESTONES.md#M1-完了-対象顧客質問票評価基準既存代替策",
+        "docs/DEMAND_VALIDATION_SPRINT_2026-10-27.md"
+      ],
+      "blocker": null,
+      "nextAction": "M2の本人一次体験談を追加探索する"
+    },
+    {
+      "id": "M2",
+      "dueDate": "2026-10-31",
+      "title": "独立した本人一次体験談5例",
+      "status": "in_progress",
+      "acceptance": [
+        "出典の異なる本人による具体的作業体験5例",
+        "各例にURL・掲載時期・会計ソフト・実作業を記録",
+        "販促媒体と本人発言を区別し重複計上しない"
+      ],
+      "actual": "3/5。うちMF併用確認0。freee利用2、会計ソフト未公表1。",
+      "evidence": [
+        "docs/demand-evidence.json",
+        "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md"
+      ],
+      "blocker": "STORES予約とMFクラウド会計を併用する本人の月次照合体験談が未発見",
+      "nextAction": "MF併用の月次締め作業を記述する公開一次発言を探索し、出典・時期・ソフト・作業を検証"
+    },
+    {
+      "id": "M3",
+      "dueDate": "2026-11-03",
+      "title": "実CSV入手経路・識別子・ヘッダー・照合受入条件の確定",
+      "status": "in_progress",
+      "acceptance": [
+        "予約一覧・予約入金内訳・月謝回数券内訳・銀行記録の入手経路を列挙",
+        "実ヘッダー・一意キー・粒度・日付・返金・手数料の未確認点を列挙",
+        "匿名化・許諾と検証手順・受入/拒否条件を確定"
+      ],
+      "actual": "公式FAQからデータ源と不一致ケースを調査済み。実ヘッダー・決済ID対応・MF実インポートは未確認。実CSV適合はfalse。",
+      "evidence": [
+        "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md",
+        "docs/STORES_BOOKING_EXPORT_PERIOD_AND_KEY_GAP_2026-10-28.md",
+        "docs/demand-evidence.json"
+      ],
+      "blocker": "公式サンプルまたは個別承認済み匿名化実CSVが未入手。承認なしで顧客CSVを取得しない。",
+      "nextAction": "承認不要な公式公開サンプルの有無を調べ、入手不可なら列・キーの未確定一覧を完成"
+    },
+    {
+      "id": "M4",
+      "dueDate": "2026-11-07",
+      "title": "同意済みヒアリング5件",
+      "status": "blocked",
+      "acceptance": [
+        "個別承認の範囲内で同意済みの本人ヒアリング5件",
+        "月次作業・時間・既存代替策・支払意思を匿名集計"
+      ],
+      "actual": "0/5。質問票はM1で準備済み。",
+      "evidence": [
+        "docs/demand-evidence.json",
+        "docs/MILESTONES.md#M1-完了-対象顧客質問票評価基準既存代替策"
+      ],
+      "blocker": "第三者への営業送信・実利用者への連絡に個別承認がない。無断で連絡しない。",
+      "nextAction": "承認不要の質問票・記録様式を維持し、個別承認後のみ実施"
+    },
+    {
+      "id": "M5",
+      "dueDate": "2026-11-10",
+      "title": "支払意思3件・実CSV適合・価格2,980円仮説を評価",
+      "status": "blocked",
+      "acceptance": [
+        "価格・購入条件・決裁者が具体的な支払意思3件",
+        "出典明示の実CSVで適合検証",
+        "MF標準機能・無料Excel・単発売り切りと比較"
+      ],
+      "actual": "支払意思0/3、実CSV適合false。2,980円は仮説で未検証。",
+      "evidence": [
+        "docs/demand-evidence.json",
+        "docs/MF_NATIVE_ALTERNATIVES_2026-10-28.md"
+      ],
+      "blocker": "ヒアリング未実施・実CSV未入手。",
+      "nextAction": "M2とM3の証拠を優先して集める"
+    },
+    {
+      "id": "M6",
+      "dueDate": "2026-11-14",
+      "title": "継続・方向転換・中止の判断",
+      "status": "not_started",
+      "acceptance": [
+        "M1-M5の証拠・未達・代替策を一覧化",
+        "継続・方向転換・中止を根拠とともに提案",
+        "全Goゲート未達なら有料化を保留"
+      ],
+      "actual": "判断未実施。現時点はINSUFFICIENT_EVIDENCE。",
+      "evidence": [
+        "docs/demand-evidence.json"
+      ],
+      "blocker": null,
+      "nextAction": "期限時点の実績で判定する"
+    }
+  ]
+}
