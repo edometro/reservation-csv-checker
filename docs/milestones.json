@@ -14,7 +14,8 @@
     "officialCapabilities": 35,
     "sellerClaims": 2,
     "editorial": 1,
-    "sourceCount": 43
+    "sourceCount": 43,
+    "publicationDatedFirsthandWorkflows": 3
   },
   "commercialGate": {
     "status": "INSUFFICIENT_EVIDENCE",
@@ -51,22 +52,23 @@
       "id": "M2",
       "dueDate": "2026-10-31",
       "title": "独立した本人一次体験談5例",
-      "status": "done",
+      "status": "in_progress",
       "acceptance": [
         "出典の異なる本人による具体的作業体験5例",
         "各例にURL・掲載時期・会計ソフト・実作業を記録",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "独立した本人一次体験談5/5（U001〜U005）。新規U005は2023年の口頭・メール予約の手動登録とカード決済連動時の変更制約。対象STORES予約＋MF併用の月次入金照合体験は依然0件、支払意思0。数値目標の完了は需要の検証完了を意味しない。",
+      "actual": "本人の具体的作業を含む独立出典は5件（U001〜U005）だが、M2必須の掲載時期を確認できたのは3/5（U001・U004・U005）。U002・U003は取材月のみ判明し、掲載時期は未確認。STORES予約＋MF会計の月次入金照合体験は0件。2026-10-29に判定を5/5 doneから3/5 in_progressへ訂正。",
       "evidence": [
         "docs/demand-evidence.json",
         "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
         "docs/STORES_RESERVATION_USER_REVIEW_TRIAGE_2026-10-28.md",
-        "https://www.itreview.jp/products/coubic/reviews/165937"
+        "https://www.itreview.jp/products/coubic/reviews/165937",
+        "https://stores.fun/cases/posts/mimosaeyedesign-cross",
+        "https://stores.fun/cases/posts/noue-cross"
       ],
-      "blocker": "M2の5件収集は達成。ただし対象MF利用者の入金照合・所要時間・支払意思の一次体験談は0。5件の多くは非対象の予約業務・freee・販促インタビューで、製品需要を支持しない。",
-      "nextAction": "新規一般レビューの件数増加は止め、対象MF利用者の月次照合の本人発言を探す。見つからなければM3の実CSV受入仕様の未確定箇所を埋める。",
-      "completedAt": "2026-10-28"
+      "blocker": "U002・U003の公式導入事例には取材月（2025-04、2025-07）の記載があるが、掲載年月を確認できない。取材時期・閲覧日を掲載時期として代用できない。M2期限10/31までに掲載時期を確認するか、別の独立した本人一次体験談2件を探す。",
+      "nextAction": "10/31までにU002・U003の公開年月を独立して検証。確認できなければ掲載時期が分かる新規本人一次体験談2件に置換し、本人作業・URL・会計ソフト・掲載時期を揃える。"
     },
     {
       "id": "M3",
