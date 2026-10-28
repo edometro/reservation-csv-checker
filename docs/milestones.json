@@ -6,7 +6,7 @@
   "statusPolicy": "各定期実行で日本時間の当日と dueDate を比較し、未達で当日が期限を過ぎた場合は blocked を含め overdue に更新する。blockedReason は別フィールドで維持する。達成は証拠リンクと判定条件の全充足を確認したときのみ。",
   "evidenceSnapshot": {
     "checkedAt": "2026-10-28",
-    "firsthandWorkflows": 3,
+    "firsthandWorkflows": 4,
     "targetMfFirsthandWorkflows": 0,
     "consentedInterviews": 0,
     "specificWillingness": 0,
@@ -14,7 +14,7 @@
     "officialCapabilities": 35,
     "sellerClaims": 2,
     "editorial": 1,
-    "sourceCount": 41
+    "sourceCount": 42
   },
   "commercialGate": {
     "status": "INSUFFICIENT_EVIDENCE",
@@ -57,13 +57,14 @@
         "各例にURL・掲載時期・会計ソフト・実作業を記録",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "3/5。うちMF併用確認0。freee利用2、会計ソフト未公表1。",
+      "actual": "4/5。新規U004はSTORES予約カード決済の領収書個別発行という本人実作業。ただし月次入金照合ではない。MF併用確認0、月次作業時間不明。",
       "evidence": [
         "docs/demand-evidence.json",
-        "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md"
+        "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
+        "docs/STORES_RESERVATION_USER_REVIEW_TRIAGE_2026-10-28.md"
       ],
-      "blocker": "STORES予約とMFクラウド会計を併用する本人の月次照合体験談が未発見",
-      "nextAction": "MF併用の月次締め作業を記述する公開一次発言を探索し、出典・時期・ソフト・作業を検証"
+      "blocker": "本人一次体験談は4/5だが、STORES予約とMFクラウド会計の併用を確認できる月次入金照合体験談は0。",
+      "nextAction": "MFクラウド会計併用の月次入金照合について本人が具体的に語る一次出典を優先探索。レビューの領収書業務を入金照合需要に誤算入しない。"
     },
     {
       "id": "M3",

@@ -268,6 +268,18 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713301734425",
       "summary": "2024-07-11更新。振込先口座情報の誤りで振込が完了しない場合、入金履歴に「エラー（組み戻し）」と表示され、未振込分は次回入金に合算。口座審査保留（O032）と混同しない。実CSVにエラー状態が出力されるかは未確認。"
+    },
+    {
+      "id": "U004",
+      "kind": "firsthand_workflow",
+      "url": "https://www.itreview.jp/products/coubic/reviews/183201",
+      "summary": "ITreviewのSTORES予約有償利用者（小規模レンタルスペース運営者）の本人投稿。2024-03-22時点、カード決済利用客からのインボイス対応領収書の要求に対して問い合わせごとに手作業で個別発行していた。経理周辺の実作業だが、月次入金照合ではない。MF会計利用・作業時間・支払意思は未確認。2026年時点の現行機能を断定しない。",
+      "accountingSoftware": "未公表",
+      "observedWork": "2024年当時、STORES予約のカード決済に伴う領収書を顧客の問い合わせごとに個別手作業で発行",
+      "publishedAt": "2024-03-22",
+      "sourceContext": "ITreviewの導入決定者・有償利用者の本人レビュー。企業所属確認済み。STORES販売者の宣伝ではないが、投稿内容は独立監査されていない。",
+      "demandDirection": "手作業の痛みは実在。ただし領収書業務であり、予約入金・MF月次照合ツールの需要を直接示さない。",
+      "targetMfUser": false
     }
   ]
 }
