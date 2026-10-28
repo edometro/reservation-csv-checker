@@ -13,6 +13,7 @@ export function summarizeDemandEvidence(registry) {
   }
   if (!validDate(registry.checkedAt)) throw new Error('調査日が不正です');
   const ids = new Set(), urls = new Set();
+  const targetMfEvidenceIds = [], nonTargetFirsthandIds = [];
   const counts = Object.fromEntries(SOURCE_KINDS.map(kind => [kind, 0]));
   for (const item of registry.sources) {
     if (!item || !TYPES.has(item.kind)) throw new Error('不明な証拠区分です');
@@ -30,6 +31,21 @@ export function summarizeDemandEvidence(registry) {
     if (item.kind === 'firsthand_workflow' &&
         (!item.accountingSoftware || !item.observedWork)) {
       throw new Error('実利用者の体験談には会計ソフト名と観察できた作業が必要です');
+    }
+    if (item.kind === 'firsthand_workflow') {
+      if (item.targetMfUser === true) {
+        // Generic MF users and STORES recommendations are not payout-reconciliation evidence.
+        const softwareMatches = /マネーフォワード|Money\s*Forward|MF\s*クラウド/i.test(item.accountingSoftware);
+        const workflowRecorded = typeof item.monthlyPayoutReconciliationWork === 'string' &&
+          item.monthlyPayoutReconciliationWork.trim().length > 0;
+        const dated = Boolean(item.publishedAt?.trim() || item.interviewedAt?.trim());
+        if (!softwareMatches || !workflowRecorded || !dated) {
+          throw new Error(`${item.id}: 対象MF月次照合の本人証拠には会計ソフト・具体的照合作業・掲載/取材時期が必要です`);
+        }
+        targetMfEvidenceIds.push(item.id);
+      } else {
+        nonTargetFirsthandIds.push(item.id);
+      }
     }
     counts[item.kind]++;
   }
@@ -51,6 +67,10 @@ export function summarizeDemandEvidence(registry) {
   };
   return {
     ...counts,
+    // Diagnostic only: five general stories are not five qualified target users.
+    targetMfReconciliationWorkflows: targetMfEvidenceIds.length,
+    targetMfEvidenceIds,
+    nonTargetFirsthandIds,
     consentedInterviews: interviews.consented,
     confirmedWillingness: interviews.specificWillingness,
     realCsvCompatibilityVerified: registry.realCsvCompatibilityVerified,
