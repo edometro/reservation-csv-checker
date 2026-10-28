@@ -9,7 +9,8 @@
     "pricing": "node scripts/pricing-scenarios.mjs",
     "retention": "node scripts/retention-scenarios.mjs",
     "demand": "node scripts/demand-status.mjs",
-    "milestones": "node scripts/milestone-status.mjs"
+    "milestones": "node scripts/milestone-status.mjs",
+    "payout:preflight": "node scripts/payout-header-preflight.mjs"
   },
   "engines": {
     "node": ">=20"
