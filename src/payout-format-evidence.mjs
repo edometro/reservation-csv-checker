@@ -19,6 +19,7 @@ export function assessPayoutFormatEvidence(entries) {
   if (!Array.isArray(entries)) throw new TypeError('検証対象は配列で指定してください');
   const blockers = [];
   const seen = new Set();
+  const payoutJoinSemantics = new Map();
   for (const [index, entry] of entries.entries()) {
     if (!entry || typeof entry !== 'object' || !PAYOUT_BREAKDOWN_ROLES.includes(entry.role)) {
       blockers.push(`INVALID_ROLE:${index}`);
@@ -45,9 +46,25 @@ export function assessPayoutFormatEvidence(entries) {
     if (!isNonEmptyNames(entry.headers)) blockers.push(prefix + 'REAL_HEADERS_UNCONFIRMED');
     if (!isNonEmptyNames(entry.identifierColumns)) blockers.push(prefix + 'IDENTIFIER_COLUMNS_UNCONFIRMED');
     if (!isNonEmptyString(entry.rowGrain)) blockers.push(prefix + 'ROW_GRAIN_UNCONFIRMED');
+    // Per-file identifiers are not evidence that both exports belong to the same payout.
+    // The join claim must name an observed column and its intended semantic identity.
+    // A matching claim still requires manual verification against a real sample.
+    const join = entry.payoutJoin;
+    if (!join || !isNonEmptyString(join.column) ||
+        !Array.isArray(entry.headers) || !entry.headers.includes(join.column) ||
+        !Array.isArray(entry.identifierColumns) || !entry.identifierColumns.includes(join.column) ||
+        !isNonEmptyString(join.semanticKey) || !isNonEmptyString(join.evidenceNote)) {
+      blockers.push(prefix + 'PAYOUT_JOIN_UNPROVEN');
+    } else {
+      payoutJoinSemantics.set(entry.role, join.semanticKey.trim());
+    }
   }
   for (const role of PAYOUT_BREAKDOWN_ROLES) {
     if (!seen.has(role)) blockers.push('MISSING:' + role);
+  }
+  if (payoutJoinSemantics.size === PAYOUT_BREAKDOWN_ROLES.length &&
+      new Set(payoutJoinSemantics.values()).size !== 1) {
+    blockers.push('PAYOUT_JOIN_SEMANTICS_MISMATCH');
   }
   return {
     state: blockers.length ? 'INSUFFICIENT_EVIDENCE' : 'READY_FOR_MANUAL_SCHEMA_REVIEW',
