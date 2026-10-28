@@ -13,7 +13,20 @@
       "summary": "STORES予約の入金CSVを手動で修正しfreeeへ読み込み、銀行入金と照合した公開体験談。MFへの支払意思は不明。",
       "accountingSoftware": "freee",
       "observedWork": "CSV列名・日時の修正と入金照合",
-      "publishedAt": "2024-11-19"
+      "publishedAt": "2024-11-19",
+      "historicalCsvObservation": {
+        "observedAt": "2024-11-19",
+        "product": "STORES予約（本人の当時の入金画面）",
+        "formatReportedByAuthor": "CSV",
+        "columnLabelsMentionedByAuthor": [
+          "merchant-display-name",
+          "取引日時",
+          "売上"
+        ],
+        "accountingSoftware": "freee",
+        "evidenceScope": "本人の当時の操作記述。2026年の入金内訳2種類のCSV形式・完全な実ヘッダー・MF会計への適合は未確認。実CSVファイル自体は未取得。",
+        "provenance": "https://kapa-shokai.com/fromstorestofreee/"
+      }
     },
     {
       "id": "O001",
