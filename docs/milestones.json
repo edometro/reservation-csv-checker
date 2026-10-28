@@ -6,7 +6,7 @@
   "statusPolicy": "各定期実行で日本時間の当日と dueDate を比較し、未達で当日が期限を過ぎた場合は blocked を含め overdue に更新する。blockedReason は別フィールドで維持する。達成は証拠リンクと判定条件の全充足を確認したときのみ。",
   "evidenceSnapshot": {
     "checkedAt": "2026-10-28",
-    "firsthandWorkflows": 4,
+    "firsthandWorkflows": 5,
     "targetMfFirsthandWorkflows": 0,
     "consentedInterviews": 0,
     "specificWillingness": 0,
@@ -14,7 +14,7 @@
     "officialCapabilities": 35,
     "sellerClaims": 2,
     "editorial": 1,
-    "sourceCount": 42
+    "sourceCount": 43
   },
   "commercialGate": {
     "status": "INSUFFICIENT_EVIDENCE",
@@ -51,20 +51,22 @@
       "id": "M2",
       "dueDate": "2026-10-31",
       "title": "独立した本人一次体験談5例",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "出典の異なる本人による具体的作業体験5例",
         "各例にURL・掲載時期・会計ソフト・実作業を記録",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "4/5。新規U004はSTORES予約カード決済の領収書個別発行という本人実作業。ただし月次入金照合ではない。MF併用確認0、月次作業時間不明。",
+      "actual": "独立した本人一次体験談5/5（U001〜U005）。新規U005は2023年の口頭・メール予約の手動登録とカード決済連動時の変更制約。対象STORES予約＋MF併用の月次入金照合体験は依然0件、支払意思0。数値目標の完了は需要の検証完了を意味しない。",
       "evidence": [
         "docs/demand-evidence.json",
         "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
-        "docs/STORES_RESERVATION_USER_REVIEW_TRIAGE_2026-10-28.md"
+        "docs/STORES_RESERVATION_USER_REVIEW_TRIAGE_2026-10-28.md",
+        "https://www.itreview.jp/products/coubic/reviews/165937"
       ],
-      "blocker": "本人一次体験談は4/5だが、STORES予約とMFクラウド会計の併用を確認できる月次入金照合体験談は0。",
-      "nextAction": "MFクラウド会計併用の月次入金照合について本人が具体的に語る一次出典を優先探索。レビューの領収書業務を入金照合需要に誤算入しない。"
+      "blocker": "M2の5件収集は達成。ただし対象MF利用者の入金照合・所要時間・支払意思の一次体験談は0。5件の多くは非対象の予約業務・freee・販促インタビューで、製品需要を支持しない。",
+      "nextAction": "新規一般レビューの件数増加は止め、対象MF利用者の月次照合の本人発言を探す。見つからなければM3の実CSV受入仕様の未確定箇所を埋める。",
+      "completedAt": "2026-10-28"
     },
     {
       "id": "M3",

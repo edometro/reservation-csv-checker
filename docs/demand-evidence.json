@@ -280,6 +280,18 @@
       "sourceContext": "ITreviewの導入決定者・有償利用者の本人レビュー。企業所属確認済み。STORES販売者の宣伝ではないが、投稿内容は独立監査されていない。",
       "demandDirection": "手作業の痛みは実在。ただし領収書業務であり、予約入金・MF月次照合ツールの需要を直接示さない。",
       "targetMfUser": false
+    },
+    {
+      "id": "U005",
+      "kind": "firsthand_workflow",
+      "url": "https://www.itreview.jp/products/coubic/reviews/165937",
+      "summary": "STORES予約を有償利用する小規模事業者の本人レビュー（2023-07-04）。口頭・メール経由の予約を運営者が手入力し、重複予約を防止した実作業。カード決済連動時は顧客自身が予約変更できないと当時報告。会計ソフト・月次入金照合・支払意思は不明で、MF向け入金照合の需要証拠ではない。",
+      "accountingSoftware": "未公表",
+      "observedWork": "口頭・メールで受けた予約を運営者がSTORES予約へ手入力して重複予約を防止。2023年時点、カード決済連動時に顧客が予約を変更できないという運用上の制約を報告。",
+      "publishedAt": "2023-07-04",
+      "sourceContext": "ITreviewの企業所属確認済み・有償利用者による本人投稿。STORES販売者の宣伝ではないが匿名の自己申告であり、現在の機能の証明ではない。",
+      "demandDirection": "予約受付の実作業・価格感度の参考。入金照合・MF会計・月次作業時間・2,980円への購入意思は不明。",
+      "targetMfUser": false
     }
   ]
 }
