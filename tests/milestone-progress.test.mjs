@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {evaluateMilestones, synchronizeMilestoneLedger} from '../src/milestone-progress.mjs';
 
 const registry = {
@@ -62,4 +63,17 @@ test('不正日付・重複IDを拒否する', () => {
   const ledger = baseline();
   ledger.milestones[1].id = 'M1';
   assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-28'), /重複/);
+});
+
+test('公開台帳を実際の証拠データから再集計しても有料化No-Goを維持する', async () => {
+  const [ledger, evidence] = await Promise.all([
+    readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse),
+    readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const result = evaluateMilestones(ledger, evidence, '2026-10-28');
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+  assert.equal(result.snapshot.firsthandWorkflows, 5);
+  assert.equal(result.snapshot.targetMfFirsthandWorkflows, 0);
+  assert.equal(result.snapshot.realCsvCompatibilityVerified, false);
+  assert.equal(result.drift.length, 0, '証拠台帳とマイルストーンの集計が一致する');
 });
