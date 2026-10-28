@@ -84,7 +84,7 @@ test('公開台帳を実際の証拠データから再集計しても有料化No
   ]);
   const result = evaluateMilestones(ledger, evidence, '2026-10-28');
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
-  assert.equal(result.snapshot.firsthandWorkflows, 5);
+  assert.equal(result.snapshot.firsthandWorkflows, 7);
   assert.equal(result.snapshot.targetMfFirsthandWorkflows, 0);
   assert.equal(result.snapshot.realCsvCompatibilityVerified, false);
   assert.equal(result.drift.length, 0, '証拠台帳とマイルストーンの集計が一致する');
