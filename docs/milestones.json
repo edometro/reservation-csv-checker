@@ -78,14 +78,16 @@
         "実ヘッダー・一意キー・粒度・日付・返金・手数料の未確認点を列挙",
         "匿名化・許諾と検証手順・受入/拒否条件を確定"
       ],
-      "actual": "公式FAQからデータ源と不一致ケースを調査済み。実ヘッダー・決済ID対応・MF実インポートは未確認。実CSV適合はfalse。",
+      "actual": "公式FAQの操作説明を再検証。予約一覧はCSV明記だが、入金内訳2種は『ダウンロード形式を選択』としか記載がなく、CSVを選択可能か未確認。公開記事で匿名の正式サンプルへのリンクは特定できず。実ヘッダー・結合キー・MF実インポートは未検証。実CSV適合false。",
       "evidence": [
         "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md",
         "docs/STORES_BOOKING_EXPORT_PERIOD_AND_KEY_GAP_2026-10-28.md",
-        "docs/demand-evidence.json"
+        "docs/demand-evidence.json",
+        "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md#5-m3-実ファイル形式の未確定ゲートとサンプル入手プロトコル2026-10-28",
+        "https://reserve-faq.stores.jp/hc/ja/articles/28713301405977"
       ],
-      "blocker": "公式サンプルまたは個別承認済み匿名化実CSVが未入手。承認なしで顧客CSVを取得しない。",
-      "nextAction": "承認不要な公式公開サンプルの有無を調べ、入手不可なら列・キーの未確定一覧を完成"
+      "blocker": "入金内訳2種の実ダウンロード形式（CSVか他形式か）・実ヘッダーが未確認。公式公開サンプル未特定。顧客データは個別承認がなく取得禁止。",
+      "nextAction": "公式公開サンプルの有無を追加探索し、未発見なら個別承認後の形式選択画面・実ヘッダー確認手順を使う。CSVを選べない場合はCSV専用製品の前提を見直す。"
     },
     {
       "id": "M4",
