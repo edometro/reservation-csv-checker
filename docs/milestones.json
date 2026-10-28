@@ -5,7 +5,7 @@
   "purpose": "予約売上チェッカーの期限・証拠・遅延管理。需要の証拠は docs/demand-evidence.json を唯一の集計元とする。",
   "statusPolicy": "各定期実行で日本時間の当日と dueDate を比較し、未達で当日が期限を過ぎた場合は blocked を含め overdue に更新する。blockedReason は別フィールドで維持する。達成は証拠リンクと判定条件の全充足を確認したときのみ。",
   "evidenceSnapshot": {
-    "checkedAt": "2026-10-29",
+    "checkedAt": "2026-10-28",
     "firsthandWorkflows": 5,
     "targetMfFirsthandWorkflows": 0,
     "consentedInterviews": 0,
