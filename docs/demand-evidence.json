@@ -250,6 +250,24 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/56991113242649",
       "summary": "2026-07-31更新。振込先口座名義の審査中/否決で入金が保留され、適切な口座の審査完了後の次回振込日に未入金分を合算。入金遅延の別原因であり、CSVから審査状態が取得できるとは未確認。"
+    },
+    {
+      "id": "O033",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713301530137",
+      "summary": "2026-08-04更新。次回入金予定額は予約と回数券・月謝の内訳で確認できるが、金額確定前は売上発生期間からの予定値で、返金や決済システム処理で変動し得る。確定後は入金履歴に表示。予定額・確定額・銀行着金額を同一視できず、実CSVの確定状態列は未確認。"
+    },
+    {
+      "id": "O034",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713301908761",
+      "summary": "2025-07-08更新。口座情報誤りによる組戻しで入金予定額が表示されない場合がある。修正後、組戻し分の振込完了まで予定額が非表示となり、次回入金に合算。予定額空欄を売上0円や振込済みと解釈しない。"
+    },
+    {
+      "id": "O035",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713301734425",
+      "summary": "2024-07-11更新。振込先口座情報の誤りで振込が完了しない場合、入金履歴に「エラー（組み戻し）」と表示され、未振込分は次回入金に合算。口座審査保留（O032）と混同しない。実CSVにエラー状態が出力されるかは未確認。"
     }
   ]
 }
