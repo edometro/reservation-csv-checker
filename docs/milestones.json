@@ -141,12 +141,14 @@
         "継続・方向転換・中止を根拠とともに提案",
         "全Goゲート未達なら有料化を保留"
       ],
-      "actual": "判断未実施。現時点はINSUFFICIENT_EVIDENCE。",
+      "actual": "判断未実施。現時点はINSUFFICIENT_EVIDENCE。 2026-10-28: 期限超過と証拠集計の差分を再計算するCLIを追加（意思決定そのものは未実施）。",
       "evidence": [
-        "docs/demand-evidence.json"
+        "docs/demand-evidence.json",
+        "src/milestone-progress.mjs",
+        "tests/milestone-progress.test.mjs"
       ],
       "blocker": null,
-      "nextAction": "期限時点の実績で判定する"
+      "nextAction": "定期作業時に npm run milestones で期限超過・証拠数を再判定し、11/14に根拠に基づき人間の継続/方向転換/中止判断を行う。"
     }
   ]
 }

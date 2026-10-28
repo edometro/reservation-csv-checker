@@ -8,7 +8,8 @@
     "serve": "python3 -m http.server 8000",
     "pricing": "node scripts/pricing-scenarios.mjs",
     "retention": "node scripts/retention-scenarios.mjs",
-    "demand": "node scripts/demand-status.mjs"
+    "demand": "node scripts/demand-status.mjs",
+    "milestones": "node scripts/milestone-status.mjs"
   },
   "engines": {
     "node": ">=20"
