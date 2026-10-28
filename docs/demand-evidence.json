@@ -232,6 +232,24 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/29947092811929",
       "summary": "2025-09-04更新。STORES予約の売上分析で「入金額」は売上からカード決済手数料を差し引いた指標。2026-08-25以降の別途振込手数料もあるため、分析指標を銀行実着金と無条件に同一視できない。CSVの列仕様や需要の証拠ではない。"
+    },
+    {
+      "id": "O030",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28718010515481",
+      "summary": "2025-10-17更新。STORES予約の月謝は毎月1日に当月分を自動請求。1日に決済完了しない場合、翌日から月末まで自動請求が続く。再請求の実際の発生件数・月次照合時間は未確認。"
+    },
+    {
+      "id": "O031",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/47636371793049",
+      "summary": "2025-10-17更新。STORES予約の月謝は通常月次入金で1日に請求完了なら当月25日、2日以降の完了なら翌月25日。週次は別ルール。月謝対象月と実入金月を同一視できず、実CSV列・顧客需要は未検証。"
+    },
+    {
+      "id": "O032",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/56991113242649",
+      "summary": "2026-07-31更新。振込先口座名義の審査中/否決で入金が保留され、適切な口座の審査完了後の次回振込日に未入金分を合算。入金遅延の別原因であり、CSVから審査状態が取得できるとは未確認。"
     }
   ]
 }
