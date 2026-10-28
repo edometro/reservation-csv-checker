@@ -119,13 +119,15 @@
         "出典明示の実CSVで適合検証",
         "MF標準機能・無料Excel・単発売り切りと比較"
       ],
-      "actual": "支払意思0/3、実CSV適合false。2,980円は仮説で未検証。",
+      "actual": "支払意思0/3、実CSV適合false。2,980円は仮説で未検証。 2026-10-28: MF会計本人レビュー2件（2019年）で銀行消込の省力化と二重計上の実経験を確認。ただしSTORES予約の併用未確認につき対象一次体験・支払意思には算入しない。",
       "evidence": [
         "docs/demand-evidence.json",
-        "docs/MF_NATIVE_ALTERNATIVES_2026-10-28.md"
+        "docs/MF_NATIVE_ALTERNATIVES_2026-10-28.md",
+        "https://www.itreview.jp/products/mfcloudkaikei/reviews/27761",
+        "https://www.itreview.jp/products/mfcloudkaikei/reviews/27638"
       ],
       "blocker": "ヒアリング未実施・実CSV未入手。",
-      "nextAction": "M2とM3の証拠を優先して集める"
+      "nextAction": "MF標準機能利用後に残るSTORES予約内訳の照合時間と二重計上の実例を確認するスクリーニング票を既存質問票に統合（送信は個別承認後）。"
     },
     {
       "id": "M6",
