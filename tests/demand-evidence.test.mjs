@@ -5,6 +5,7 @@ import {summarizeDemandEvidence} from '../src/demand-evidence.mjs';
 
 const saved = JSON.parse(await readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8'));
 const clone = () => structuredClone(saved);
+// The evidence registry grows over time: assert its classification, not a stale snapshot total.
 const firsthand = n => ({
   id: 'U'+n, kind: 'firsthand_workflow',
   url: 'https://example.org/workflow-'+n, summary: '本人の手作業の説明',
@@ -14,7 +15,7 @@ const firsthand = n => ({
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, 3);
-  assert.equal(result.official_capability, 22);
+  assert.equal(result.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
   assert.equal(result.consentedInterviews, 0);
@@ -88,7 +89,7 @@ test('MF built-in bank import and auto rules are official alternatives, not paid
     assert.equal(matches[0].kind, 'official_capability');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 22);
+  assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.missing.firsthandCases, 2);
   assert.equal(summary.missing.interviews, 5);
@@ -113,7 +114,7 @@ test('STORES POS, shop, reservation and MF payout claims stay distinct from paid
       '公式の連携・価格情報は顧客の支払意思ではない');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 22);
+  assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
@@ -133,7 +134,7 @@ test('booking CSV export month and key caveats are official evidence, not new cu
       'CSV出力仕様は本人の作業体験談ではない');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 22);
+  assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
@@ -154,7 +155,7 @@ test('payment-rail official facts never count as user pain or paid willingness',
     assert.equal(matches[0].kind, 'official_capability', '公式仕様を一次体験談と混同しない');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 22);
+  assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
@@ -202,10 +203,26 @@ test('MF journal duplicate-check and two distinct import paths are alternatives,
     assert.equal(matches[0].kind, 'official_capability');
   }
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.official_capability, 22);
+  assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(summary.firsthand_workflow, 3);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+
+test('refund deadline is a documented CSV reconciliation gap, never a paying user', () => {
+  const url = 'https://reserve-faq.stores.jp/hc/ja/articles/28712713337369';
+  const matches = saved.sources.filter(s => s.url === url);
+  assert.equal(matches.length, 1, '返金期限の公式FAQは1つの出典として記録');
+  assert.equal(matches[0].id, 'O026');
+  assert.equal(matches[0].kind, 'official_capability');
+  const result = summarizeDemandEvidence(saved);
+  assert.ok(result.official_capability >= 26, '既存公式根拠を欠落させない');
+  assert.equal(result.firsthand_workflow, 3);
+  assert.equal(result.consentedInterviews, 0);
+  assert.equal(result.confirmedWillingness, 0);
+  assert.equal(result.realCsvCompatibilityVerified, false);
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
