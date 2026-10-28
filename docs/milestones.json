@@ -5,8 +5,8 @@
   "purpose": "予約売上チェッカーの期限・証拠・遅延管理。需要の証拠は docs/demand-evidence.json を唯一の集計元とする。",
   "statusPolicy": "各定期実行で日本時間の当日と dueDate を比較し、未達で当日が期限を過ぎた場合は blocked を含め overdue に更新する。blockedReason は別フィールドで維持する。達成は証拠リンクと判定条件の全充足を確認したときのみ。",
   "evidenceSnapshot": {
-    "checkedAt": "2026-10-28",
-    "firsthandWorkflows": 5,
+    "checkedAt": "2026-10-29",
+    "firsthandWorkflows": 7,
     "targetMfFirsthandWorkflows": 0,
     "consentedInterviews": 0,
     "specificWillingness": 0,
@@ -14,8 +14,8 @@
     "officialCapabilities": 35,
     "sellerClaims": 2,
     "editorial": 1,
-    "sourceCount": 43,
-    "publicationDatedFirsthandWorkflows": 3
+    "sourceCount": 45,
+    "publicationDatedFirsthandWorkflows": 5
   },
   "commercialGate": {
     "status": "INSUFFICIENT_EVIDENCE",
@@ -52,23 +52,26 @@
       "id": "M2",
       "dueDate": "2026-10-31",
       "title": "独立した本人一次体験談5例",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "出典の異なる本人による具体的作業体験5例",
         "各例にURL・掲載時期・会計ソフト・実作業を記録",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "本人の具体的作業を含む独立出典は5件（U001〜U005）だが、M2必須の掲載時期を確認できたのは3/5（U001・U004・U005）。U002・U003は取材月のみ判明し、掲載時期は未確認。STORES予約＋MF会計の月次入金照合体験は0件。2026-10-29に判定を5/5 doneから3/5 in_progressへ訂正。",
+      "actual": "2026-10-29: 掲載日が確認できる本人一次体験談U006（2022-06-30、予約後の電話確認作業削減）・U007（2022-04-24、カレンダーと電話予約の照合）を別URLで追加。掲載日確認済み5/5（U001/U004/U005/U006/U007）、本人作業体験7件（うちU002/U003は掲載時期未確認）。会計ソフトはU006/U007とも未公表と明記。匿名レビューの個人同一性は厳密に証明できない。STORES予約＋MF会計の月次入金照合本人証拠0件、面談0件、支払意思0件、実CSV適合falseで有料需要の裏付けは増えていない。",
       "evidence": [
         "docs/demand-evidence.json",
         "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
         "docs/STORES_RESERVATION_USER_REVIEW_TRIAGE_2026-10-28.md",
         "https://www.itreview.jp/products/coubic/reviews/165937",
         "https://stores.fun/cases/posts/mimosaeyedesign-cross",
-        "https://stores.fun/cases/posts/noue-cross"
+        "https://stores.fun/cases/posts/noue-cross",
+        "https://www.itreview.jp/products/coubic/reviews/115327",
+        "https://www.itreview.jp/products/coubic/reviews/106305"
       ],
-      "blocker": "U002・U003の公式導入事例には取材月（2025-04、2025-07）の記載があるが、掲載年月を確認できない。取材時期・閲覧日を掲載時期として代用できない。M2期限10/31までに掲載時期を確認するか、別の独立した本人一次体験談2件を探す。",
-      "nextAction": "10/31までにU002・U003の公開年月を独立して検証。確認できなければ掲載時期が分かる新規本人一次体験談2件に置換し、本人作業・URL・会計ソフト・掲載時期を揃える。"
+      "blocker": null,
+      "nextAction": "M2の一般一次体験談5件目標は達成。ただし対象MF会計併用者の月次入金照合証拠は0件。次回はM3の未確定実CSV入手経路・受入条件を、既存資料を再利用して最終整理する。",
+      "completedAt": "2026-10-29"
     },
     {
       "id": "M3",
