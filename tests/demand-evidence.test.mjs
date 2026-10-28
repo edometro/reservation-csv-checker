@@ -5,6 +5,12 @@ import {summarizeDemandEvidence} from '../src/demand-evidence.mjs';
 
 const saved = JSON.parse(await readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8'));
 const clone = () => structuredClone(saved);
+const baselineFirsthand = saved.sources.filter(s => s.kind === 'firsthand_workflow').length;
+const baselineMissing = Math.max(0, 5 - baselineFirsthand);
+const addToFive = data => {
+  const needed = Math.max(0, 5 - data.sources.filter(s => s.kind === 'firsthand_workflow').length);
+  data.sources.push(...Array.from({length: needed}, (_, i) => firsthand(1000 + i)));
+};
 // The evidence registry grows over time: assert its classification, not a stale snapshot total.
 const firsthand = n => ({
   id: 'U'+n, kind: 'firsthand_workflow',
@@ -14,7 +20,7 @@ const firsthand = n => ({
 
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 3);
+  assert.equal(result.firsthand_workflow, baselineFirsthand);
   assert.equal(result.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(result.seller_claim, 2);
   assert.equal(result.editorial, 1);
@@ -22,8 +28,20 @@ test('tracked evidence keeps real users separate from seller and official claims
   assert.equal(result.confirmedWillingness, 0);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
   assert.deepEqual(result.missing, {
-    firsthandCases: 2, interviews: 5, willingness: 3, realCsvCompatibility: 1
+    firsthandCases: baselineMissing, interviews: 5, willingness: 3, realCsvCompatibility: 1
   });
+});
+
+test('2024 independent STORES booking receipt workload is not MF reconciliation demand', () => {
+  const url = 'https://www.itreview.jp/products/coubic/reviews/183201';
+  const matches = saved.sources.filter(s => s.url === url);
+  assert.equal(matches.length, 1, '同じ本人レビューを重複計上しない');
+  assert.equal(matches[0].kind, 'firsthand_workflow');
+  assert.equal(matches[0].publishedAt, '2024-03-22');
+  assert.equal(matches[0].accountingSoftware, '未公表');
+  assert.match(matches[0].observedWork, /領収書/);
+  assert.equal(matches[0].targetMfUser, false);
+  assert.equal(summarizeDemandEvidence(saved).decision, 'INSUFFICIENT_EVIDENCE');
 });
 
 test('seller and official entries cannot satisfy the firsthand target', () => {
@@ -32,13 +50,13 @@ test('seller and official entries cannot satisfy the firsthand target', () => {
     data.sources.push({id: 'S'+(n+10), kind: 'seller_claim',
       url: 'https://example.org/seller-'+n, summary: '宣伝'});
   }
-  assert.equal(summarizeDemandEvidence(data).firsthand_workflow, 3);
-  assert.equal(summarizeDemandEvidence(data).missing.firsthandCases, 2);
+  assert.equal(summarizeDemandEvidence(data).firsthand_workflow, baselineFirsthand);
+  assert.equal(summarizeDemandEvidence(data).missing.firsthandCases, baselineMissing);
 });
 
 test('five actual stories alone do not constitute customer interviews or compatibility', () => {
   const data = clone();
-  data.sources.push(...[4,5].map(firsthand));
+  addToFive(data);
   const result = summarizeDemandEvidence(data);
   assert.equal(result.firsthand_workflow, 5);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
@@ -48,7 +66,7 @@ test('five actual stories alone do not constitute customer interviews or compati
 
 test('only complete requirements allow human Go review, never auto-launch', () => {
   const data = clone();
-  data.sources.push(...[4,5].map(firsthand));
+  addToFive(data);
   data.interviews = {consented: 5, specificWillingness: 3};
   data.realCsvCompatibilityVerified = true;
   assert.equal(summarizeDemandEvidence(data).decision, 'READY_FOR_HUMAN_GO_REVIEW');
@@ -90,8 +108,8 @@ test('MF built-in bank import and auto rules are official alternatives, not paid
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
-  assert.equal(summary.firsthand_workflow, 3);
-  assert.equal(summary.missing.firsthandCases, 2);
+  assert.equal(summary.firsthand_workflow, baselineFirsthand);
+  assert.equal(summary.missing.firsthandCases, baselineMissing);
   assert.equal(summary.missing.interviews, 5);
   assert.equal(summary.missing.willingness, 3);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
@@ -115,7 +133,7 @@ test('STORES POS, shop, reservation and MF payout claims stay distinct from paid
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
-  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.firsthand_workflow, baselineFirsthand);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
@@ -135,7 +153,7 @@ test('booking CSV export month and key caveats are official evidence, not new cu
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
-  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.firsthand_workflow, baselineFirsthand);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
@@ -156,7 +174,7 @@ test('payment-rail official facts never count as user pain or paid willingness',
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
-  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.firsthand_workflow, baselineFirsthand);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
@@ -182,8 +200,8 @@ test('vendor-hosted interviews count as unique first-person workflow reports, no
     source.kind === 'firsthand_workflow' && source.targetMfUser === true);
   assert.equal(mfCases.length, 0, 'MF併用の一次体験談はまだ未確認');
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.firsthand_workflow, 3);
-  assert.equal(summary.missing.firsthandCases, 2);
+  assert.equal(summary.firsthand_workflow, baselineFirsthand);
+  assert.equal(summary.missing.firsthandCases, baselineMissing);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
@@ -204,7 +222,7 @@ test('MF journal duplicate-check and two distinct import paths are alternatives,
   }
   const summary = summarizeDemandEvidence(saved);
   assert.equal(summary.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
-  assert.equal(summary.firsthand_workflow, 3);
+  assert.equal(summary.firsthand_workflow, baselineFirsthand);
   assert.equal(summary.consentedInterviews, 0);
   assert.equal(summary.confirmedWillingness, 0);
   assert.equal(summary.realCsvCompatibilityVerified, false);
@@ -220,7 +238,7 @@ test('refund deadline is a documented CSV reconciliation gap, never a paying use
   assert.equal(matches[0].kind, 'official_capability');
   const result = summarizeDemandEvidence(saved);
   assert.ok(result.official_capability >= 26, '既存公式根拠を欠落させない');
-  assert.equal(result.firsthand_workflow, 3);
+  assert.equal(result.firsthand_workflow, baselineFirsthand);
   assert.equal(result.consentedInterviews, 0);
   assert.equal(result.confirmedWillingness, 0);
   assert.equal(result.realCsvCompatibilityVerified, false);
