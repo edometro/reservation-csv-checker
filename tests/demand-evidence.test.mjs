@@ -9,11 +9,13 @@ const baselineFirsthand = saved.sources.filter(s => s.kind === 'firsthand_workfl
 const baselinePublished = saved.sources.filter(s => s.kind === 'firsthand_workflow' &&
   s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
   /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '')).length;
-const baselineMissing = Math.max(0, 5 - baselinePublished);
+const baselineQualified = saved.sources.filter(s => s.kind === 'firsthand_workflow' &&
+  s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
+  /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '') &&
+  !/^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(s.accountingSoftware)).length;
+const baselineMissing = Math.max(0, 5 - baselineQualified);
 const addToFive = data => {
-  const needed = Math.max(0, 5 - data.sources.filter(s => s.kind === 'firsthand_workflow' &&
-    s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
-    /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '')).length);
+  const needed = Math.max(0, 5 - summarizeDemandEvidence(data).m2QualifiedFirsthandWorkflows);
   data.sources.push(...Array.from({length: needed}, (_, i) => firsthand(1000 + i)));
 };
 // The evidence registry grows over time: assert its classification, not a stale snapshot total.
@@ -43,7 +45,9 @@ test('M2: interview month and crawl date do not substitute for a published perio
   assert.equal(result.firsthand_workflow, 7);
   assert.equal(result.publicationDatedFirsthandWorkflows, 5);
   assert.deepEqual(result.publicationMissingIds.sort(), ['U002', 'U003']);
-  assert.equal(result.missing.firsthandCases, 0);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
+  assert.deepEqual(result.m2QualifiedIds, ['U001']);
+  assert.equal(result.missing.firsthandCases, 4);
   const data = clone();
   const u2 = data.sources.find(s => s.id === 'U002');
   u2.publishedAt = '2025-04'; // Example: only if actual publication month is verified.
@@ -78,7 +82,7 @@ test('five actual stories alone do not constitute customer interviews or compati
   const data = clone();
   addToFive(data);
   const result = summarizeDemandEvidence(data);
-  assert.equal(result.publicationDatedFirsthandWorkflows, 5);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 5);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
   assert.equal(result.missing.interviews, 5);
   assert.equal(result.missing.realCsvCompatibility, 1);
@@ -369,9 +373,23 @@ test('M2: a dated story without actual STORES予約 usage evidence is excluded f
   let result = summarizeDemandEvidence(data);
   assert.equal(result.publicationDatedFirsthandWorkflows, baselinePublished - 1);
   assert.deepEqual(result.nonBookingFirsthandIds, ['U007']);
-  assert.equal(result.missing.firsthandCases, 1);
+  assert.equal(result.missing.firsthandCases, baselineMissing);
   u7.bookingUseEvidence = 'STORES決済だけを使用';
   u7.bookingProduct = 'STORES決済';
   result = summarizeDemandEvidence(data);
   assert.equal(result.publicationDatedFirsthandWorkflows, baselinePublished - 1);
+});
+
+
+test('M2: dated STORES予約 reviews with undisclosed accounting software are not qualified', () => {
+  const data = clone();
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.publicationDatedFirsthandWorkflows, 5);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
+  assert.deepEqual(result.softwareUnverifiedIds.sort(), ['U004', 'U005', 'U006', 'U007']);
+  const u4 = data.sources.find(s => s.id === 'U004');
+  u4.accountingSoftware = 'マネーフォワード クラウド会計'; // synthetic metadata, NOT a real observation
+  const synthetic = summarizeDemandEvidence(data);
+  assert.equal(synthetic.m2QualifiedFirsthandWorkflows, 2);
+  assert.equal(synthetic.targetMfReconciliationWorkflows, 0);
 });
