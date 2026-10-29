@@ -29,7 +29,8 @@
       },
       "bookingProduct": "STORES予約",
       "bookingUseEvidence": "本人がSTORES予約の設定→入金からCSVをダウンロードし、freeeへの加工・取込と銀行着金の照合を説明（2024-11-19本人ブログ）。",
-      "accountingSoftwareUseEvidence": "2024-11-19の本人記事でfreee会計の銀行同期、エクセルインポート（収入取引）、未取引決済の消込を実行した手順を記述。https://kapa-shokai.com/fromstorestofreee/"
+      "accountingSoftwareUseEvidence": "2024-11-19の本人記事でfreee会計の銀行同期、エクセルインポート（収入取引）、未取引決済の消込を実行した手順を記述。https://kapa-shokai.com/fromstorestofreee/",
+      "operatorKey": "handmade-workshop-author"
     },
     {
       "id": "O001",
@@ -185,7 +186,8 @@
         "doesNotSupport": "販促インタビューU002自体の掲載日、STORES予約からfreee会計への直接連携、月次の予約入金照合、MF利用、支払意思を証明しない。",
         "sameOperator": true,
         "countsAsSeparateFirsthand": false
-      }
+      },
+      "operatorKey": "mimosa-eyedesign"
     },
     {
       "id": "U003",
@@ -200,7 +202,8 @@
       "demandDirection": "既存POS/予約連携による作業削減。月次照合・MF利用は未確認。",
       "targetMfUser": false,
       "bookingProduct": "STORES予約",
-      "bookingUseEvidence": "販売者掲載の本人インタビューでSTORES予約を利用サービスとして明記し、予約の手入力削減を本人が説明（取材2025-07、掲載日未確認）。"
+      "bookingUseEvidence": "販売者掲載の本人インタビューでSTORES予約を利用サービスとして明記し、予約の手入力削減を本人が説明（取材2025-07、掲載日未確認）。",
+      "operatorKey": "noue"
     },
     {
       "id": "O020",
