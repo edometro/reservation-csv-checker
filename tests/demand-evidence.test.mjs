@@ -31,7 +31,7 @@ test('tracked evidence keeps real users separate from seller and official claims
   assert.equal(result.firsthand_workflow, baselineFirsthand);
   assert.equal(result.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(result.seller_claim, 2);
-  assert.equal(result.editorial, 1);
+  assert.equal(result.editorial, saved.sources.filter(s => s.kind === 'editorial').length);
   assert.equal(result.consentedInterviews, 0);
   assert.equal(result.confirmedWillingness, 0);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
