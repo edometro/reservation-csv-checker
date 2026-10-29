@@ -15,7 +15,8 @@
     "sellerClaims": 2,
     "editorial": 1,
     "sourceCount": 46,
-    "publicationDatedFirsthandWorkflows": 5
+    "publicationDatedFirsthandWorkflows": 5,
+    "m2QualifiedFirsthandWorkflows": 1
   },
   "commercialGate": {
     "status": "INSUFFICIENT_EVIDENCE",
@@ -52,13 +53,13 @@
       "id": "M2",
       "dueDate": "2026-10-31",
       "title": "独立した本人一次体験談5例",
-      "status": "done",
+      "status": "in_progress",
       "acceptance": [
         "出典の異なる本人による具体的作業体験5例",
-        "各例にURL・掲載時期・会計ソフト・実作業を記録",
+        "各例にURL・掲載時期・本人の具体的作業・実際に確認できた会計ソフト名を記録（未公表は件数未達として扱う）",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "2026-10-29: 掲載日が確認できる本人一次体験談U006（2022-06-30、予約後の電話確認作業削減）・U007（2022-04-24、カレンダーと電話予約の照合）を別URLで追加。掲載日確認済み5/5（U001/U004/U005/U006/U007）、本人作業体験7件（うちU002/U003は掲載時期未確認）。会計ソフトはU006/U007とも未公表と明記。匿名レビューの個人同一性は厳密に証明できない。STORES予約＋MF会計の月次入金照合本人証拠0件、面談0件、支払意思0件、実CSV適合falseで有料需要の裏付けは増えていない。 2026-10-29: M2をSTORES予約の本人利用根拠付きに限定し、U001〜U007の製品利用をURLと照合。別製品のSTORES決済のみを本人利用した2023年ブログは不採用。5/5は維持、対象MF月次照合本人0、面談0/5、支払意思0/3、実CSV適合false。",
+      "actual": "2026-10-29 再監査：掲載時期・STORES予約本人利用・具体的作業・会計ソフト名が全て揃う独立一次資料はU001（freee）の1/5件のみ。掲載時期確認済み5件のうちU004/U005/U006/U007は会計ソフト未公表でM2条件未達。U002はfreeeを記載するが掲載時期不明。U003は両方不明。従来の『5/5 done』は会計ソフト未公表を完了に計上した過大評価だったため訂正。対象MF月次照合本人0件、同意面談0/5、支払意思0/3、実CSV適合false。既存出典の監査で新規利用者獲得なし。",
       "evidence": [
         "docs/demand-evidence.json",
         "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
@@ -69,11 +70,11 @@
         "https://www.itreview.jp/products/coubic/reviews/115327",
         "https://www.itreview.jp/products/coubic/reviews/106305",
         "docs/MILESTONES.md#2026-10-29m2をstores予約の本人利用根拠付き5件に限定issue-3",
-        "https://biz.ukulelelabo.com/stores/"
+        "https://biz.ukulelelabo.com/stores/",
+        "docs/MILESTONES.md#m2-再監査2026-10-29会計ソフト未公表を完了計上しない"
       ],
-      "blocker": null,
-      "nextAction": "M2は製品本人利用＋掲載時期の5件を確認済み。M3（11/03）で真正な現行入金内訳2種類の形式・実ヘッダー・同一振込キーを検証。対象MF月次照合本人0件のため有料需要は未確認。",
-      "completedAt": "2026-10-29"
+      "blocker": "掲載時期と会計ソフト名が両方確認できる独立した本人一次資料が1件のみ。4件不足。外部ヒアリング・顧客連絡は個別承認なし。",
+      "nextAction": "10/31までに公開済みのSTORES予約本人一次記録で会計ソフト名と掲載時期が両方確認できる別URL4件を探して採否判定。見つからなければ1/5を維持し、11/01からoverdueにする。"
     },
     {
       "id": "M3",
