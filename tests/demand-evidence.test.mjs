@@ -22,7 +22,7 @@ const addToFive = data => {
 const firsthand = n => ({
   id: 'U'+n, kind: 'firsthand_workflow',
   url: 'https://example.org/workflow-'+n, summary: '本人の手作業の説明',
-  accountingSoftware: 'freee', observedWork: '月次のCSV加工', publishedAt: '2026-10-29',
+  accountingSoftware: 'freee', accountingSoftwareUseEvidence: '本人がfreee会計で収入取引を登録', observedWork: '月次のCSV加工', publishedAt: '2026-10-29',
   bookingProduct: 'STORES予約', bookingUseEvidence: '本人が予約画面でCSVを操作した'
 });
 
@@ -404,6 +404,7 @@ test('M2: dated STORES予約 reviews with undisclosed accounting software are no
   assert.deepEqual(result.softwareUnverifiedIds.sort(), ['U004', 'U005', 'U006', 'U007']);
   const u4 = data.sources.find(s => s.id === 'U004');
   u4.accountingSoftware = 'マネーフォワード クラウド会計'; // synthetic metadata, NOT a real observation
+  u4.accountingSoftwareUseEvidence = '本人がMF会計を利用'; // synthetic only
   const synthetic = summarizeDemandEvidence(data);
   assert.equal(synthetic.m2QualifiedFirsthandWorkflows, 2);
   assert.equal(synthetic.targetMfReconciliationWorkflows, 0);
@@ -424,4 +425,25 @@ test('M2: an explicitly fictional STORES予約 + freee workflow cannot count as 
   assert.equal(summary.targetMfReconciliationWorkflows, 0);
   assert.equal(summary.missing.firsthandCases, 4);
   assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+
+test('M2: a product name alone is not proof of actual accounting-software use', () => {
+  const data = clone();
+  const u1 = data.sources.find(s => s.id === 'U001');
+  delete u1.accountingSoftwareUseEvidence;
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 0);
+  assert.ok(result.softwareUnverifiedIds.includes('U001'));
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('M2: freee予約 is not freee会計 even when the booking app was used', () => {
+  const data = clone();
+  const u1 = data.sources.find(s => s.id === 'U001');
+  u1.accountingSoftware = 'freee予約';
+  u1.accountingSoftwareUseEvidence = '本人がfreee予約で予約を受け付けた';
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 0);
+  assert.ok(result.softwareUnverifiedIds.includes('U001'));
 });
