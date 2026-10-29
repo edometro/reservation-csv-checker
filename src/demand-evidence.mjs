@@ -19,6 +19,7 @@ export function summarizeDemandEvidence(registry) {
   const targetMfEvidenceIds = [], nonTargetFirsthandIds = [];
   const publicationDatedIds = [], publicationMissingIds = [], nonBookingFirsthandIds = [];
   const m2QualifiedIds = [], softwareUnverifiedIds = [];
+  const operatorUnverifiedIds = [], duplicateOperatorIds = [], qualifiedOperators = new Set();
   const counts = Object.fromEntries(SOURCE_KINDS.map(kind => [kind, 0]));
   for (const item of registry.sources) {
     if (!item || !TYPES.has(item.kind)) throw new Error('不明な証拠区分です');
@@ -58,7 +59,15 @@ export function summarizeDemandEvidence(registry) {
           if (isUnverified || isOtherProduct || !hasUseProof) {
             softwareUnverifiedIds.push(item.id);
           } else {
-            m2QualifiedIds.push(item.id);
+            // Different URLs from the same operator are one independent M2 case.
+            // An anonymous source URL is not proof of a distinct operator.
+            const operatorKey = typeof item.operatorKey === 'string' ? item.operatorKey.trim() : '';
+            if (!operatorKey) operatorUnverifiedIds.push(item.id);
+            else if (qualifiedOperators.has(operatorKey)) duplicateOperatorIds.push(item.id);
+            else {
+              qualifiedOperators.add(operatorKey);
+              m2QualifiedIds.push(item.id);
+            }
           }
         } else publicationMissingIds.push(item.id);
       } else {
@@ -108,6 +117,8 @@ export function summarizeDemandEvidence(registry) {
     m2QualifiedFirsthandWorkflows: m2QualifiedIds.length,
     m2QualifiedIds,
     softwareUnverifiedIds,
+    operatorUnverifiedIds,
+    duplicateOperatorIds,
     publicationDatedIds,
     publicationMissingIds,
     nonBookingFirsthandIds,
