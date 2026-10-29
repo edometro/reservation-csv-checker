@@ -42,11 +42,19 @@ export function summarizeDemandEvidence(registry) {
       if (item.targetMfUser === true) {
         // Generic MF users and STORES recommendations are not payout-reconciliation evidence.
         const softwareMatches = /マネーフォワード|Money\s*Forward|MF\s*クラウド/i.test(item.accountingSoftware);
+        // A Money Forward user recommending STORES is not a STORES Reservation user.
+        // Require a separately observed use of the exact booking product, not just a
+        // generic payout story. These are metadata checks; source truth is reviewed manually.
+        const reservationUseRecorded = item.bookingProduct === 'STORES予約' &&
+          typeof item.bookingUseEvidence === 'string' && item.bookingUseEvidence.trim().length > 0;
         const workflowRecorded = typeof item.monthlyPayoutReconciliationWork === 'string' &&
           item.monthlyPayoutReconciliationWork.trim().length > 0;
-        const dated = Boolean(item.publishedAt?.trim() || item.interviewedAt?.trim());
-        if (!softwareMatches || !workflowRecorded || !dated) {
-          throw new Error(`${item.id}: 対象MF月次照合の本人証拠には会計ソフト・具体的照合作業・掲載/取材時期が必要です`);
+        // A crawl date, malformed string, or interview date masquerading as a
+        // publication date must not satisfy the provenance requirement.
+        const dated = validPublicationPeriod(item.publishedAt) ||
+          validPublicationPeriod(item.interviewedAt);
+        if (!softwareMatches || !reservationUseRecorded || !workflowRecorded || !dated) {
+          throw new Error(`${item.id}: 対象MF月次照合の本人証拠にはSTORES予約の本人利用・MF会計・具体的月次照合作業・有効な掲載/取材時期が必要です`);
         }
         targetMfEvidenceIds.push(item.id);
       } else {
