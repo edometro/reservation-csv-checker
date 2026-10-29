@@ -106,7 +106,7 @@
       "id": "O010",
       "kind": "official_capability",
       "url": "https://biz.moneyforward.com/support/account/news/new-feature/20240112.html",
-      "summary": "2024-01-12公開。MF会計が「STORES」から振り込まれる売上・手数料の取得に対応。ただし「STORES」がSTORES予約を含むか公式記事では不明。"
+      "summary": "2024-01-12のMF公式記事は『STORES』からの売上・手数料取得を告知するが製品名は曖昧。STORES株式会社の2024-03-19公式発表（別出典O036）は当時のMF連携対象をSTORESネットショップのみと明示。STORES予約の現行2入金内訳がMFに連携される証拠とはしない。"
     },
     {
       "id": "O011",
@@ -343,6 +343,12 @@
       "targetMfUser": false,
       "bookingProduct": "STORES予約",
       "bookingUseEvidence": "STORES予約のGoogle Calendar連携で電話等のオフライン予約と突合し、反映遅延による予約重複を経験した本人レビュー（2022-04-24）。"
+    },
+    {
+      "id": "O036",
+      "kind": "official_capability",
+      "url": "https://www.st.inc/news/2024-03-19-ec-moneyforward",
+      "summary": "STORES株式会社の2024-03-19公式発表はMFクラウドとのAPI連携対象を『STORES ネットショップのみ』と明示し、レジは当時今後対応予定と区別。2024-01-12 MF『STORES』入金売上・手数料連携の対象をSTORES予約と推定できない。2026年現在の予約連携不存在・実CSV適合を証明するものではなく、需要人数には計上しない。"
     }
   ]
 }
