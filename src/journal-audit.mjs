@@ -54,7 +54,7 @@ export function auditJournalCSV(csvText, {fiscalYearStart = '', fiscalYearEnd = 
     }
   }
 
-  let missingTax = 0, missingNumber = 0;
+  let missingTax = 0, missingInvoice = 0, missingNumber = 0;
   const seenEntries = new Map();
   rows.forEach((row, index) => {
     const line = recordLines[index + 1];
@@ -112,10 +112,13 @@ export function auditJournalCSV(csvText, {fiscalYearStart = '', fiscalYearEnd = 
       errors.push(`${line}行目: 摘要は200文字以内で指定してください`);
     }
     if (!row[6].trim() || !row[14].trim()) missingTax++;
+    // MF treats an empty invoice category as 適格 on import, not as unknown.
+    if (!row[7].trim() || !row[15].trim()) missingInvoice++;
     if (!transactionNumber) missingNumber++;
   });
 
   if (missingTax) warnings.push(`借方または貸方の税区分が未設定: ${missingTax}件（会計・税務上の判断が必要）`);
+  if (missingInvoice) warnings.push(`借方または貸方インボイス区分が空欄: ${missingInvoice}件（MF仕訳帳インポートでは空欄が「適格」として扱われます。適格性を確認せず本番取込しないでください）`);
   if (missingNumber) warnings.push(`取引Noが未設定: ${missingNumber}件（会計側の二重取り込みを防止できません）`);
   // Even a populated transaction number is NOT an idempotency key: MF assigns
   // a new number if it already exists and imports the journal again.
