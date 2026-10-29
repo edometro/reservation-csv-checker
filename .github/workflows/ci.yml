@@ -24,3 +24,5 @@ jobs:
       - run: npm test
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+      - run: npm run demand
+      - run: npm run milestones
