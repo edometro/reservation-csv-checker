@@ -12,7 +12,8 @@ const baselinePublished = saved.sources.filter(s => s.kind === 'firsthand_workfl
 const baselineQualified = saved.sources.filter(s => s.kind === 'firsthand_workflow' &&
   s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
   /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '') &&
-  !/^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(s.accountingSoftware)).length;
+  !/^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(s.accountingSoftware) &&
+  s.accountingSoftwareUseEvidence?.trim() && s.operatorKey?.trim()).length;
 const baselineMissing = Math.max(0, 5 - baselineQualified);
 const addToFive = data => {
   const needed = Math.max(0, 5 - summarizeDemandEvidence(data).m2QualifiedFirsthandWorkflows);
@@ -23,6 +24,7 @@ const firsthand = n => ({
   id: 'U'+n, kind: 'firsthand_workflow',
   url: 'https://example.org/workflow-'+n, summary: '本人の手作業の説明',
   accountingSoftware: 'freee', accountingSoftwareUseEvidence: '本人がfreee会計で収入取引を登録', observedWork: '月次のCSV加工', publishedAt: '2026-10-29',
+  operatorKey: 'synthetic-operator-'+n,
   bookingProduct: 'STORES予約', bookingUseEvidence: '本人が予約画面でCSVを操作した'
 });
 
@@ -405,6 +407,7 @@ test('M2: dated STORES予約 reviews with undisclosed accounting software are no
   const u4 = data.sources.find(s => s.id === 'U004');
   u4.accountingSoftware = 'マネーフォワード クラウド会計'; // synthetic metadata, NOT a real observation
   u4.accountingSoftwareUseEvidence = '本人がMF会計を利用'; // synthetic only
+  u4.operatorKey = 'synthetic-itreview-operator'; // synthetic only, NOT verified in reality
   const synthetic = summarizeDemandEvidence(data);
   assert.equal(synthetic.m2QualifiedFirsthandWorkflows, 2);
   assert.equal(synthetic.targetMfReconciliationWorkflows, 0);
@@ -446,4 +449,37 @@ test('M2: freee予約 is not freee会計 even when the booking app was used', ()
   const result = summarizeDemandEvidence(data);
   assert.equal(result.m2QualifiedFirsthandWorkflows, 0);
   assert.ok(result.softwareUnverifiedIds.includes('U001'));
+});
+
+
+test('M2: multiple URLs by the same operator count as one independent user', () => {
+  const data = clone();
+  const operatorKey = data.sources.find(s => s.id === 'U001').operatorKey;
+  data.sources.push({...firsthand(910), operatorKey});
+  data.sources.push({...firsthand(911), operatorKey});
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
+  assert.deepEqual(result.duplicateOperatorIds, ['U910', 'U911']);
+  assert.equal(result.missing.firsthandCases, 4);
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('M2: a different URL without operator identity cannot count as a new person', () => {
+  const data = clone();
+  const item = {...firsthand(912)};
+  delete item.operatorKey;
+  data.sources.push(item);
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
+  assert.deepEqual(result.operatorUnverifiedIds, ['U912']);
+  assert.equal(result.missing.firsthandCases, 4);
+});
+
+test('M2: a separately verified operator with all required fields can add one case', () => {
+  const data = clone();
+  data.sources.push(firsthand(913));
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 2);
+  assert.deepEqual(result.m2QualifiedIds, ['U001', 'U913']);
+  assert.equal(result.missing.firsthandCases, 3);
 });
