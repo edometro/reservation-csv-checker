@@ -7,10 +7,12 @@ const saved = JSON.parse(await readFile(new URL('../docs/demand-evidence.json', 
 const clone = () => structuredClone(saved);
 const baselineFirsthand = saved.sources.filter(s => s.kind === 'firsthand_workflow').length;
 const baselinePublished = saved.sources.filter(s => s.kind === 'firsthand_workflow' &&
+  s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
   /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '')).length;
 const baselineMissing = Math.max(0, 5 - baselinePublished);
 const addToFive = data => {
   const needed = Math.max(0, 5 - data.sources.filter(s => s.kind === 'firsthand_workflow' &&
+    s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
     /^\d{4}-\d{2}(-\d{2})?$/.test(s.publishedAt ?? '')).length);
   data.sources.push(...Array.from({length: needed}, (_, i) => firsthand(1000 + i)));
 };
@@ -18,7 +20,8 @@ const addToFive = data => {
 const firsthand = n => ({
   id: 'U'+n, kind: 'firsthand_workflow',
   url: 'https://example.org/workflow-'+n, summary: '本人の手作業の説明',
-  accountingSoftware: 'freee', observedWork: '月次のCSV加工', publishedAt: '2026-10-29'
+  accountingSoftware: 'freee', observedWork: '月次のCSV加工', publishedAt: '2026-10-29',
+  bookingProduct: 'STORES予約', bookingUseEvidence: '本人が予約画面でCSVを操作した'
 });
 
 test('tracked evidence keeps real users separate from seller and official claims', () => {
@@ -330,4 +333,39 @@ test('Issue #3: arbitrary date strings do not satisfy target provenance', () => 
   assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
   item.interviewedAt = '2026-10';
   assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 1);
+});
+
+test('M2: a real STORES payment operator who explicitly has not used booking cannot inflate reservation evidence', () => {
+  const data = clone();
+  // 2023-01-18 article (updated 2024-02-28): https://biz.ukulelelabo.com/stores/
+  // The author reports using STORES決済 for lesson fees but explicitly says
+  // the STORES reservation product has NOT been adopted. MF is only mentioned as an option.
+  data.sources.push({
+    id: 'U888', kind: 'firsthand_workflow',
+    url: 'https://biz.ukulelelabo.com/stores/',
+    summary: 'STORES決済の本人利用。STORES予約は未利用と明記。',
+    accountingSoftware: '未確認', observedWork: 'レッスン料の対面決済',
+    publishedAt: '2023-01-18', bookingProduct: 'STORES決済',
+    bookingUseEvidence: '予約システムはまだ使っていない', targetMfUser: false
+  });
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.firsthand_workflow, baselineFirsthand + 1);
+  assert.equal(result.publicationDatedFirsthandWorkflows, baselinePublished);
+  assert.deepEqual(result.nonBookingFirsthandIds, ['U888']);
+  assert.equal(result.targetMfReconciliationWorkflows, 0);
+  assert.equal(result.missing.firsthandCases, baselineMissing);
+});
+
+test('M2: a dated story without actual STORES予約 usage evidence is excluded from the five', () => {
+  const data = clone();
+  const u7 = data.sources.find(s => s.id === 'U007');
+  u7.bookingUseEvidence = '';
+  let result = summarizeDemandEvidence(data);
+  assert.equal(result.publicationDatedFirsthandWorkflows, baselinePublished - 1);
+  assert.deepEqual(result.nonBookingFirsthandIds, ['U007']);
+  assert.equal(result.missing.firsthandCases, 1);
+  u7.bookingUseEvidence = 'STORES決済だけを使用';
+  u7.bookingProduct = 'STORES決済';
+  result = summarizeDemandEvidence(data);
+  assert.equal(result.publicationDatedFirsthandWorkflows, baselinePublished - 1);
 });
