@@ -8,7 +8,7 @@ const registry = {
   realCsvCompatibilityVerified: false,
   sources: Array.from({length: 5}, (_, i) => ({id: `U${i}`, kind: 'firsthand_workflow',
     url: `https://example.org/review/${i}`, summary: '本人の具体的な作業',
-    accountingSoftware: '未公表', observedWork: '予約受付', publishedAt: '2026-10-28',
+    accountingSoftware: 'freee', observedWork: '予約受付', publishedAt: '2026-10-28',
     bookingProduct: 'STORES予約', bookingUseEvidence: '本人がSTORES予約で予約を受けた'}))
 };
 const baseline = () => ({
@@ -29,6 +29,7 @@ test('期限翌日にblockedもoverdue、doneは維持、次期限は最古の�
   assert.equal(result.nextDue.id, 'M3');
   assert.equal(result.snapshot.targetMfFirsthandWorkflows, 0);
   assert.equal(result.snapshot.publicationDatedFirsthandWorkflows, 5);
+  assert.equal(result.snapshot.m2QualifiedFirsthandWorkflows, 5);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
@@ -99,5 +100,18 @@ test('M2: five dated stories from other STORES products do not qualify', () => {
   ledger.milestones[1].status = 'in_progress';
   const result = evaluateMilestones(ledger, data, '2026-11-01');
   assert.equal(result.snapshot.publicationDatedFirsthandWorkflows, 4);
+  assert.equal(result.milestones[1].effectiveStatus, 'overdue');
+});
+
+
+test('M2: five dated stories without accounting-software names cannot be marked done', () => {
+  const data = structuredClone(registry);
+  data.sources.forEach(s => { s.accountingSoftware = '未公表'; });
+  const ledger = baseline();
+  assert.throws(() => evaluateMilestones(ledger, data, '2026-10-29'), /M2.*不足/);
+  ledger.milestones[1].status = 'in_progress';
+  const result = evaluateMilestones(ledger, data, '2026-11-01');
+  assert.equal(result.snapshot.publicationDatedFirsthandWorkflows, 5);
+  assert.equal(result.snapshot.m2QualifiedFirsthandWorkflows, 0);
   assert.equal(result.milestones[1].effectiveStatus, 'overdue');
 });
