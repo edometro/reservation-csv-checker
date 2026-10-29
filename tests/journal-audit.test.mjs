@@ -11,8 +11,9 @@ test('generated journal has valid structure but unverified tax and duplicate-imp
   const audit=auditJournalCSV(draft());
   assert.equal(audit.rowCount,1);
   assert.deepEqual(audit.errors,[]);
-  assert.equal(audit.warnings.length,3);
+  assert.equal(audit.warnings.length,4);
   assert.match(audit.warnings.join(' '),/税区分が未設定/);
+  assert.match(audit.warnings.join(' '),/インボイス区分が空欄.*適格/);
   assert.match(audit.warnings.join(' '),/取引Noが未設定/);
   assert.match(audit.warnings.join(' '),/再インポートすると取引Noの指定・再利用に関係なく/);
 });
@@ -42,6 +43,8 @@ test('preflight always warns about reimports even when tax classifications and t
   rows[1][0]='123456789';
   rows[1][6]='仮の借方税区分';
   rows[1][14]='仮の貸方税区分';
+  rows[1][7]='適格';
+  rows[1][15]='適格';
   const audit=auditJournalCSV(stringifyCSV(rows));
   assert.deepEqual(audit.errors,[]);
   assert.equal(audit.warnings.length,1);
@@ -166,4 +169,23 @@ test('reimport warning remains when transaction number is present, including a r
   // Reusing the same number does not make an import idempotent.
   const again=auditJournalCSV(stringifyCSV(rows));
   assert.match(again.warnings.join(' / '),/新規仕訳が登録/);
+});
+
+
+test('MF blank invoice categories are not neutral: warn even with tax categories filled',()=>{
+  const rows=parseCSV(draft());
+  rows[1][6]='仮の借方税区分';
+  rows[1][14]='仮の貸方税区分';
+  rows[1][0]='123';
+  const bothBlank=auditJournalCSV(stringifyCSV(rows));
+  assert.deepEqual(bothBlank.errors,[]);
+  assert.match(bothBlank.warnings.join(' '),/インボイス区分が空欄: 1件.*適格/);
+  rows[1][7]='適格';
+  const oneBlank=auditJournalCSV(stringifyCSV(rows));
+  assert.match(oneBlank.warnings.join(' '),/インボイス区分が空欄: 1件.*適格/);
+  rows[1][15]='適格';
+  const explicit=auditJournalCSV(stringifyCSV(rows));
+  assert.doesNotMatch(explicit.warnings.join(' '),/インボイス区分が空欄/);
+  assert.match(explicit.warnings.join(' '),/再インポート/);
+  // Explicit values are not verified against the account or tax law.
 });
