@@ -8,7 +8,7 @@ const registry = {
   realCsvCompatibilityVerified: false,
   sources: Array.from({length: 5}, (_, i) => ({id: `U${i}`, kind: 'firsthand_workflow',
     url: `https://example.org/review/${i}`, summary: '本人の具体的な作業',
-    accountingSoftware: 'freee', observedWork: '予約受付', publishedAt: '2026-10-28',
+    accountingSoftware: 'freee', accountingSoftwareUseEvidence: '本人がfreee会計で帳簿を管理', observedWork: '予約受付', publishedAt: '2026-10-28',
     bookingProduct: 'STORES予約', bookingUseEvidence: '本人がSTORES予約で予約を受けた'}))
 };
 const baseline = () => ({
