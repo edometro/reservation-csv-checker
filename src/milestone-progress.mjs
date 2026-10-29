@@ -62,3 +62,46 @@ export function synchronizeMilestoneLedger(ledger, evaluation) {
   if (changed) updated.updatedAt = evaluation.asOf;
   return {updated, changed};
 }
+
+/**
+ * Keep the current Markdown status table consistent with the JSON ledger.
+ * Historical dated research notes are intentionally preserved verbatim.
+ */
+export function synchronizeMilestoneMarkdown(markdown, ledger, asOf) {
+  if (!validDate(asOf)) throw new Error('判定日が不正です（YYYY-MM-DD）');
+  const heading = '## 進捗（日本時間）';
+  const start = markdown.indexOf(heading);
+  if (start < 0) throw new Error('Markdownの進捗表がありません');
+  const nextHeading = markdown.indexOf('\n## ', start + heading.length);
+  const end = nextHeading < 0 ? markdown.length : nextHeading;
+  const current = markdown.slice(start, end);
+  const byId = new Map(ledger.milestones.map(m => [m.id, m]));
+  const seen = new Set();
+  const snapshot = ledger.evidenceSnapshot;
+  const rows = current.replace(/^\|\s*(M[1-6])\s*\|[^\r\n]*$/gm, (line, id) => {
+    const m = byId.get(id);
+    const cells = line.split('|');
+    if (!m || cells.length !== 7 || seen.has(id)) throw new Error('Markdownの進捗表が不正です');
+    seen.add(id);
+    cells[5] = ` **${m.status}** `;
+    if (id === 'M2') {
+      const n = snapshot.m2QualifiedFirsthandWorkflows;
+      cells[4] = ` 全条件充足${n}/5（不足${Math.max(0, 5 - n)}）、対象MF月次照合${snapshot.targetMfFirsthandWorkflows}件 `;
+    } else if (id === 'M4') {
+      cells[4] = ` 同意済み${snapshot.consentedInterviews}/5。外部連絡は個別承認制 `;
+    } else if (id === 'M5') {
+      cells[4] = ` 支払意思${snapshot.specificWillingness}/3、実CSV適合 ${snapshot.realCsvCompatibilityVerified} `;
+    }
+    return cells.join('|');
+  });
+  for (const id of ['M1', 'M2', 'M3', 'M4', 'M5', 'M6']) {
+    if (!seen.has(id)) throw new Error(`Markdownの進捗表に${id}がありません`);
+  }
+  const section = rows.replace(/\|\s*\d{4}-\d{2}-\d{2}時点の実績\s*\|/,
+    `| ${asOf}時点の実績 |`);
+  if (section === current && !current.includes(`${asOf}時点の実績`)) {
+    throw new Error('Markdownの進捗表の日付見出しが不正です');
+  }
+  const content = markdown.slice(0, start) + section + markdown.slice(end);
+  return {content, changed: content !== markdown};
+}
