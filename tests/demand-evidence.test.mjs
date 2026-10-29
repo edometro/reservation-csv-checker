@@ -279,6 +279,11 @@ test('Issue #3: MF mentions require firsthand monthly payout work and publicatio
   data.sources.push(item);
   assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
   item.monthlyPayoutReconciliationWork = 'STORES予約の内訳と銀行着金を月末に本人が突合した';
+  // Merely mentioning STORES in a payout description is not independently
+  // recorded evidence that the author used the booking product.
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.bookingProduct = 'STORES予約';
+  item.bookingUseEvidence = '本人がSTORES予約の事前決済を運用していると明記';
   assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 1);
   item.accountingSoftware = 'freee';
   assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
@@ -292,4 +297,37 @@ test('Issue #3: seller claims never count as qualified target users even if flag
   data.sources.push({id: 'S-target', kind: 'seller_claim', url: 'https://example.org/seller-target',
     summary: '宣伝', targetMfUser: true});
   assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 0);
+});
+
+
+test('Issue #3: an MF user recommending STORES cannot be marked as a qualified target', () => {
+  const data = clone();
+  const item = {...firsthand(998), targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    monthlyPayoutReconciliationWork: '別サービスの入金を毎月照合',
+    publishedAt: '2026-10-29'};
+  data.sources.push(item);
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.bookingProduct = 'STORES決済';
+  item.bookingUseEvidence = 'STORES決済のみ本人利用';
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.bookingProduct = 'STORES予約';
+  item.bookingUseEvidence = '';
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.bookingUseEvidence = '本人が予約の事前決済を使用';
+  assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 1);
+});
+
+test('Issue #3: arbitrary date strings do not satisfy target provenance', () => {
+  const data = clone();
+  const item = {...firsthand(997), targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    bookingProduct: 'STORES予約',
+    bookingUseEvidence: '本人がSTORES予約を運用',
+    monthlyPayoutReconciliationWork: '月末に予約入金と銀行着金を突合',
+    publishedAt: '未確認', interviewedAt: '2026-02-30'};
+  data.sources.push(item);
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
+  item.interviewedAt = '2026-10';
+  assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 1);
 });
