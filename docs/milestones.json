@@ -13,8 +13,8 @@
     "realCsvCompatibilityVerified": false,
     "officialCapabilities": 36,
     "sellerClaims": 2,
-    "editorial": 1,
-    "sourceCount": 46,
+    "editorial": 2,
+    "sourceCount": 47,
     "publicationDatedFirsthandWorkflows": 5,
     "m2QualifiedFirsthandWorkflows": 1
   },
@@ -59,7 +59,7 @@
         "各例にURL・掲載時期・本人の具体的作業・実際に確認できた会計ソフト名を記録（未公表は件数未達として扱う）",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "2026-10-29 再監査：掲載時期・STORES予約本人利用・具体的作業・会計ソフト名が全て揃う独立一次資料はU001（freee）の1/5件のみ。掲載時期確認済み5件のうちU004/U005/U006/U007は会計ソフト未公表でM2条件未達。U002はfreeeを記載するが掲載時期不明。U003は両方不明。従来の『5/5 done』は会計ソフト未公表を完了に計上した過大評価だったため訂正。対象MF月次照合本人0件、同意面談0/5、支払意思0/3、実CSV適合false。既存出典の監査で新規利用者獲得なし。",
+      "actual": "2026-10-29 再監査：掲載時期・STORES予約本人利用・具体的作業・会計ソフト名が全て揃う独立一次資料はU001（freee）の1/5件のみ。掲載時期確認済み5件のうちU004/U005/U006/U007は会計ソフト未公表でM2条件未達。U002はfreeeを記載するが掲載時期不明。U003は両方不明。従来の『5/5 done』は会計ソフト未公表を完了に計上した過大評価だったため訂正。対象MF月次照合本人0件、同意面談0/5、支払意思0/3、実CSV適合false。既存出典の監査で新規利用者獲得なし。 2026-10-29: 公開記事のSTORES予約＋freee会計併用・月10時間削減の具体的記述は、本文が人物・店舗・効果をフィクションと明記。E002としてeditorialに1回のみ登録し、本人一次証拠には不採用。M2 1/5、4件不足のまま。",
       "evidence": [
         "docs/demand-evidence.json",
         "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
@@ -71,10 +71,12 @@
         "https://www.itreview.jp/products/coubic/reviews/106305",
         "docs/MILESTONES.md#2026-10-29m2をstores予約の本人利用根拠付き5件に限定issue-3",
         "https://biz.ukulelelabo.com/stores/",
-        "docs/MILESTONES.md#m2-再監査2026-10-29会計ソフト未公表を完了計上しない"
+        "docs/MILESTONES.md#m2-再監査2026-10-29会計ソフト未公表を完了計上しない",
+        "https://okomari.smilefactory-rakuai.com/articles/83c37864.html",
+        "docs/MILESTONES.md#2026-10-29m2の架空事例を一次証拠から除外issue-3--今回の1成果物"
       ],
       "blocker": "掲載時期と会計ソフト名が両方確認できる独立した本人一次資料が1件のみ。4件不足。外部ヒアリング・顧客連絡は個別承認なし。",
-      "nextAction": "10/31までに公開済みのSTORES予約本人一次記録で会計ソフト名と掲載時期が両方確認できる別URL4件を探して採否判定。見つからなければ1/5を維持し、11/01からoverdueにする。"
+      "nextAction": "10/31までにSTORES予約本人利用・具体的作業・実際の会計ソフト名・掲載時期が揃う独立公開一次資料を1件採否判定。新たな適格証拠がなければ1/5を維持し11/01からoverdue。"
     },
     {
       "id": "M3",

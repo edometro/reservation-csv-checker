@@ -31,7 +31,7 @@ test('tracked evidence keeps real users separate from seller and official claims
   assert.equal(result.firsthand_workflow, baselineFirsthand);
   assert.equal(result.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
   assert.equal(result.seller_claim, 2);
-  assert.equal(result.editorial, 1);
+  assert.equal(result.editorial, saved.sources.filter(s => s.kind === 'editorial').length);
   assert.equal(result.consentedInterviews, 0);
   assert.equal(result.confirmedWillingness, 0);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
@@ -392,4 +392,21 @@ test('M2: dated STORES予約 reviews with undisclosed accounting software are no
   const synthetic = summarizeDemandEvidence(data);
   assert.equal(synthetic.m2QualifiedFirsthandWorkflows, 2);
   assert.equal(synthetic.targetMfReconciliationWorkflows, 0);
+});
+
+
+test('M2: an explicitly fictional STORES予約 + freee workflow cannot count as a customer', () => {
+  // https://okomari.smilefactory-rakuai.com/articles/83c37864.html
+  // The article expressly labels its operator, shop and outcome as fiction.
+  const item = saved.sources.find(s => s.id === 'E002');
+  assert.ok(item, '架空の顧客事例の出典を追跡する');
+  assert.equal(item.kind, 'editorial', 'フィクションは本人一次体験ではない');
+  assert.match(item.summary, /フィクション/);
+  assert.equal(saved.sources.filter(s => s.url === item.url).length, 1, '出典は重複計上しない');
+  const summary = summarizeDemandEvidence(saved);
+  assert.equal(summary.editorial, 2);
+  assert.equal(summary.m2QualifiedFirsthandWorkflows, 1);
+  assert.equal(summary.targetMfReconciliationWorkflows, 0);
+  assert.equal(summary.missing.firsthandCases, 4);
+  assert.equal(summary.decision, 'INSUFFICIENT_EVIDENCE');
 });

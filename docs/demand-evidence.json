@@ -349,6 +349,14 @@
       "kind": "official_capability",
       "url": "https://www.st.inc/news/2024-03-19-ec-moneyforward",
       "summary": "STORES株式会社の2024-03-19公式発表はMFクラウドとのAPI連携対象を『STORES ネットショップのみ』と明示し、レジは当時今後対応予定と区別。2024-01-12 MF『STORES』入金売上・手数料連携の対象をSTORES予約と推定できない。2026年現在の予約連携不存在・実CSV適合を証明するものではなく、需要人数には計上しない。"
+    },
+    {
+      "id": "E002",
+      "kind": "editorial",
+      "url": "https://okomari.smilefactory-rakuai.com/articles/83c37864.html",
+      "summary": "2026-05-21公開の写真スタジオ『佐藤さん』によるSTORES予約＋freee会計の月次CSV加工・月10時間削減の記述は、記事自身が人物・店舗・成果を架空のフィクションと明示。実利用者の本人一次体験談ではない。M2/対象MF月次照合/面談/支払意思には計上しない。",
+      "publishedAt": "2026-05-21",
+      "sourceContext": "編集記事の架空ペルソナ。本文冒頭の注記と末尾の『登場人物・店舗名は架空』『効果や数値は想定』を確認。実顧客の行動・削減時間を示す証拠ではない。"
     }
   ]
 }
