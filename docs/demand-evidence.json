@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-29",
+  "checkedAt": "2026-10-30",
   "interviews": {
     "consented": 0,
     "specificWillingness": 0
@@ -28,7 +28,8 @@
         "provenance": "https://kapa-shokai.com/fromstorestofreee/"
       },
       "bookingProduct": "STORES予約",
-      "bookingUseEvidence": "本人がSTORES予約の設定→入金からCSVをダウンロードし、freeeへの加工・取込と銀行着金の照合を説明（2024-11-19本人ブログ）。"
+      "bookingUseEvidence": "本人がSTORES予約の設定→入金からCSVをダウンロードし、freeeへの加工・取込と銀行着金の照合を説明（2024-11-19本人ブログ）。",
+      "accountingSoftwareUseEvidence": "2024-11-19の本人記事でfreee会計の銀行同期、エクセルインポート（収入取引）、未取引決済の消込を実行した手順を記述。https://kapa-shokai.com/fromstorestofreee/"
     },
     {
       "id": "O001",
