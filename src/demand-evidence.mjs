@@ -18,6 +18,7 @@ export function summarizeDemandEvidence(registry) {
   const ids = new Set(), urls = new Set();
   const targetMfEvidenceIds = [], nonTargetFirsthandIds = [];
   const publicationDatedIds = [], publicationMissingIds = [], nonBookingFirsthandIds = [];
+  const m2QualifiedIds = [], softwareUnverifiedIds = [];
   const counts = Object.fromEntries(SOURCE_KINDS.map(kind => [kind, 0]));
   for (const item of registry.sources) {
     if (!item || !TYPES.has(item.kind)) throw new Error('不明な証拠区分です');
@@ -33,7 +34,7 @@ export function summarizeDemandEvidence(registry) {
     ids.add(item.id);
     urls.add(normalizedUrl);
     if (item.kind === 'firsthand_workflow' &&
-        (!item.accountingSoftware || !item.observedWork)) {
+        (typeof item.accountingSoftware !== 'string' || !item.accountingSoftware.trim() || !item.observedWork)) {
       throw new Error('実利用者の体験談には会計ソフト名と観察できた作業が必要です');
     }
     if (item.kind === 'firsthand_workflow') {
@@ -43,8 +44,17 @@ export function summarizeDemandEvidence(registry) {
       const reservationUseRecorded = item.bookingProduct === 'STORES予約' &&
         typeof item.bookingUseEvidence === 'string' && item.bookingUseEvidence.trim().length > 0;
       if (reservationUseRecorded) {
-        if (validPublicationPeriod(item.publishedAt)) publicationDatedIds.push(item.id);
-        else publicationMissingIds.push(item.id);
+        if (validPublicationPeriod(item.publishedAt)) {
+          publicationDatedIds.push(item.id);
+          // M2 requires a recorded accounting-software identity. "未公表" is
+          // honest provenance metadata, but not evidence of a named product.
+          const software = item.accountingSoftware.trim();
+          if (/^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(software)) {
+            softwareUnverifiedIds.push(item.id);
+          } else {
+            m2QualifiedIds.push(item.id);
+          }
+        } else publicationMissingIds.push(item.id);
       } else {
         nonBookingFirsthandIds.push(item.id);
       }
@@ -81,7 +91,7 @@ export function summarizeDemandEvidence(registry) {
     throw new Error('実CSVの適合確認状況が不正です');
   }
   const missing = {
-    firsthandCases: countMissing(publicationDatedIds.length, 5),
+    firsthandCases: countMissing(m2QualifiedIds.length, 5),
     interviews: countMissing(interviews.consented, 5),
     willingness: countMissing(interviews.specificWillingness, 3),
     realCsvCompatibility: registry.realCsvCompatibilityVerified ? 0 : 1
@@ -89,6 +99,9 @@ export function summarizeDemandEvidence(registry) {
   return {
     ...counts,
     publicationDatedFirsthandWorkflows: publicationDatedIds.length,
+    m2QualifiedFirsthandWorkflows: m2QualifiedIds.length,
+    m2QualifiedIds,
+    softwareUnverifiedIds,
     publicationDatedIds,
     publicationMissingIds,
     nonBookingFirsthandIds,
