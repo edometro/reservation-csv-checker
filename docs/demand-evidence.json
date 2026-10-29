@@ -175,7 +175,16 @@
       "demandDirection": "既存代替策による作業削減（追加ツール需要を裏付けない）",
       "targetMfUser": false,
       "bookingProduct": "STORES予約",
-      "bookingUseEvidence": "販売者掲載の本人インタビューでSTORES予約を2024年の開業時からSTORESレジ・決済と併用したと明記（取材2025-04、掲載日未確認）。"
+      "bookingUseEvidence": "販売者掲載の本人インタビューでSTORES予約を2024年の開業時からSTORESレジ・決済と併用したと明記（取材2025-04、掲載日未確認）。",
+      "sameOperatorCorroboration": {
+        "url": "https://mimosa-eyedesign.stores.jp/reserve/mimosaeyedesign/blogs/990644",
+        "publishedAt": "2025-06-19",
+        "provenance": "STORES予約上の同一店舗による告知。予約ページ変更を予告した本人運営の公開記録（本文は公開検索スニペットと予約サイト上の日付を照合）。",
+        "supports": "同一店舗が2025年6月時点でSTORES予約ページを運用していたことを独立の公開URLで補強する。",
+        "doesNotSupport": "販促インタビューU002自体の掲載日、STORES予約からfreee会計への直接連携、月次の予約入金照合、MF利用、支払意思を証明しない。",
+        "sameOperator": true,
+        "countsAsSeparateFirsthand": false
+      }
     },
     {
       "id": "U003",
