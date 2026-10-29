@@ -49,7 +49,13 @@ export function summarizeDemandEvidence(registry) {
           // M2 requires a recorded accounting-software identity. "未公表" is
           // honest provenance metadata, but not evidence of a named product.
           const software = item.accountingSoftware.trim();
-          if (/^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(software)) {
+          // Product name alone is not proof of actual accounting-software use.
+          // freee予約 is a booking product, not freee会計.
+          const hasUseProof = typeof item.accountingSoftwareUseEvidence === 'string' &&
+            item.accountingSoftwareUseEvidence.trim().length > 0;
+          const isOtherProduct = /予約|booking|coubic|レジ|決済|ネットショップ/i.test(software);
+          const isUnverified = /^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(software);
+          if (isUnverified || isOtherProduct || !hasUseProof) {
             softwareUnverifiedIds.push(item.id);
           } else {
             m2QualifiedIds.push(item.id);
