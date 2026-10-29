@@ -279,6 +279,9 @@ test('Issue #3: MF mentions require firsthand monthly payout work and publicatio
   const item = {...firsthand(999), targetMfUser: true,
     accountingSoftware: 'マネーフォワード クラウド会計',
     publishedAt: '2026-10-29'};
+  // This test starts without booking-use proof, unlike the general M2 fixture.
+  delete item.bookingProduct;
+  delete item.bookingUseEvidence;
   data.sources.push(item);
   assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
   item.monthlyPayoutReconciliationWork = 'STORES予約の内訳と銀行着金を月末に本人が突合した';
@@ -309,6 +312,9 @@ test('Issue #3: an MF user recommending STORES cannot be marked as a qualified t
     accountingSoftware: 'マネーフォワード クラウド会計',
     monthlyPayoutReconciliationWork: '別サービスの入金を毎月照合',
     publishedAt: '2026-10-29'};
+  // This test starts without booking-use proof, unlike the general M2 fixture.
+  delete item.bookingProduct;
+  delete item.bookingUseEvidence;
   data.sources.push(item);
   assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/);
   item.bookingProduct = 'STORES決済';
