@@ -58,7 +58,7 @@
         "各例にURL・掲載時期・会計ソフト・実作業を記録",
         "販促媒体と本人発言を区別し重複計上しない"
       ],
-      "actual": "2026-10-29: 掲載日が確認できる本人一次体験談U006（2022-06-30、予約後の電話確認作業削減）・U007（2022-04-24、カレンダーと電話予約の照合）を別URLで追加。掲載日確認済み5/5（U001/U004/U005/U006/U007）、本人作業体験7件（うちU002/U003は掲載時期未確認）。会計ソフトはU006/U007とも未公表と明記。匿名レビューの個人同一性は厳密に証明できない。STORES予約＋MF会計の月次入金照合本人証拠0件、面談0件、支払意思0件、実CSV適合falseで有料需要の裏付けは増えていない。",
+      "actual": "2026-10-29: 掲載日が確認できる本人一次体験談U006（2022-06-30、予約後の電話確認作業削減）・U007（2022-04-24、カレンダーと電話予約の照合）を別URLで追加。掲載日確認済み5/5（U001/U004/U005/U006/U007）、本人作業体験7件（うちU002/U003は掲載時期未確認）。会計ソフトはU006/U007とも未公表と明記。匿名レビューの個人同一性は厳密に証明できない。STORES予約＋MF会計の月次入金照合本人証拠0件、面談0件、支払意思0件、実CSV適合falseで有料需要の裏付けは増えていない。 2026-10-29: M2をSTORES予約の本人利用根拠付きに限定し、U001〜U007の製品利用をURLと照合。別製品のSTORES決済のみを本人利用した2023年ブログは不採用。5/5は維持、対象MF月次照合本人0、面談0/5、支払意思0/3、実CSV適合false。",
       "evidence": [
         "docs/demand-evidence.json",
         "docs/STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md",
@@ -67,10 +67,12 @@
         "https://stores.fun/cases/posts/mimosaeyedesign-cross",
         "https://stores.fun/cases/posts/noue-cross",
         "https://www.itreview.jp/products/coubic/reviews/115327",
-        "https://www.itreview.jp/products/coubic/reviews/106305"
+        "https://www.itreview.jp/products/coubic/reviews/106305",
+        "docs/MILESTONES.md#2026-10-29m2をstores予約の本人利用根拠付き5件に限定issue-3",
+        "https://biz.ukulelelabo.com/stores/"
       ],
       "blocker": null,
-      "nextAction": "M2の一般一次体験談5件目標は達成。ただし対象MF会計併用者の月次入金照合証拠は0件。次回はM3の未確定実CSV入手経路・受入条件を、既存資料を再利用して最終整理する。",
+      "nextAction": "M2は製品本人利用＋掲載時期の5件を確認済み。M3（11/03）で真正な現行入金内訳2種類の形式・実ヘッダー・同一振込キーを検証。対象MF月次照合本人0件のため有料需要は未確認。",
       "completedAt": "2026-10-29"
     },
     {

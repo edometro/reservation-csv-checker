@@ -17,7 +17,7 @@ export function summarizeDemandEvidence(registry) {
   if (!validDate(registry.checkedAt)) throw new Error('調査日が不正です');
   const ids = new Set(), urls = new Set();
   const targetMfEvidenceIds = [], nonTargetFirsthandIds = [];
-  const publicationDatedIds = [], publicationMissingIds = [];
+  const publicationDatedIds = [], publicationMissingIds = [], nonBookingFirsthandIds = [];
   const counts = Object.fromEntries(SOURCE_KINDS.map(kind => [kind, 0]));
   for (const item of registry.sources) {
     if (!item || !TYPES.has(item.kind)) throw new Error('不明な証拠区分です');
@@ -37,16 +37,23 @@ export function summarizeDemandEvidence(registry) {
       throw new Error('実利用者の体験談には会計ソフト名と観察できた作業が必要です');
     }
     if (item.kind === 'firsthand_workflow') {
-      if (validPublicationPeriod(item.publishedAt)) publicationDatedIds.push(item.id);
-      else publicationMissingIds.push(item.id);
+      // M2 is specifically about STORES Reservation operators, not any STORES
+      // product or generic accounting-software review. A product mention alone
+      // is insufficient: require separately recorded firsthand usage.
+      const reservationUseRecorded = item.bookingProduct === 'STORES予約' &&
+        typeof item.bookingUseEvidence === 'string' && item.bookingUseEvidence.trim().length > 0;
+      if (reservationUseRecorded) {
+        if (validPublicationPeriod(item.publishedAt)) publicationDatedIds.push(item.id);
+        else publicationMissingIds.push(item.id);
+      } else {
+        nonBookingFirsthandIds.push(item.id);
+      }
       if (item.targetMfUser === true) {
         // Generic MF users and STORES recommendations are not payout-reconciliation evidence.
         const softwareMatches = /マネーフォワード|Money\s*Forward|MF\s*クラウド/i.test(item.accountingSoftware);
         // A Money Forward user recommending STORES is not a STORES Reservation user.
         // Require a separately observed use of the exact booking product, not just a
         // generic payout story. These are metadata checks; source truth is reviewed manually.
-        const reservationUseRecorded = item.bookingProduct === 'STORES予約' &&
-          typeof item.bookingUseEvidence === 'string' && item.bookingUseEvidence.trim().length > 0;
         const workflowRecorded = typeof item.monthlyPayoutReconciliationWork === 'string' &&
           item.monthlyPayoutReconciliationWork.trim().length > 0;
         // A crawl date, malformed string, or interview date masquerading as a
@@ -84,6 +91,7 @@ export function summarizeDemandEvidence(registry) {
     publicationDatedFirsthandWorkflows: publicationDatedIds.length,
     publicationDatedIds,
     publicationMissingIds,
+    nonBookingFirsthandIds,
     // Diagnostic only: five general stories are not five qualified target users.
     targetMfReconciliationWorkflows: targetMfEvidenceIds.length,
     targetMfEvidenceIds,

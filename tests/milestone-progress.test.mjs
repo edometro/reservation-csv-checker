@@ -8,7 +8,8 @@ const registry = {
   realCsvCompatibilityVerified: false,
   sources: Array.from({length: 5}, (_, i) => ({id: `U${i}`, kind: 'firsthand_workflow',
     url: `https://example.org/review/${i}`, summary: '本人の具体的な作業',
-    accountingSoftware: '未公表', observedWork: '予約受付', publishedAt: '2026-10-28'}))
+    accountingSoftware: '未公表', observedWork: '予約受付', publishedAt: '2026-10-28',
+    bookingProduct: 'STORES予約', bookingUseEvidence: '本人がSTORES予約で予約を受けた'}))
 };
 const baseline = () => ({
   evidenceSnapshot: {}, commercialGate: {status: 'INSUFFICIENT_EVIDENCE'},
@@ -88,4 +89,15 @@ test('公開台帳を実際の証拠データから再集計しても有料化No
   assert.equal(result.snapshot.targetMfFirsthandWorkflows, 0);
   assert.equal(result.snapshot.realCsvCompatibilityVerified, false);
   assert.equal(result.drift.length, 0, '証拠台帳とマイルストーンの集計が一致する');
+});
+
+test('M2: five dated stories from other STORES products do not qualify', () => {
+  const data = structuredClone(registry);
+  data.sources[0].bookingProduct = 'STORES決済';
+  const ledger = baseline();
+  assert.throws(() => evaluateMilestones(ledger, data, '2026-10-29'), /M2.*不足/);
+  ledger.milestones[1].status = 'in_progress';
+  const result = evaluateMilestones(ledger, data, '2026-11-01');
+  assert.equal(result.snapshot.publicationDatedFirsthandWorkflows, 4);
+  assert.equal(result.milestones[1].effectiveStatus, 'overdue');
 });

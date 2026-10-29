@@ -26,7 +26,9 @@
         "accountingSoftware": "freee",
         "evidenceScope": "本人の当時の操作記述。2026年の入金内訳2種類のCSV形式・完全な実ヘッダー・MF会計への適合は未確認。実CSVファイル自体は未取得。",
         "provenance": "https://kapa-shokai.com/fromstorestofreee/"
-      }
+      },
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "本人がSTORES予約の設定→入金からCSVをダウンロードし、freeeへの加工・取込と銀行着金の照合を説明（2024-11-19本人ブログ）。"
     },
     {
       "id": "O001",
@@ -171,7 +173,9 @@
       "publishedAt": "未記載（取材2025-04、2026-10-28確認）",
       "sourceContext": "STORES公式の販促目的の導入事例。本人の一人称回答に限り一次体験談と扱い、販売者による要約・効果保証とは区別する。",
       "demandDirection": "既存代替策による作業削減（追加ツール需要を裏付けない）",
-      "targetMfUser": false
+      "targetMfUser": false,
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "販売者掲載の本人インタビューでSTORES予約を2024年の開業時からSTORESレジ・決済と併用したと明記（取材2025-04、掲載日未確認）。"
     },
     {
       "id": "U003",
@@ -184,7 +188,9 @@
       "publishedAt": "未記載（取材2025-07、2026-10-28確認）",
       "sourceContext": "STORES公式の販促目的の導入事例。本人の一人称回答に限り一次体験談と扱い、販売者による要約・効果保証とは区別する。",
       "demandDirection": "既存POS/予約連携による作業削減。月次照合・MF利用は未確認。",
-      "targetMfUser": false
+      "targetMfUser": false,
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "販売者掲載の本人インタビューでSTORES予約を利用サービスとして明記し、予約の手入力削減を本人が説明（取材2025-07、掲載日未確認）。"
     },
     {
       "id": "O020",
@@ -292,7 +298,9 @@
       "publishedAt": "2024-03-22",
       "sourceContext": "ITreviewの導入決定者・有償利用者の本人レビュー。企業所属確認済み。STORES販売者の宣伝ではないが、投稿内容は独立監査されていない。",
       "demandDirection": "手作業の痛みは実在。ただし領収書業務であり、予約入金・MF月次照合ツールの需要を直接示さない。",
-      "targetMfUser": false
+      "targetMfUser": false,
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "STORES予約をレンタルスペースに導入し、カード決済利用客への領収書を個別手作業で発行した本人レビュー（2024-03-22）。"
     },
     {
       "id": "U005",
@@ -304,7 +312,9 @@
       "publishedAt": "2023-07-04",
       "sourceContext": "ITreviewの企業所属確認済み・有償利用者による本人投稿。STORES販売者の宣伝ではないが匿名の自己申告であり、現在の機能の証明ではない。",
       "demandDirection": "予約受付の実作業・価格感度の参考。入金照合・MF会計・月次作業時間・2,980円への購入意思は不明。",
-      "targetMfUser": false
+      "targetMfUser": false,
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "STORES予約で口頭・メール予約を管理者が手入力し、予約重複を防止した本人レビュー（2023-07-04）。"
     },
     {
       "id": "U006",
@@ -316,7 +326,9 @@
       "publishedAt": "2022-06-30",
       "sourceContext": "ITreview本人投稿。STORES予約利用者（20-50人規模・卸売系、無償利用）のレビュー。匿名投稿のため個人の厳密な一意性は検証不能。",
       "demandDirection": "予約受付の電話作業削減。入金照合・MF需要の証拠ではない。",
-      "targetMfUser": false
+      "targetMfUser": false,
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "STORES予約のオプション予約を実際に使い、以前の電話確認作業が減った本人レビュー（2022-06-30）。"
     },
     {
       "id": "U007",
@@ -328,7 +340,9 @@
       "publishedAt": "2022-04-24",
       "sourceContext": "ITreview本人投稿。診療所（20人未満・有償利用）のレビュー。U006とは業種・契約・日付・URLが異なるが、匿名投稿の本人一意性は完全検証不能。",
       "demandDirection": "予約カレンダー突合の運用課題。月次入金照合・MF会計・追加CSV製品需要は未確認。",
-      "targetMfUser": false
+      "targetMfUser": false,
+      "bookingProduct": "STORES予約",
+      "bookingUseEvidence": "STORES予約のGoogle Calendar連携で電話等のオフライン予約と突合し、反映遅延による予約重複を経験した本人レビュー（2022-04-24）。"
     }
   ]
 }
