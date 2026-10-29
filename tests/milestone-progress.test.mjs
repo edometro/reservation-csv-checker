@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {evaluateMilestones, synchronizeMilestoneLedger} from '../src/milestone-progress.mjs';
+import {evaluateMilestones, synchronizeMilestoneLedger, synchronizeMilestoneMarkdown} from '../src/milestone-progress.mjs';
 
 const registry = {
   checkedAt: '2026-10-28', interviews: {consented: 0, specificWillingness: 0},
@@ -115,4 +115,34 @@ test('M2: five dated stories without accounting-software names cannot be marked 
   assert.equal(result.snapshot.publicationDatedFirsthandWorkflows, 5);
   assert.equal(result.snapshot.m2QualifiedFirsthandWorkflows, 0);
   assert.equal(result.milestones[1].effectiveStatus, 'overdue');
+});
+
+test('現在の進捗表は台帳のblocked状態と適格件数に同期し、履歴は変更しない', async () => {
+  const [markdown, ledger] = await Promise.all([
+    readFile(new URL('../docs/MILESTONES.md', import.meta.url), 'utf8'),
+    readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const synced = synchronizeMilestoneMarkdown(markdown, ledger, '2026-10-30');
+  assert.equal(synced.changed, false, '公開済み進捗表が台帳と一致する');
+  assert.match(synced.content, /\| M2 \|[^\n]*全条件充足1\/5[^\n]*\*\*blocked\*\*/);
+  assert.equal(synchronizeMilestoneMarkdown(synced.content, ledger, '2026-10-30').changed, false);
+});
+
+test('期限翌日にoverdueを進捗表へ反映し、古い研究記録は残す', async () => {
+  const [markdown, ledger, evidence] = await Promise.all([
+    readFile(new URL('../docs/MILESTONES.md', import.meta.url), 'utf8'),
+    readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse),
+    readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const evaluation = evaluateMilestones(ledger, evidence, '2026-11-01');
+  const {updated} = synchronizeMilestoneLedger(ledger, evaluation);
+  const synced = synchronizeMilestoneMarkdown(markdown, updated, '2026-11-01');
+  assert.match(synced.content, /\| M2 \|[^\n]*\*\*overdue\*\*/);
+  assert.match(synced.content, /\| 2026-11-01時点の実績 \|/);
+  assert.equal(synchronizeMilestoneMarkdown(synced.content, updated, '2026-11-01').changed, false);
+  assert.ok(synced.content.includes('### 2026-10-29：ITreview'));
+});
+
+test('進捗表の欠落は黙って通さない', () => {
+  assert.throws(() => synchronizeMilestoneMarkdown('# 欠落', baseline(), '2026-10-30'), /進捗表/);
 });
