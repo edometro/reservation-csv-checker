@@ -56,6 +56,21 @@ test('M2: interview month and crawl date do not substitute for a published perio
   assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 5);
 });
 
+test('M2: same-operator dated booking post corroborates U002 but cannot date its undated interview', () => {
+  const u2 = saved.sources.find(s => s.id === 'U002');
+  assert.equal(u2.sameOperatorCorroboration.url, 'https://mimosa-eyedesign.stores.jp/reserve/mimosaeyedesign/blogs/990644');
+  assert.equal(u2.sameOperatorCorroboration.publishedAt, '2025-06-19');
+  assert.equal(u2.sameOperatorCorroboration.sameOperator, true);
+  assert.equal(u2.sameOperatorCorroboration.countsAsSeparateFirsthand, false);
+  assert.equal(saved.sources.filter(s => s.url === u2.sameOperatorCorroboration.url).length, 0,
+    '同じ店舗の別ページを別の顧客として数えない');
+  const result = summarizeDemandEvidence(saved);
+  assert.ok(result.publicationMissingIds.includes('U002'), '別ページの投稿日を取材記事の投稿日に移植しない');
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
+  assert.equal(result.targetMfReconciliationWorkflows, 0);
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
 test('2024 independent STORES booking receipt workload is not MF reconciliation demand', () => {
   const url = 'https://www.itreview.jp/products/coubic/reviews/183201';
   const matches = saved.sources.filter(s => s.url === url);
