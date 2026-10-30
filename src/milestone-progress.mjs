@@ -1,6 +1,7 @@
 import {summarizeDemandEvidence} from './demand-evidence.mjs';
 
 const STATES = new Set(['not_started', 'in_progress', 'blocked', 'done', 'overdue']);
+const WORK_PRIORITIES = new Set(['active', 'parked']);
 const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
   !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 
@@ -46,7 +47,8 @@ export function evaluateMilestones(ledger, registry, asOf) {
   }
   const seen = new Set();
   const milestones = ledger.milestones.map(m => {
-    if (!m || typeof m.id !== 'string' || seen.has(m.id) || !validDate(m.dueDate) || !STATES.has(m.status)) {
+    if (!m || typeof m.id !== 'string' || seen.has(m.id) || !validDate(m.dueDate) || !STATES.has(m.status) ||
+        (m.workPriority !== undefined && !WORK_PRIORITIES.has(m.workPriority))) {
       throw new Error('ID・期限・状態が不正または重複しています');
     }
     seen.add(m.id);
@@ -62,8 +64,15 @@ export function evaluateMilestones(ledger, registry, asOf) {
   });
   const next = milestones.filter(m => m.effectiveStatus !== 'done')
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
+  // The oldest overdue milestone stays visible, but may be blocked on access.
+  // Select exactly one independently actionable work item for this run.
+  const activeWork = milestones.filter(m => m.effectiveStatus !== 'done' && m.workPriority === 'active');
+  if (activeWork.length > 1) throw new Error('同時にactiveの未完了マイルストーンは1件までです');
+  const work = activeWork[0] ?? null;
   return {asOf, snapshot, decision: summary.decision, drift, milestones, nextDue: next && {
     id: next.id, dueDate: next.dueDate, status: next.effectiveStatus, blocker: next.blocker ?? null
+  }, nextWork: work && {
+    id: work.id, dueDate: work.dueDate, status: work.effectiveStatus, blocker: work.blocker ?? null
   }};
 }
 
