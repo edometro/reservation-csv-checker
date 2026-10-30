@@ -4,6 +4,21 @@ const STATES = new Set(['not_started', 'in_progress', 'blocked', 'done', 'overdu
 const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
   !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 
+// M3 is an evidence-backed acquisition/schema milestone, not full MF import compatibility.
+// Synthetic tests may exercise this gate, but production evidence references must be audited.
+function hasM3SourceEvidence(source) {
+  return source && source.provenanceVerified === true && source.csvFormatVerified === true &&
+    source.actualHeadersVerified === true && typeof source.evidenceRef === 'string' &&
+    source.evidenceRef.trim().length > 0;
+}
+
+function hasM3AcceptanceEvidence(v) {
+  return v && hasM3SourceEvidence(v.reservations) &&
+    hasM3SourceEvidence(v.passesAndSubscriptions) && v.commonPayoutKeyVerified === true &&
+    typeof v.commonPayoutKeyEvidenceRef === 'string' && v.commonPayoutKeyEvidenceRef.trim().length > 0 &&
+    v.acceptanceCriteriaDocumented === true;
+}
+
 export function evaluateMilestones(ledger, registry, asOf) {
   if (!validDate(asOf)) throw new Error('判定日が不正です（YYYY-MM-DD）');
   if (!ledger || !Array.isArray(ledger.milestones) || !ledger.evidenceSnapshot || !ledger.commercialGate) {
@@ -37,6 +52,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
     seen.add(m.id);
     // Completion requires more than counts; never infer "done" from numeric progress.
     if (m.status === 'done' && ((m.id === 'M2' && summary.m2QualifiedFirsthandWorkflows < 5) ||
+        (m.id === 'M3' && !hasM3AcceptanceEvidence(ledger.m3Verification)) ||
         (m.id === 'M4' && summary.consentedInterviews < 5) ||
         (m.id === 'M5' && (summary.confirmedWillingness < 3 || !summary.realCsvCompatibilityVerified)))) {
       throw new Error(`${m.id}は完了と記録されていますが必須証拠が不足しています`);
