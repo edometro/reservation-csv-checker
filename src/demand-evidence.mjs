@@ -17,6 +17,7 @@ export function summarizeDemandEvidence(registry) {
   if (!validDate(registry.checkedAt)) throw new Error('調査日が不正です');
   const ids = new Set(), urls = new Set();
   const targetMfEvidenceIds = [], nonTargetFirsthandIds = [];
+  const targetMfOperators = new Set(), targetMfOperatorUnverifiedIds = [], targetMfDuplicateOperatorIds = [];
   const publicationDatedIds = [], publicationMissingIds = [], nonBookingFirsthandIds = [];
   const m2QualifiedIds = [], softwareUnverifiedIds = [];
   const operatorUnverifiedIds = [], duplicateOperatorIds = [], qualifiedOperators = new Set();
@@ -85,10 +86,20 @@ export function summarizeDemandEvidence(registry) {
         // publication date must not satisfy the provenance requirement.
         const dated = validPublicationPeriod(item.publishedAt) ||
           validPublicationPeriod(item.interviewedAt);
-        if (!softwareMatches || !reservationUseRecorded || !workflowRecorded || !dated) {
+        const softwareUseRecorded = typeof item.accountingSoftwareUseEvidence === 'string' &&
+          item.accountingSoftwareUseEvidence.trim().length > 0;
+        if (!softwareMatches || !softwareUseRecorded || !reservationUseRecorded || !workflowRecorded || !dated) {
           throw new Error(`${item.id}: 対象MF月次照合の本人証拠にはSTORES予約の本人利用・MF会計・具体的月次照合作業・有効な掲載/取材時期が必要です`);
         }
-        targetMfEvidenceIds.push(item.id);
+        // Multiple URLs from one operator are not independent MF users.
+        // Unknown operator identity is insufficient for a target-user count.
+        const operatorKey = typeof item.operatorKey === 'string' ? item.operatorKey.trim() : '';
+        if (!operatorKey) targetMfOperatorUnverifiedIds.push(item.id);
+        else if (targetMfOperators.has(operatorKey)) targetMfDuplicateOperatorIds.push(item.id);
+        else {
+          targetMfOperators.add(operatorKey);
+          targetMfEvidenceIds.push(item.id);
+        }
       } else {
         nonTargetFirsthandIds.push(item.id);
       }
@@ -125,6 +136,8 @@ export function summarizeDemandEvidence(registry) {
     // Diagnostic only: five general stories are not five qualified target users.
     targetMfReconciliationWorkflows: targetMfEvidenceIds.length,
     targetMfEvidenceIds,
+    targetMfOperatorUnverifiedIds,
+    targetMfDuplicateOperatorIds,
     nonTargetFirsthandIds,
     consentedInterviews: interviews.consented,
     confirmedWillingness: interviews.specificWillingness,
