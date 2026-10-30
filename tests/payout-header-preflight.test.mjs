@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, link } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parsePayoutHeader, inspectPayoutHeaders, MAX_HEADER_BYTES } from '../src/payout-header-preflight.mjs';
@@ -79,4 +79,27 @@ test('quoted newline is part of the header, not the start of the data rows', () 
     Buffer.from([0xff])
   ]);
   assert.deepEqual(parsePayoutHeader(bytes).headers, ['multi\nline', 'amount']);
+});
+
+test('different paths containing identical bytes are not two independent payout exports', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'payout-duplicate-'));
+  try {
+    const a = join(dir, 'reservations.csv');
+    const b = join(dir, 'passes.csv');
+    const csv = 'id,amount\nSENSITIVE_VALUE,100\n';
+    await writeFile(a, csv);
+    await writeFile(b, csv);
+    await assert.rejects(() => inspectPayoutHeaders(a, b), { code: 'DUPLICATE_EXPORT_CONTENT' });
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('hardlinked filenames are rejected as duplicated payout exports', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'payout-hardlink-'));
+  try {
+    const a = join(dir, 'reservations.csv');
+    const b = join(dir, 'passes.csv');
+    await writeFile(a, 'id,amount\nSENSITIVE_VALUE,100\n');
+    await link(a, b);
+    await assert.rejects(() => inspectPayoutHeaders(a, b), { code: 'DUPLICATE_EXPORT_CONTENT' });
+  } finally { await rm(dir, { recursive: true, force: true }); }
 });
