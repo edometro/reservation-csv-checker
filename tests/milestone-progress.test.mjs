@@ -122,10 +122,10 @@ test('現在の進捗表は台帳のblocked状態と適格件数に同期し、�
     readFile(new URL('../docs/MILESTONES.md', import.meta.url), 'utf8'),
     readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse)
   ]);
-  const synced = synchronizeMilestoneMarkdown(markdown, ledger, '2026-10-30');
+  const synced = synchronizeMilestoneMarkdown(markdown, ledger, '2026-10-31');
   assert.equal(synced.changed, false, '公開済み進捗表が台帳と一致する');
   assert.match(synced.content, /\| M2 \|[^\n]*全条件充足1\/5[^\n]*\*\*blocked\*\*/);
-  assert.equal(synchronizeMilestoneMarkdown(synced.content, ledger, '2026-10-30').changed, false);
+  assert.equal(synchronizeMilestoneMarkdown(synced.content, ledger, '2026-10-31').changed, false);
 });
 
 test('期限翌日にoverdueを進捗表へ反映し、古い研究記録は残す', async () => {
