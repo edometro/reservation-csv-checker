@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {evaluateMilestones, synchronizeMilestoneLedger, synchronizeMilestoneMarkdown} from '../src/milestone-progress.mjs';
 
 const registry = {
@@ -208,4 +209,16 @@ test('同時並走と不正な作業優先度を拒否する', () => {
   ledger.milestones[1].workPriority = 'parked';
   ledger.milestones[2].workPriority = 'unknown';
   assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-31'), /不正/);
+});
+
+test('CLIは11/01時点の遅延M2と単一active M3を別々に出力する', () => {
+  const output = execFileSync(process.execPath,
+    ['scripts/milestone-status.mjs', '--as-of', '2026-11-01'], {encoding: 'utf8'});
+  const report = JSON.parse(output);
+  assert.equal(report.nextDue.id, 'M2');
+  assert.equal(report.nextDue.status, 'overdue');
+  assert.equal(report.nextWork.id, 'M3');
+  assert.equal(report.nextWork.status, 'in_progress');
+  assert.equal(report.evidence.m2QualifiedFirsthandWorkflows, 1);
+  assert.equal(report.evidence.realCsvCompatibilityVerified, false);
 });
