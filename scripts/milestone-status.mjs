@@ -24,4 +24,4 @@ if (write && changed) await writeFile(ledgerUrl, JSON.stringify(updated, null, 2
 if (write && markdownSync.changed) await writeFile(new URL('../docs/MILESTONES.md', import.meta.url), markdownSync.content);
 console.log(JSON.stringify({asOf, decision: evaluation.decision, evidence: evaluation.snapshot,
   milestones: evaluation.milestones.map(m => ({id: m.id, dueDate: m.dueDate, stored: m.status, effective: m.effectiveStatus})),
-  nextDue: evaluation.nextDue, drift: evaluation.drift, ledgerUpdated: write && changed, markdownUpdated: write && markdownSync.changed}, null, 2));
+  nextDue: evaluation.nextDue, nextWork: evaluation.nextWork, drift: evaluation.drift, ledgerUpdated: write && changed, markdownUpdated: write && markdownSync.changed}, null, 2));
