@@ -10,7 +10,8 @@
     "retention": "node scripts/retention-scenarios.mjs",
     "demand": "node scripts/demand-status.mjs",
     "milestones": "node scripts/milestone-status.mjs",
-    "payout:preflight": "node scripts/payout-header-preflight.mjs"
+    "payout:preflight": "node scripts/payout-header-preflight.mjs",
+    "demand:gaps": "node scripts/m2-gap-audit.mjs"
   },
   "engines": {
     "node": ">=20"
