@@ -1,4 +1,5 @@
 import { open } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
@@ -116,6 +117,14 @@ async function inspectOne(path) {
   }
 }
 
+// Compare complete files in constant memory. Neither hashes nor file contents
+// are returned; different paths can still be copies of the same export.
+async function digestFile(path) {
+  const hash = createHash('sha256');
+  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  return hash.digest('hex');
+}
+
 /** Never returns data rows, filenames, or proof of payout/ledger compatibility. */
 export async function inspectPayoutHeaders(reservationsPath, passesPath) {
   if (!reservationsPath || !passesPath || resolve(reservationsPath) === resolve(passesPath)) {
@@ -123,6 +132,10 @@ export async function inspectPayoutHeaders(reservationsPath, passesPath) {
   }
   const reservations = await inspectOne(reservationsPath);
   const passes = await inspectOne(passesPath);
+  // Distinct paths alone do not establish two independent payout breakdowns.
+  if (await digestFile(reservationsPath) === await digestFile(passesPath)) {
+    throw new PayoutHeaderError('DUPLICATE_EXPORT_CONTENT');
+  }
   return {
     state: 'HEADERS_OBSERVED_MANUAL_REVIEW_REQUIRED',
     exports: [
