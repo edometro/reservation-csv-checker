@@ -55,3 +55,28 @@ test('two different synthetic files are read without exposing rows or granting c
     await assert.rejects(() => inspectPayoutHeaders(a, a), { code: 'TWO_DISTINCT_FILES_REQUIRED' });
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('header-only check does not reject valid headers due to truncated or invalid data-row bytes', () => {
+  const invalidBody = Buffer.concat([Buffer.from('id,amount\n'), Buffer.from([0xff, 0xfe])]);
+  assert.deepEqual(parsePayoutHeader(invalidBody).headers, ['id', 'amount']);
+  // A bounded read can cut a multi-byte UTF-8 code point in a later row.
+  const cutBody = Buffer.concat([
+    Buffer.from('id,amount\n'),
+    Buffer.alloc(MAX_HEADER_BYTES - 10, 0x61),
+    Buffer.from([0xe3])
+  ]);
+  assert.deepEqual(parsePayoutHeader(cutBody).headers, ['id', 'amount']);
+});
+
+test('a header exceeding the byte limit is rejected even when its newline is present', () => {
+  const oversized = 'id,' + 'x'.repeat(MAX_HEADER_BYTES - 2) + '\n';
+  assert.throws(() => parse(oversized), { code: 'HEADER_TOO_LARGE' });
+});
+
+test('quoted newline is part of the header, not the start of the data rows', () => {
+  const bytes = Buffer.concat([
+    Buffer.from('"multi\nline",amount\n'),
+    Buffer.from([0xff])
+  ]);
+  assert.deepEqual(parsePayoutHeader(bytes).headers, ['multi\nline', 'amount']);
+});

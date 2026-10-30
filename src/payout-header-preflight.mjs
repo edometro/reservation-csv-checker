@@ -12,6 +12,35 @@ export class PayoutHeaderError extends Error {
   }
 }
 
+// CSV delimiters and quotes are ASCII bytes in UTF-8. Find the first record
+// before decoding: data rows can be truncated at the bounded-read limit and
+// must not cause a header-only check to report a false UTF-8 failure.
+function firstHeaderRecordEnd(bytes) {
+  let quoted = false;
+  let fieldStart = true;
+  let afterQuote = false;
+  for (let i = 0; i < bytes.length; i++) {
+    const byte = bytes[i];
+    if (byte === 0x22) {
+      if (quoted) {
+        if (bytes[i + 1] === 0x22) i++;
+        else { quoted = false; afterQuote = true; }
+      } else if (fieldStart && !afterQuote) {
+        quoted = true;
+        fieldStart = false;
+      }
+    } else if (!quoted && (byte === 0x0a || byte === 0x0d)) {
+      return i + 1;
+    } else if (!quoted && byte === 0x2c) {
+      fieldStart = true;
+      afterQuote = false;
+    } else if (!quoted) {
+      fieldStart = false;
+    }
+  }
+  return bytes.length;
+}
+
 /** Parse only the first CSV record. The returned labels must stay local. */
 export function parsePayoutHeader(bytes) {
   if (!Buffer.isBuffer(bytes)) throw new TypeError('Buffer required');
@@ -20,9 +49,12 @@ export function parsePayoutHeader(bytes) {
       bytes.subarray(0, 4).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0]))) {
     throw new PayoutHeaderError('NON_CSV_OFFICE_FORMAT');
   }
+  const headerEnd = firstHeaderRecordEnd(bytes);
+  if (headerEnd > MAX_HEADER_BYTES) throw new PayoutHeaderError('HEADER_TOO_LARGE');
   let content;
   try {
-    content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    // Validate the header only, never the unrelated data rows.
+    content = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, headerEnd));
   } catch {
     throw new PayoutHeaderError('NOT_UTF8');
   }
@@ -59,10 +91,7 @@ export function parsePayoutHeader(bytes) {
     }
   }
   if (quoted) throw new PayoutHeaderError('UNTERMINATED_QUOTED_HEADER');
-  if (!terminated) {
-    if (bytes.length > MAX_HEADER_BYTES) throw new PayoutHeaderError('HEADER_TOO_LARGE');
-    headers.push(field);
-  }
+  if (!terminated) headers.push(field);
   if (headers.length < 2) throw new PayoutHeaderError('TOO_FEW_COLUMNS');
   const normalized = headers.map(x => x.trim());
   if (normalized.some(x => !x || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(x))) {
