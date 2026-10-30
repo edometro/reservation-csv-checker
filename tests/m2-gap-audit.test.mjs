@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {buildM2GapAudit} from '../src/m2-gap-audit.mjs';
 
 const registry = JSON.parse(await readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8'));
@@ -41,4 +42,12 @@ test('M2 report never uses an interview month as the source publication period',
   const row = buildM2GapAudit(data).sources.find(item => item.id === 'U002');
   assert.ok(row.missingConditions.includes('SOURCE_PUBLICATION_PERIOD_UNVERIFIED'));
   assert.equal(row.qualified, false);
+});
+
+test('M2 CLI prints machine-readable gap report without claiming five users', () => {
+  const output = execFileSync(process.execPath, ['scripts/m2-gap-audit.mjs'], {encoding: 'utf8'});
+  const report = JSON.parse(output);
+  assert.equal(report.qualified, 1);
+  assert.equal(report.missing, 4);
+  assert.equal(report.sources.length, 7);
 });
