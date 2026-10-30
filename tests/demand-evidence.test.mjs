@@ -483,3 +483,38 @@ test('M2: a separately verified operator with all required fields can add one ca
   assert.deepEqual(result.m2QualifiedIds, ['U001', 'U913']);
   assert.equal(result.missing.firsthandCases, 3);
 });
+
+test('Issue #3: a Money Forward product name without firsthand software-use proof is not target evidence', () => {
+  const data = clone();
+  const item = {...firsthand(994), targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    monthlyPayoutReconciliationWork: 'STORES予約の入金内訳と銀行着金を月次で照合',
+    accountingSoftwareUseEvidence: ''};
+  data.sources.push(item);
+  assert.throws(() => summarizeDemandEvidence(data), /対象MF月次照合/,
+    'MF製品名の自己申告だけで実使用の証拠にしない');
+  item.accountingSoftwareUseEvidence = '本人がマネーフォワード クラウド会計の銀行明細を操作した';
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.targetMfReconciliationWorkflows, 1);
+  assert.deepEqual(result.targetMfEvidenceIds, ['U994']);
+});
+
+test('Issue #3: two MF URLs from one operator and anonymous MF reports never inflate target count', () => {
+  const data = clone();
+  const mf = n => ({...firsthand(n), targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    accountingSoftwareUseEvidence: '本人がMFクラウド会計の入金明細を操作',
+    monthlyPayoutReconciliationWork: '予約内訳と銀行入金を月次で突合'});
+  const first = mf(995);
+  const duplicate = {...mf(996), operatorKey: first.operatorKey};
+  const anonymous = mf(997);
+  delete anonymous.operatorKey;
+  data.sources.push(first, duplicate, anonymous);
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.targetMfReconciliationWorkflows, 1);
+  assert.deepEqual(result.targetMfEvidenceIds, ['U995']);
+  assert.deepEqual(result.targetMfDuplicateOperatorIds, ['U996']);
+  assert.deepEqual(result.targetMfOperatorUnverifiedIds, ['U997']);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 2, 'M2も同一運営者を重複計上しない');
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
