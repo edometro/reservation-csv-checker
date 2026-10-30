@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm, link } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, link, symlink, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parsePayoutHeader, inspectPayoutHeaders, MAX_HEADER_BYTES } from '../src/payout-header-preflight.mjs';
@@ -101,5 +101,25 @@ test('hardlinked filenames are rejected as duplicated payout exports', async () 
     await writeFile(a, 'id,amount\nSENSITIVE_VALUE,100\n');
     await link(a, b);
     await assert.rejects(() => inspectPayoutHeaders(a, b), { code: 'DUPLICATE_EXPORT_CONTENT' });
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('preflight refuses symlinks and directories before reading private CSV content', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'payout-file-type-'));
+  try {
+    const original = join(dir, 'original.csv');
+    const other = join(dir, 'other.csv');
+    const alias = join(dir, 'alias.csv');
+    const folder = join(dir, 'not-a-csv');
+    await writeFile(original, 'id,amount\\nSECRET_A,100\\n');
+    await writeFile(other, 'id,amount\\nSECRET_B,200\\n');
+    await symlink(original, alias);
+    await mkdir(folder);
+    await assert.rejects(() => inspectPayoutHeaders(alias, other), { code: 'UNSAFE_FILE_TYPE' });
+    await assert.rejects(() => inspectPayoutHeaders(original, alias), { code: 'UNSAFE_FILE_TYPE' });
+    await assert.rejects(() => inspectPayoutHeaders(folder, other), { code: 'UNSAFE_FILE_TYPE' });
+    const report = await inspectPayoutHeaders(original, other);
+    assert.equal(report.realCsvCompatibilityVerified, false);
+    assert.equal(JSON.stringify(report).includes('SECRET_'), false);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
