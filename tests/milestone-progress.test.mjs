@@ -183,3 +183,29 @@ test('期限翌日にoverdueを進捗表へ反映し、古い研究記録は残�
 test('進捗表の欠落は黙って通さない', () => {
   assert.throws(() => synchronizeMilestoneMarkdown('# 欠落', baseline(), '2026-10-30'), /進捗表/);
 });
+
+test('期限超過のM2は未達一覧に残し、独立して進めるM3だけを次の1作業に選ぶ', () => {
+  const ledger = baseline();
+  ledger.milestones[1].status = 'blocked';
+  ledger.milestones[1].workPriority = 'parked';
+  ledger.milestones[2].workPriority = 'active';
+  const result = evaluateMilestones(ledger, registry, '2026-11-01');
+  assert.equal(result.nextDue.id, 'M2', '遅延は隠さない');
+  assert.equal(result.nextDue.status, 'overdue');
+  assert.equal(result.nextWork.id, 'M3', '承認待ちのM2を無限に再調査しない');
+  const {updated} = synchronizeMilestoneLedger(ledger, result);
+  assert.equal(updated.milestones[1].status, 'overdue');
+  assert.equal(updated.milestones[1].workPriority, 'parked');
+  assert.equal(updated.milestones[2].workPriority, 'active');
+});
+
+test('同時並走と不正な作業優先度を拒否する', () => {
+  const ledger = baseline();
+  ledger.milestones[1].status = 'blocked';
+  ledger.milestones[1].workPriority = 'active';
+  ledger.milestones[2].workPriority = 'active';
+  assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-31'), /同時にactive/);
+  ledger.milestones[1].workPriority = 'parked';
+  ledger.milestones[2].workPriority = 'unknown';
+  assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-31'), /不正/);
+});
