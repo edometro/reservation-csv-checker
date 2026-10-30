@@ -171,8 +171,8 @@ export async function inspectPayoutHeaders(reservationsPath, passesPath) {
       if (await digestFile(first) === await digestFile(second)) {
         throw new PayoutHeaderError('DUPLICATE_EXPORT_CONTENT');
       }
-  return {
-    state: 'HEADERS_OBSERVED_MANUAL_REVIEW_REQUIRED',
+      return {
+        state: 'HEADERS_OBSERVED_MANUAL_REVIEW_REQUIRED',
     exports: [
       { role: 'payout_reservations', ...reservations },
       { role: 'payout_passes_subscriptions', ...passes }
