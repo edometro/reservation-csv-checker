@@ -218,7 +218,7 @@ test('CLIは11/01時点の遅延M2と単一active M3を別々に出力する', (
   assert.equal(report.nextDue.id, 'M2');
   assert.equal(report.nextDue.status, 'overdue');
   assert.equal(report.nextWork.id, 'M3');
-  assert.equal(report.nextWork.status, 'in_progress');
+  assert.equal(report.nextWork.status, 'blocked', '実CSV未入手・個別承認なしのM3はactiveでもblocked');
   assert.equal(report.evidence.m2QualifiedFirsthandWorkflows, 1);
   assert.equal(report.evidence.realCsvCompatibilityVerified, false);
 });
