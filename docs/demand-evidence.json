@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-30",
+  "checkedAt": "2026-10-31",
   "interviews": {
     "consented": 0,
     "specificWillingness": 0
@@ -376,6 +376,12 @@
       "kind": "official_capability",
       "url": "https://stores.fun/reserve/pricing",
       "summary": "2026-10-30閲覧のSTORES予約公式料金表。予約・顧客情報CSVダウンロードはビジネス/エンタープライズのみ（年契約ビジネス税込28,600円/月）。現行の入金履歴『内訳（予約）』『内訳（回数券・月謝）』のプラン別可否・ファイル形式はこの表からは判断できない。本人需要・実CSV適合の証拠ではない。"
+    },
+    {
+      "id": "O038",
+      "kind": "official_capability",
+      "url": "https://regi-faq.stores.jp/hc/ja/articles/27464631531289",
+      "summary": "STORESレジ公式FAQ（2026-07-22更新、2026-10-31確認）はSTORES予約連携のレジ会計操作の対象を予約・レジ双方の有料プラン契約者に限定し、レジ売上を過去日に遡って登録できず操作日に計上すると明記。過去月の予約・振込を後追いPOS売上から復元することはできない。現行予約入金2内訳のCSV形式・プラン可否・実ヘッダー・共通振込キーは証明せず、本人一次証拠でもない。"
     }
   ]
 }
