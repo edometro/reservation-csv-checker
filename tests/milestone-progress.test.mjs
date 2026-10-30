@@ -45,6 +45,43 @@ test('M2: 取材時期だけの5件を完了と誤判定しない', () => {
   assert.equal(result.milestones[1].effectiveStatus, 'overdue');
 });
 
+test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確認ならdoneを拒否', () => {
+  const ledger = baseline();
+  ledger.milestones[2].status = 'done';
+  assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-31'), /M3.*不足/);
+  const verified = () => ({provenanceVerified: true, csvFormatVerified: true,
+    actualHeadersVerified: true, evidenceRef: 'docs/redacted-local-verification.md'});
+  ledger.m3Verification = {
+    reservations: verified(), passesAndSubscriptions: verified(),
+    commonPayoutKeyVerified: true, commonPayoutKeyEvidenceRef: 'docs/redacted-local-verification.md',
+    acceptanceCriteriaDocumented: true
+  };
+  const valid = evaluateMilestones(ledger, registry, '2026-10-31');
+  assert.equal(valid.milestones[2].effectiveStatus, 'done');
+  assert.equal(valid.snapshot.realCsvCompatibilityVerified, false,
+    'M3形式確認はMF実インポート/全体適合の証明ではない');
+  assert.equal(valid.decision, 'INSUFFICIENT_EVIDENCE');
+  for (const [section, field] of [
+    ['reservations', 'provenanceVerified'],
+    ['reservations', 'csvFormatVerified'],
+    ['reservations', 'actualHeadersVerified'],
+    ['reservations', 'evidenceRef'],
+    ['passesAndSubscriptions', 'provenanceVerified'],
+    ['passesAndSubscriptions', 'csvFormatVerified'],
+    ['passesAndSubscriptions', 'actualHeadersVerified'],
+    ['passesAndSubscriptions', 'evidenceRef']
+  ]) {
+    const missing = structuredClone(ledger);
+    missing.m3Verification[section][field] = field === 'evidenceRef' ? '' : false;
+    assert.throws(() => evaluateMilestones(missing, registry, '2026-10-31'), /M3.*不足/);
+  }
+  for (const field of ['commonPayoutKeyVerified', 'commonPayoutKeyEvidenceRef', 'acceptanceCriteriaDocumented']) {
+    const missing = structuredClone(ledger);
+    missing.m3Verification[field] = field === 'commonPayoutKeyEvidenceRef' ? '' : false;
+    assert.throws(() => evaluateMilestones(missing, registry, '2026-10-31'), /M3.*不足/);
+  }
+});
+
 test('期限当日はoverdueにせず、翌日から判定', () => {
   const result = evaluateMilestones(baseline(), registry, '2026-11-03');
   assert.equal(result.milestones[2].effectiveStatus, 'in_progress');
