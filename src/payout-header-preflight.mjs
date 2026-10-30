@@ -1,5 +1,5 @@
-import { open } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
+import { open, lstat } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
@@ -106,22 +106,50 @@ export function parsePayoutHeader(bytes) {
   };
 }
 
-async function inspectOne(path) {
-  const handle = await open(path, 'r');
+// A path may point to a FIFO, device, directory, or symlink. Refuse those
+// before reading sensitive CSVs. O_NOFOLLOW also closes the lstat/open race
+// on platforms that support it; the inode check catches path substitution.
+async function openRegularFile(path) {
+  const before = await lstat(path);
+  if (!before.isFile()) throw new PayoutHeaderError('UNSAFE_FILE_TYPE');
+  let handle;
   try {
-    const bytes = Buffer.alloc(MAX_HEADER_BYTES + 1);
-    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
-    return parsePayoutHeader(bytes.subarray(0, bytesRead));
-  } finally {
+    handle = await open(path, fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0));
+  } catch (error) {
+    if (error?.code === 'ELOOP') throw new PayoutHeaderError('UNSAFE_FILE_TYPE');
+    throw error;
+  }
+  try {
+    const after = await handle.stat();
+    if (!after.isFile() || after.dev !== before.dev || after.ino !== before.ino) {
+      throw new PayoutHeaderError('UNSAFE_FILE_TYPE');
+    }
+    return handle;
+  } catch (error) {
     await handle.close();
+    throw error;
   }
 }
 
-// Compare complete files in constant memory. Neither hashes nor file contents
-// are returned; different paths can still be copies of the same export.
-async function digestFile(path) {
+async function inspectOne(handle) {
+  const bytes = Buffer.alloc(MAX_HEADER_BYTES + 1);
+  const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
+  return parsePayoutHeader(bytes.subarray(0, bytesRead));
+}
+
+// Hash through the SAME open descriptor used for header inspection. Reopening
+// a pathname would allow a replaced file to be hashed after a different header
+// was checked. Hashes and file contents never leave this process.
+async function digestFile(handle) {
   const hash = createHash('sha256');
-  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  const buffer = Buffer.alloc(64 * 1024);
+  let position = 0;
+  while (true) {
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, position);
+    if (!bytesRead) break;
+    hash.update(buffer.subarray(0, bytesRead));
+    position += bytesRead;
+  }
   return hash.digest('hex');
 }
 
@@ -130,14 +158,21 @@ export async function inspectPayoutHeaders(reservationsPath, passesPath) {
   if (!reservationsPath || !passesPath || resolve(reservationsPath) === resolve(passesPath)) {
     throw new PayoutHeaderError('TWO_DISTINCT_FILES_REQUIRED');
   }
-  const reservations = await inspectOne(reservationsPath);
-  const passes = await inspectOne(passesPath);
-  // Distinct paths alone do not establish two independent payout breakdowns.
-  if (await digestFile(reservationsPath) === await digestFile(passesPath)) {
-    throw new PayoutHeaderError('DUPLICATE_EXPORT_CONTENT');
-  }
-  return {
-    state: 'HEADERS_OBSERVED_MANUAL_REVIEW_REQUIRED',
+  const first = await openRegularFile(reservationsPath);
+  try {
+    const second = await openRegularFile(passesPath);
+    try {
+      const [firstStat, secondStat] = await Promise.all([first.stat(), second.stat()]);
+      if (firstStat.dev === secondStat.dev && firstStat.ino === secondStat.ino) {
+        throw new PayoutHeaderError('DUPLICATE_EXPORT_CONTENT');
+      }
+      const reservations = await inspectOne(first);
+      const passes = await inspectOne(second);
+      if (await digestFile(first) === await digestFile(second)) {
+        throw new PayoutHeaderError('DUPLICATE_EXPORT_CONTENT');
+      }
+      return {
+        state: 'HEADERS_OBSERVED_MANUAL_REVIEW_REQUIRED',
     exports: [
       { role: 'payout_reservations', ...reservations },
       { role: 'payout_passes_subscriptions', ...passes }
@@ -147,5 +182,11 @@ export async function inspectPayoutHeaders(reservationsPath, passesPath) {
     bankReconciliationVerified: false,
     mfImportVerified: false,
     realCsvCompatibilityVerified: false
-  };
+      };
+    } finally {
+      await second.close();
+    }
+  } finally {
+    await first.close();
+  }
 }
