@@ -6,6 +6,10 @@
 
 > **現行の判定は下の「進捗」表とJSON台帳が正本です。** 追記型の過去の調査記録には後に撤回したM2「5/5 done」等が残っていますが、履歴であって現在の判定ではありません。`npm run milestones -- --write` は期限・件数・状態を現在表へ同期します。
 
+### 2026-10-30：Pelfine本人ブログ2本を横断照合し、STORES予約ユーザーへの誤計上を拒否（Issue #3）
+
+**今回の完了成果物**：[既存の一次体験談反証資料](STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md#2026-10-30pelfine本人ブログ2記事を照合しstores予約の実利用と取り違えないissue-3)に、[本人の予約記事](https://pelfine.blog/reservation-system)（2022-03-05公開・2023-07-20更新）と[決済記事](https://pelfine.blog/cashless-payment)（2022-03-25公開・2023-07-20更新）の同一運営者照合を記録。本人は**Airリザーブの有料プランで予約・カルテ管理**、**Squareで決済**と説明。STORES予約は比較対象であり、当時の本人実使用を確認できない。会計ソフト名の言及もSTORES予約入金の実処理の証明ではない。**M2不採用、適格1/5・不足4、対象MF本人0、面談0/5、支払意思0/3、実CSV適合false**。出典2本を2人と数えない。期限10/31までblocked、未達なら11/01からoverdue。**次の1作業**：別運営者の新しい本人一次資料を1件採否判定し、なければ11/03期限M3の未検証事項へ重点移行。第三者への無承認連絡・顧客CSV取得・販売・公開デプロイなし。
+
 ### 2026-10-30：別運営者の予約切替告知をM2候補として採否判定（Issue #3）
 
 **今回の完了成果物**：[既存の本人談・反証資料](STORES_USER_INTERVIEWS_COUNTEREVIDENCE_2026-10-28.md#2026-10-30mariuca-voice-studioの予約サービス切替告知をm2不採用と判定issue-3)に、[Mariuca Voice Studioの本人ブログ](https://ameblo.jp/mariucavoicetraining/entry-12978833094.html)と[同一店舗の予約ページ](https://mariucavoicestudio.stores.jp/reserve/mariuca)を照合した採否・根拠を記録。本人はfreee予約からSTORES予約への切替を告知し、キャンセル対応負担を理由に挙げる。しかし**freee予約は会計ソフトfreee会計ではない**。会計ソフトの実使用、銀行入金の月次照合、記事掲載日は未確認。予約ページの匿名レビュー日（2026-10-12）をブログ掲載日として転用しない。同一運営者の2URLを2件に数えない。**M2不採用、需要証拠台帳の件数増加なし**。
