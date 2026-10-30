@@ -111,8 +111,8 @@ test('preflight refuses symlinks and directories before reading private CSV cont
     const other = join(dir, 'other.csv');
     const alias = join(dir, 'alias.csv');
     const folder = join(dir, 'not-a-csv');
-    await writeFile(original, 'id,amount\\nSECRET_A,100\\n');
-    await writeFile(other, 'id,amount\\nSECRET_B,200\\n');
+    await writeFile(original, 'id,amount\nSECRET_A,100\n');
+    await writeFile(other, 'id,amount\nSECRET_B,200\n');
     await symlink(original, alias);
     await mkdir(folder);
     await assert.rejects(() => inspectPayoutHeaders(alias, other), { code: 'UNSAFE_FILE_TYPE' });
