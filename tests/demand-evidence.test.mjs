@@ -28,6 +28,27 @@ const firsthand = n => ({
   bookingProduct: 'STORES予約', bookingUseEvidence: '本人が予約画面でCSVを操作した'
 });
 
+
+const addSyntheticInterviewProof = (data, willing = 3) => {
+  data.interviews = {
+    consented: 5, specificWillingness: willing,
+    records: Array.from({length: 5}, (_, i) => ({
+      participantKey: 'synthetic-p' + i,
+      consentedAt: '2026-10-30', interviewedAt: '2026-10-31',
+      consentEvidenceRef: 'synthetic-private-consent-' + i,
+      interviewEvidenceRef: 'synthetic-private-interview-' + i,
+      willingness: i < willing,
+      ...(i < willing ? {
+        willingnessPriceJPY: 2980,
+        decisionMakerConfirmed: true,
+        willingnessTimeframe: '翌月から',
+        requiredFeatures: '予約入金と銀行着金の照合',
+        willingnessEvidenceRef: 'synthetic-private-price-' + i
+      } : {})
+    }))
+  };
+};
+
 test('tracked evidence keeps real users separate from seller and official claims', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, baselineFirsthand);
@@ -123,7 +144,7 @@ test('five actual stories alone do not constitute customer interviews or compati
 test('only complete requirements allow human Go review, never auto-launch', () => {
   const data = clone();
   addToFive(data);
-  data.interviews = {consented: 5, specificWillingness: 3};
+  addSyntheticInterviewProof(data);
   data.realCsvCompatibilityVerified = true;
   data.realCsvVerification = {
     reviewedAt: '2026-10-31',
@@ -131,6 +152,7 @@ test('only complete requirements allow human Go review, never auto-launch', () =
       [key, {verified: true, evidenceRef: 'synthetic-test-proof-' + key}]))
   };
   assert.equal(summarizeDemandEvidence(data).decision, 'READY_FOR_HUMAN_GO_REVIEW');
+  data.interviews.records[2].willingness = false;
   data.interviews.specificWillingness = 2;
   assert.equal(summarizeDemandEvidence(data).decision, 'INSUFFICIENT_EVIDENCE');
 });
@@ -138,7 +160,7 @@ test('only complete requirements allow human Go review, never auto-launch', () =
 test('M5: flipping the real-CSV boolean cannot bypass actual proof references', () => {
   const data = clone();
   addToFive(data);
-  data.interviews = {consented: 5, specificWillingness: 3};
+  addSyntheticInterviewProof(data);
   data.realCsvCompatibilityVerified = true;
   assert.throws(() => summarizeDemandEvidence(data), /実CSV適合.*監査証拠/);
   data.realCsvVerification = {
@@ -158,6 +180,43 @@ test('M5: flipping the real-CSV boolean cannot bypass actual proof references', 
   assert.throws(() => summarizeDemandEvidence(data), /監査証拠/, 'future review date cannot qualify');
   data.realCsvCompatibilityVerified = false;
   assert.equal(summarizeDemandEvidence(data).decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('M4/M5: aggregate counters cannot fabricate consent or 2,980 yen willingness', () => {
+  const data = clone();
+  data.interviews = {consented: 5, specificWillingness: 3};
+  assert.throws(() => summarizeDemandEvidence(data), /監査証拠/);
+  addSyntheticInterviewProof(data);
+  assert.equal(summarizeDemandEvidence(data).consentedInterviews, 5);
+  assert.equal(summarizeDemandEvidence(data).confirmedWillingness, 3);
+  const missingConsent = clone();
+  addSyntheticInterviewProof(missingConsent);
+  missingConsent.interviews.records[0].consentEvidenceRef = '';
+  assert.throws(() => summarizeDemandEvidence(missingConsent), /監査証拠/);
+  const duplicate = clone();
+  addSyntheticInterviewProof(duplicate);
+  duplicate.interviews.records[1].participantKey = duplicate.interviews.records[0].participantKey;
+  assert.throws(() => summarizeDemandEvidence(duplicate), /重複/);
+  const future = clone();
+  addSyntheticInterviewProof(future);
+  future.interviews.records[0].interviewedAt = '2026-11-01';
+  assert.throws(() => summarizeDemandEvidence(future), /監査証拠/);
+  const lowPrice = clone();
+  addSyntheticInterviewProof(lowPrice);
+  lowPrice.interviews.records[0].willingnessPriceJPY = 1000;
+  assert.throws(() => summarizeDemandEvidence(lowPrice), /2,980円/);
+  const noBuyer = clone();
+  addSyntheticInterviewProof(noBuyer);
+  noBuyer.interviews.records[0].decisionMakerConfirmed = false;
+  assert.throws(() => summarizeDemandEvidence(noBuyer), /2,980円/);
+  const missingPriceProof = clone();
+  addSyntheticInterviewProof(missingPriceProof);
+  missingPriceProof.interviews.records[0].willingnessEvidenceRef = '';
+  assert.throws(() => summarizeDemandEvidence(missingPriceProof), /監査証拠/);
+  const wrongCount = clone();
+  addSyntheticInterviewProof(wrongCount);
+  wrongCount.interviews.specificWillingness = 4;
+  assert.throws(() => summarizeDemandEvidence(wrongCount), /件数/);
 });
 
 test('duplicate sources and unsupported categories are rejected', () => {
