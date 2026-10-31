@@ -14,13 +14,13 @@ function hasM3SourceEvidence(source) {
     source.evidenceRef.trim().length > 0;
 }
 
-function hasM3AcceptanceEvidence(v) {
+function hasM3AcceptanceEvidence(v, asOf) {
   return v && hasM3SourceEvidence(v.reservations) &&
     hasM3SourceEvidence(v.passesAndSubscriptions) && v.commonPayoutKeyVerified === true &&
     typeof v.commonPayoutKeyEvidenceRef === 'string' && v.commonPayoutKeyEvidenceRef.trim().length > 0 &&
     v.acceptanceCriteriaDocumented === true &&
     Array.isArray(v.formatEvidence) &&
-    assessPayoutFormatEvidence(v.formatEvidence).state === 'READY_FOR_MANUAL_SCHEMA_REVIEW';
+    assessPayoutFormatEvidence(v.formatEvidence, {asOf}).state === 'READY_FOR_MANUAL_SCHEMA_REVIEW';
 }
 
 export function evaluateMilestones(ledger, registry, asOf) {
@@ -57,7 +57,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
     seen.add(m.id);
     // Completion requires more than counts; never infer "done" from numeric progress.
     if (m.status === 'done' && ((m.id === 'M2' && summary.m2QualifiedFirsthandWorkflows < 5) ||
-        (m.id === 'M3' && !hasM3AcceptanceEvidence(ledger.m3Verification)) ||
+        (m.id === 'M3' && !hasM3AcceptanceEvidence(ledger.m3Verification, asOf)) ||
         (m.id === 'M4' && summary.consentedInterviews < 5) ||
         (m.id === 'M5' && (summary.confirmedWillingness < 3 || !summary.realCsvCompatibilityVerified)))) {
       throw new Error(`${m.id}は完了と記録されていますが必須証拠が不足しています`);
