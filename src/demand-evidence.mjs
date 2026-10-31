@@ -9,6 +9,9 @@ const CSV_PROOF_KEYS = ["payoutReservations","payoutPassesAndSubscriptions","sha
 const validDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) &&
   !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s;
 const countMissing = (actual, required) => Math.max(0, required - actual);
+// Operator IDs are internal anonymous identifiers, not case-sensitive names.
+// Canonicalize before deduplication so alternate case / Unicode width cannot inflate M2 or MF counts.
+const normalizeOperatorKey = value => typeof value === 'string' ? value.trim().normalize('NFKC').toLowerCase() : '';
 // Interview dates and crawl dates are not publication dates. Month precision is allowed.
 const validPublicationPeriod = value => validDate(value) ||
   (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && validDate(value + '-01'));
@@ -122,7 +125,7 @@ export function summarizeDemandEvidence(registry) {
           } else {
             // Different URLs from the same operator are one independent M2 case.
             // An anonymous source URL is not proof of a distinct operator.
-            const operatorKey = typeof item.operatorKey === 'string' ? item.operatorKey.trim() : '';
+            const operatorKey = normalizeOperatorKey(item.operatorKey);
             if (!operatorKey) operatorUnverifiedIds.push(item.id);
             else if (qualifiedOperators.has(operatorKey)) duplicateOperatorIds.push(item.id);
             else {
@@ -153,7 +156,7 @@ export function summarizeDemandEvidence(registry) {
         }
         // Multiple URLs from one operator are not independent MF users.
         // Unknown operator identity is insufficient for a target-user count.
-        const operatorKey = typeof item.operatorKey === 'string' ? item.operatorKey.trim() : '';
+        const operatorKey = normalizeOperatorKey(item.operatorKey);
         if (!operatorKey) targetMfOperatorUnverifiedIds.push(item.id);
         else if (targetMfOperators.has(operatorKey)) targetMfDuplicateOperatorIds.push(item.id);
         else {
