@@ -1,4 +1,5 @@
 import {summarizeDemandEvidence} from './demand-evidence.mjs';
+import {assessPayoutFormatEvidence} from './payout-format-evidence.mjs';
 
 const STATES = new Set(['not_started', 'in_progress', 'blocked', 'done', 'overdue']);
 const WORK_PRIORITIES = new Set(['active', 'parked']);
@@ -17,7 +18,9 @@ function hasM3AcceptanceEvidence(v) {
   return v && hasM3SourceEvidence(v.reservations) &&
     hasM3SourceEvidence(v.passesAndSubscriptions) && v.commonPayoutKeyVerified === true &&
     typeof v.commonPayoutKeyEvidenceRef === 'string' && v.commonPayoutKeyEvidenceRef.trim().length > 0 &&
-    v.acceptanceCriteriaDocumented === true;
+    v.acceptanceCriteriaDocumented === true &&
+    Array.isArray(v.formatEvidence) &&
+    assessPayoutFormatEvidence(v.formatEvidence).state === 'READY_FOR_MANUAL_SCHEMA_REVIEW';
 }
 
 export function evaluateMilestones(ledger, registry, asOf) {

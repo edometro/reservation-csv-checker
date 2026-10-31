@@ -55,7 +55,16 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
   ledger.m3Verification = {
     reservations: verified(), passesAndSubscriptions: verified(),
     commonPayoutKeyVerified: true, commonPayoutKeyEvidenceRef: 'docs/redacted-local-verification.md',
-    acceptanceCriteriaDocumented: true
+    acceptanceCriteriaDocumented: true,
+    formatEvidence: ['payout_reservations', 'payout_passes_subscriptions'].map(role => ({
+      role, product: 'STORES予約', exportSurface: 'payout_history',
+      sourceKind: 'official_public_sample', sourceUrl: 'https://example.org/synthetic-only.csv',
+      observedAt: '2026-10-29', fileFormat: 'csv',
+      headers: ['payout_reference', 'transaction_id', 'amount'],
+      identifierColumns: ['payout_reference', 'transaction_id'], rowGrain: 'payment',
+      payoutJoin: {column: 'payout_reference', semanticKey: 'same-payout',
+        evidenceNote: 'synthetic metadata fixture; not real STORES evidence'}
+    }))
   };
   const valid = evaluateMilestones(ledger, registry, '2026-10-31');
   assert.equal(valid.milestones[2].effectiveStatus, 'done');
@@ -75,6 +84,18 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     const missing = structuredClone(ledger);
     missing.m3Verification[section][field] = field === 'evidenceRef' ? '' : false;
     assert.throws(() => evaluateMilestones(missing, registry, '2026-10-31'), /M3.*不足/);
+  }
+  for (const [label, mutate] of [
+    ['no structured metadata', v => { delete v.formatEvidence; }],
+    ['only one payout breakdown', v => { v.formatEvidence.pop(); }],
+    ['reservation-list export substituted', v => { v.formatEvidence[0].exportSurface = 'reservation_list'; }],
+    ['missing observed header', v => { v.formatEvidence[0].headers = []; }],
+    ['missing payout join', v => { delete v.formatEvidence[1].payoutJoin; }],
+    ['different payout identity', v => { v.formatEvidence[1].payoutJoin.semanticKey = 'other-payout'; }]
+  ]) {
+    const missing = structuredClone(ledger);
+    mutate(missing.m3Verification);
+    assert.throws(() => evaluateMilestones(missing, registry, '2026-10-31'), /M3.*不足/, label);
   }
   for (const field of ['commonPayoutKeyVerified', 'commonPayoutKeyEvidenceRef', 'acceptanceCriteriaDocumented']) {
     const missing = structuredClone(ledger);
