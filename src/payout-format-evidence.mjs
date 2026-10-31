@@ -10,17 +10,18 @@ const isDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(
 const isNonEmptyString = value => typeof value === 'string' && value.trim().length > 0;
 const isNonEmptyNames = value => Array.isArray(value) && value.length > 0 &&
   value.every(isNonEmptyString) && new Set(value).size === value.length;
-// A third-party HTTPS URL is not evidence of an official STORES export.
-// Hostname equality/suffix checks prevent stores.jp.evil.example lookalikes.
-// Off-domain samples require separate manual provenance handling, not an
-// automatic "official_public_sample" pass.
+// A vendor-owned domain is not necessarily an official publication:
+// STORES merchants also have their own *.stores.jp / *.stores.app pages.
+// Only the known official FAQ host and exact STORES corporate site hosts
+// can enter manual provenance review. The URL alone never verifies a CSV.
+// Off-domain sample URLs require separate human provenance verification.
 const isOfficialStoresSampleUrl = value => {
   if (!isNonEmptyString(value)) return false;
   try {
     const url = new URL(value);
-    const domains = ['stores.jp', 'stores.fun', 'stores.app'];
+    const officialHosts = new Set(['reserve-faq.stores.jp', 'stores.fun', 'www.stores.fun']);
     return url.protocol === 'https:' && !url.username && !url.password &&
-      !url.port && domains.some(host => url.hostname === host || url.hostname.endsWith('.' + host));
+      !url.port && officialHosts.has(url.hostname.toLowerCase());
   } catch { return false; }
 };
 
