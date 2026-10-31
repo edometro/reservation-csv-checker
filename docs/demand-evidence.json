@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-31",
+  "checkedAt": "2026-11-01",
   "interviews": {
     "consented": 0,
     "specificWillingness": 0
@@ -391,6 +391,12 @@
       "summary": "2026-10-26公開の独立取材記事でfreee予約の運営担当者は、新規登録の30〜40%がfreee関連プロダクト経由と申告。freee会計からfreee予約への案内導線があるとの販売者本人発言であり、第三者監査済みの登録ログ・STORES予約利用者・MF会計利用者・予約入金の会計自動連携・本ツールへの支払意思を証明しない。既存freeeユーザーへの予約サービス内クロスセルは競争上の仮説に留め、M2/M4/M5には加算しない。",
       "publishedAt": "2026-10-26",
       "sourceContext": "独立媒体によるfreee予約運営担当者への取材。数値は提供者の自己申告（seller_claim）で、利用者本人の実務体験ではない。"
+    },
+    {
+      "id": "O039",
+      "kind": "official_capability",
+      "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713302057241",
+      "summary": "2026-06-22更新のSTORES予約公式入金サイクルFAQ。月次25日振込では日本時間1日00:00〜08:59の決済が当月振込対象、同日09:00以降は翌月振込対象となる例を明示。週次は別の対象期間。月次決済日付だけで入金内訳・銀行着金を結合しない。現行2内訳CSVの実ヘッダー・振込キーや利用者需要の証拠ではない。"
     }
   ],
   "realCsvVerification": {
