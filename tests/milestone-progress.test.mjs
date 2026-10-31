@@ -58,7 +58,7 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     acceptanceCriteriaDocumented: true,
     formatEvidence: ['payout_reservations', 'payout_passes_subscriptions'].map(role => ({
       role, product: 'STORES予約', exportSurface: 'payout_history',
-      sourceKind: 'official_public_sample', sourceUrl: 'https://example.org/synthetic-only.csv',
+      sourceKind: 'official_public_sample', sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
       observedAt: '2026-10-29', fileFormat: 'csv',
       headers: ['payout_reference', 'transaction_id', 'amount'],
       identifierColumns: ['payout_reference', 'transaction_id'], rowGrain: 'payment',
@@ -91,7 +91,10 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     ['reservation-list export substituted', v => { v.formatEvidence[0].exportSurface = 'reservation_list'; }],
     ['missing observed header', v => { v.formatEvidence[0].headers = []; }],
     ['missing payout join', v => { delete v.formatEvidence[1].payoutJoin; }],
-    ['different payout identity', v => { v.formatEvidence[1].payoutJoin.semanticKey = 'other-payout'; }]
+    ['different payout identity', v => { v.formatEvidence[1].payoutJoin.semanticKey = 'other-payout'; }],
+    ['untrusted official sample host', v => { v.formatEvidence[0].sourceUrl = 'https://example.org/not-official.csv'; }],
+    ['future observed date', v => { v.formatEvidence[0].observedAt = '2026-11-01'; }],
+    ['identifier absent from headers', v => { v.formatEvidence[1].identifierColumns.push('imaginary_id'); }]
   ]) {
     const missing = structuredClone(ledger);
     mutate(missing.m3Verification);

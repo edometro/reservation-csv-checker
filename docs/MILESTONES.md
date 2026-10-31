@@ -4,6 +4,14 @@
 >
 > **機械可読台帳**: [milestones.json](milestones.json)。**需要証拠の唯一の集計元**: [demand-evidence.json](demand-evidence.json)。検証方針の原本: [DEMAND_VALIDATION_SPRINT_2026-10-27.md](DEMAND_VALIDATION_SPRINT_2026-10-27.md)。
 
+### 2026-10-31 19:37 JST：M3の公式サンプル出典偽装と形式メタデータ不整合を拒否
+
+**今回の単一成果物**：[PR #122](https://github.com/edometro/reservation-csv-checker/pull/122) で `official_public_sample` を任意のHTTPS URLで通せた抜け道を修正。STORES公式ドメイン以外・紛らわしいホスト・認証情報付きURL、判定日より未来の観測日、実ヘッダーにない識別子列を拒否する。公開サンプルのホスト確認は真正性の証明ではなく、合成の公式ドメインURLも**手動審査候補に留まる**。新規実CSV取得なし。既存の形式判定を再利用し、別の調査文書は作らない。
+
+**検証条件・限界**：合成回帰テストで偽公式URL・未来日付・未観測識別子の拒否を検証する。GitHub ActionsはPRで確認する。2026-10-31現在、M2は適格一次1/5（不足4）・`blocked`、対象MF本人0、M3は真正な現行2内訳CSV・実ヘッダー・共通振込キー未取得で`blocked`（期限11/03）、M4=0/5、M5=0/3、実CSV適合`false`。新規顧客・面談・支払意思・売上なし。無承認の第三者連絡・実顧客CSV取得・決済・公開デプロイなし。
+
+**次回の1作業**：11/01にM2の期限超過を `npm run milestones -- --write` で機械台帳・進捗表へ同期。M3は真正な公開公式2内訳実CSVまたは個別承認がなければ`blocked`を維持し、11/03未達なら11/04に`overdue`。有料化は`INSUFFICIENT_EVIDENCE` / No-Go。
+
 ### 2026-10-31 18:32 JST：M3の形式メタデータを完了条件に接続
 
 **今回の単一成果物**：Issue #2のM3完了判定で、2内訳の出典・CSV形式・ヘッダーの真偽値と任意の証拠参照を入力するだけで、既存の詳細形式検査（`assessPayoutFormatEvidence`）を通らず`done`にできる経路を閉じた。M3の完了には、現行STORES予約の入金履歴2内訳について、出典種別・取得日・実ヘッダー・識別子列・行粒度・両内訳の振込キー意味の一致を含む`m3Verification.formatEvidence`を必須とする。形式メタデータが欠ける場合や予約一覧CSVで代用した場合は`done`を拒否する。既存の`src/payout-format-evidence.mjs`を再利用し、新しい調査文書を乱立させない。

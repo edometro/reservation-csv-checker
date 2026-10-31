@@ -10,12 +10,21 @@ const isDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(
 const isNonEmptyString = value => typeof value === 'string' && value.trim().length > 0;
 const isNonEmptyNames = value => Array.isArray(value) && value.length > 0 &&
   value.every(isNonEmptyString) && new Set(value).size === value.length;
-const isHttpsUrl = value => {
+// A third-party HTTPS URL is not evidence of an official STORES export.
+// Hostname equality/suffix checks prevent stores.jp.evil.example lookalikes.
+// Off-domain samples require separate manual provenance handling, not an
+// automatic "official_public_sample" pass.
+const isOfficialStoresSampleUrl = value => {
   if (!isNonEmptyString(value)) return false;
-  try { return new URL(value).protocol === 'https:'; } catch { return false; }
+  try {
+    const url = new URL(value);
+    const domains = ['stores.jp', 'stores.fun', 'stores.app'];
+    return url.protocol === 'https:' && !url.username && !url.password &&
+      !url.port && domains.some(host => url.hostname === host || url.hostname.endsWith('.' + host));
+  } catch { return false; }
 };
 
-export function assessPayoutFormatEvidence(entries) {
+export function assessPayoutFormatEvidence(entries, {asOf} = {}) {
   if (!Array.isArray(entries)) throw new TypeError('検証対象は配列で指定してください');
   const blockers = [];
   const seen = new Set();
@@ -36,15 +45,19 @@ export function assessPayoutFormatEvidence(entries) {
     }
     if (!['official_public_sample', 'permissioned_anonymized_sample'].includes(entry.sourceKind)) {
       blockers.push(prefix + 'SOURCE_NOT_VERIFIABLE');
-    } else if (entry.sourceKind === 'official_public_sample' && !isHttpsUrl(entry.sourceUrl)) {
-      blockers.push(prefix + 'OFFICIAL_SAMPLE_URL_MISSING');
+    } else if (entry.sourceKind === 'official_public_sample' && !isOfficialStoresSampleUrl(entry.sourceUrl)) {
+      blockers.push(prefix + 'OFFICIAL_SAMPLE_URL_UNTRUSTED');
     } else if (entry.sourceKind === 'permissioned_anonymized_sample' && entry.permissionConfirmed !== true) {
       blockers.push(prefix + 'PERMISSION_NOT_CONFIRMED');
     }
     if (!isDate(entry.observedAt)) blockers.push(prefix + 'OBSERVATION_DATE_MISSING');
+    else if (asOf && entry.observedAt > asOf) blockers.push(prefix + 'OBSERVATION_DATE_IN_FUTURE');
     if (entry.fileFormat !== 'csv') blockers.push(prefix + 'CSV_FORMAT_UNCONFIRMED');
     if (!isNonEmptyNames(entry.headers)) blockers.push(prefix + 'REAL_HEADERS_UNCONFIRMED');
     if (!isNonEmptyNames(entry.identifierColumns)) blockers.push(prefix + 'IDENTIFIER_COLUMNS_UNCONFIRMED');
+    else if (!Array.isArray(entry.headers) || entry.identifierColumns.some(name => !entry.headers.includes(name))) {
+      blockers.push(prefix + 'IDENTIFIER_COLUMNS_NOT_IN_HEADERS');
+    }
     if (!isNonEmptyString(entry.rowGrain)) blockers.push(prefix + 'ROW_GRAIN_UNCONFIRMED');
     // Per-file identifiers are not evidence that both exports belong to the same payout.
     // The join claim must name an observed column and its intended semantic identity.
