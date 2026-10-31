@@ -64,6 +64,23 @@ test('missing columns, blank keys, malformed rows and duplicates fail closed', a
   });
 });
 
+test('reordered rows and different line endings or BOM cannot masquerade as two exports', async () => {
+  const reordered = '振込番号,予約,金額\\nA,SECRET_PERSON_C,300\\nB,SECRET_PERSON_B,200\\nA,SECRET_PERSON_A,100\\n'.replace(/\\n/g, '\n');
+  await withFiles(a, reordered, async (x, y) => {
+    await assert.rejects(() => inspectPayoutKeyCandidates(x, y, '振込番号', '振込番号'), { code: 'DUPLICATE_EXPORT_CONTENT' });
+  });
+  await withFiles(a, '\ufeff' + a.replace(/\n/g, '\r\n'), async (x, y) => {
+    await assert.rejects(() => inspectPayoutKeyCandidates(x, y, '振込番号', '振込番号'), { code: 'DUPLICATE_EXPORT_CONTENT' });
+  });
+});
+
+test('reordered columns of the same export are not independent breakdowns', async () => {
+  const columnsReordered = '金額,予約,振込番号\n100,SECRET_PERSON_A,A\n200,SECRET_PERSON_B,B\n300,SECRET_PERSON_C,A\n';
+  await withFiles(a, columnsReordered, async (x, y) => {
+    await assert.rejects(() => inspectPayoutKeyCandidates(x, y, '振込番号', '振込番号'), { code: 'DUPLICATE_EXPORT_CONTENT' });
+  });
+});
+
 test('symlink source is refused', async () => {
   await withFiles(a, b, async (x, y, dir) => {
     const alias = join(dir, 'alias.csv');
