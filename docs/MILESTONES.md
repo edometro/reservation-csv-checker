@@ -4,6 +4,14 @@
 >
 > **機械可読台帳**: [milestones.json](milestones.json)。**需要証拠の唯一の集計元**: [demand-evidence.json](demand-evidence.json)。検証方針の原本: [DEMAND_VALIDATION_SPRINT_2026-10-27.md](DEMAND_VALIDATION_SPRINT_2026-10-27.md)。
 
+### 2026-11-01 02:39 JST：M3の取得経路を再判定、前回未確認のmain CIを確認（Issue #2）
+
+**今回の単一成果物**：[Issue #2の取得ゲート監査](https://github.com/edometro/reservation-csv-checker/issues/2#issuecomment-6546899071)。既存の[入金ソース契約](PAYOUT_SOURCE_CONTRACT_2026-10-28.md)と重複するFAQ仕様や合成テストを増やさず、現行2内訳の公開実ファイル/個別承認の有無だけを再判定した。公式FAQ（[確定入金の内訳](https://reserve-faq.stores.jp/hc/ja/articles/28713301405977)、[予定額の内訳](https://reserve-faq.stores.jp/hc/ja/articles/28713301530137)、ともに2026-08-04更新）では別ダウンロードと形式選択操作を確認できるが、**真正な現行2内訳実CSV、実ヘッダー、同一振込キーは今回も得られなかった**。公式仕様は本人一次証拠に計上しない。不存在を断定しない。
+
+**新規検証結果**：前回未確認だったPR #128マージ後の[main Actions #41221178226](https://github.com/edometro/reservation-csv-checker/actions/runs/41221178226)は `completed/success` と確認。これは既存テストの成功であり実CSV適合ではない。M2=10/31期限超過・適格一次1/5（不足4）・`overdue`、M3=11/03期限・現行実CSV0・`blocked`、M4=同意面談0/5、M5=支払意思0/3・実CSV適合false、商用化No-Go。新しい顧客・一次証拠・面談・売上なし。
+
+**遅延/障害・次回の1作業**：現行2内訳の真正な公式公開ファイルURLと権利者の個別承認がなく、実ファイルのローカル検査は実施できない。11/03まで新しい真正URLまたは承認の発生だけを確認し、あれば既存の `npm run payout:preflight` とA/B照合受入仕様を使用。なければM3を `blocked` に維持し、11/04から `overdue`。無承認の営業・実顧客データ取得・決済・公開デプロイなし。
+
 ### 2026-11-01 01:41 JST：M3の月初08:59/09:00入金境界を受入仕様へ追加（Issue #2）
 
 **単一成果物**：既存[入金ソース契約第23節](PAYOUT_SOURCE_CONTRACT_2026-10-28.md#23-2026-11-01月初08590900-jstの振込月境界を誤結合しないm3受入例issue-2)に、[STORES予約公式入金サイクルFAQ](https://reserve-faq.stores.jp/hc/ja/articles/28713302057241)（2026-06-22更新）に基づく**月初08:59/09:00 JSTの月次入金対象差**と、同日決済を同一振込へ誤結合しない正負例を追加。公式仕様はO039として重複なしに登録。週次入金・切替時は月次ルールで確定しない。実CSVの取得や処理を完了したわけではない。
