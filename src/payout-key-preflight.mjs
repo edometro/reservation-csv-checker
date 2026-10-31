@@ -1,5 +1,6 @@
 import { open, lstat } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
 const MAX_BYTES = 16 * 1024 * 1024;
@@ -81,7 +82,18 @@ function keysFromCsv(bytes, column) {
   const index = headers.indexOf(column);
   if (index < 0) throw new PayoutKeyPreflightError('KEY_COLUMN_NOT_FOUND');
   if (rows.some(row => !row[index].trim())) throw new PayoutKeyPreflightError('EMPTY_PAYOUT_KEY');
-  return { rowCount: rows.length, keys: new Set(rows.map(row => row[index])) };
+  // The same export may be re-saved with a BOM, different line endings,
+  // row order, or column order. Byte equality alone misses those duplicates.
+  // Canonicalize only in memory; never return raw rows or this digest.
+  const columns = headers.map((name, i) => ({ name, i }))
+    .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  const canonicalRows = rows
+    .map(row => JSON.stringify(columns.map(({ i }) => row[i])))
+    .sort();
+  const contentDigest = createHash('sha256')
+    .update(JSON.stringify([columns.map(({ name }) => name), canonicalRows]))
+    .digest('hex');
+  return { rowCount: rows.length, keys: new Set(rows.map(row => row[index])), contentDigest };
 }
 
 /** Two-payout key discrimination preflight, without provenance/semantics claims. */
@@ -94,6 +106,9 @@ export async function inspectPayoutKeyCandidates(reservationsPath, passesPath, r
   if (first.equals(second)) throw new PayoutKeyPreflightError('DUPLICATE_EXPORT_CONTENT');
   const a = keysFromCsv(first, reservationsKey);
   const b = keysFromCsv(second, passesKey);
+  if (a.contentDigest === b.contentDigest) {
+    throw new PayoutKeyPreflightError('DUPLICATE_EXPORT_CONTENT');
+  }
   const shared = [...a.keys].filter(x => b.keys.has(x)).length;
   return {
     state: shared >= 2 ? 'TWO_SHARED_KEYS_OBSERVED_MANUAL_REVIEW_REQUIRED' : 'INSUFFICIENT_SHARED_KEYS',
