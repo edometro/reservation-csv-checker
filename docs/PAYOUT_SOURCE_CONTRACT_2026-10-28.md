@@ -551,3 +551,12 @@ npm run payout:keys -- /private/reservations.csv /private/passes.csv '観測し�
 **期限・予定対実績**：M2=10/31期限超過・適格一次1/5（不足4）、対象STORES予約＋MF月次照合本人0。M3=11/03期限・現行真正2内訳CSV0件、形式/実ヘッダー/共通振込キーunknown、**blocked**、実CSV適合false。M4同意済み面談0/5、M5具体的支払意思0/3。有料化=INSUFFICIENT_EVIDENCE（No-Go）。本照会パケットは**取得準備**であり、公式回答・本人一次需要・有料顧客の証拠ではない。
 
 **次回の1作業**：11/03までに新規の真正な公式公開サンプルURLまたは個別承認・公式回答が発生したかを**差分だけ**確認する。あれば出典と適合ゲートを検証し、なければM3 blockedを維持し11/04にoverdueへ。無承認の第三者連絡・データ取得・決済・公開デプロイなし。
+
+
+## 26. 2026-11-01 07:35 JST：販売者ストアURLを「STORES公式公開CSV」と誤認しない（Issue #2 / M3）
+
+**単一成果物と判定**：既存の `assessPayoutFormatEvidence` は、URLのホストが `*.stores.jp` または `*.stores.app` であれば、個別店舗が公開したファイルでも `official_public_sample` のURL検査を通過できた。STORES予約の店舗公開ページの例は既登録U002の `mimosa-eyedesign.stores.jp`。**STORES提供ドメイン上の店舗資料はSTORES社の公式サンプルではない**。M3の出典誤認を防ぐため、機械的に受け入れるURLホストを `reserve-faq.stores.jp`、`stores.fun`、`www.stores.fun` の完全一致に限定する。任意のサブドメイン、STORES店舗ページ、似たホスト名、HTTP、ユーザー情報入りURLは拒否する。
+
+**検証条件**：合成メタデータで `mimosa-eyedesign.stores.jp`、`merchant.stores.app`、`merchant.stores.fun` を拒否し、既存のSTORES公式FAQホストと公式サイトホストは**手動監査候補**まで許可する。公式ホストのURLであっても、実際のCSVの存在・現行2内訳との同一性・ヘッダー・キー・権利者許諾を自動的には証明しない。ドメイン外の真正資料が見つかった場合は出典を人間が別途確認する（自動Goにしない）。
+
+**予定対実績・障害・次回の1作業**：これは既存の出典メタデータの誤受入を修正する回帰であり、真正な現行2内訳CSVの新規取得ではない。M2は10/31期限超過・適格一次1/5（不足4）・対象MF本人0、M3は11/03期限・`blocked`・実CSV0件、M4面談0/5、M5支払意思0/3、`realCsvCompatibilityVerified=false`、有料化No-Go。個別承認なしで実顧客データ取得や公式照会送信はしない。次回は11/03期限までに**新規の真正な公式公開ファイルURLまたは個別承認・公式回答が存在するかの差分**だけを判定し、なければM3未達を維持する。

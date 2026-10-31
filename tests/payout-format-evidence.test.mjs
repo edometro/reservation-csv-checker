@@ -118,7 +118,11 @@ test('M3 official sample provenance rejects unrelated HTTPS and lookalike hosts'
     'https://stores.jp.evil.example/file.csv',
     'https://attacker@reserve-faq.stores.jp/file.csv',
     'http://reserve-faq.stores.jp/file.csv',
-    'https://notstores.fun.example/file.csv'
+    'https://notstores.fun.example/file.csv',
+    // Public merchant storefronts are vendor-hosted but not STORES corporate samples.
+    'https://mimosa-eyedesign.stores.jp/exports/example.csv',
+    'https://merchant.stores.app/sample.csv',
+    'https://merchant.stores.fun/sample.csv'
   ]) {
     const entries = both();
     entries[0].sourceUrl = url;
@@ -126,6 +130,10 @@ test('M3 official sample provenance rejects unrelated HTTPS and lookalike hosts'
   }
   // These are synthetic URLs on known domains, not actual verified samples.
   assert.equal(check(both()).state, 'READY_FOR_MANUAL_SCHEMA_REVIEW');
+  const corporateSite = both();
+  corporateSite[0].sourceUrl = 'https://stores.fun/attachments/synthetic-only.csv';
+  assert.equal(check(corporateSite).state, 'READY_FOR_MANUAL_SCHEMA_REVIEW');
+  assert.equal(check(corporateSite).realCsvCompatibilityVerified, false);
 });
 
 test('M3 format evidence refuses future observation and identifier not in observed headers', () => {
