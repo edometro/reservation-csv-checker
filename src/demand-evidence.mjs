@@ -22,6 +22,54 @@ function hasRealCsvProof(verification, checkedAt) {
     });
 }
 
+
+/**
+ * M4/M5: aggregate counters alone are not proof of consent or willingness.
+ * Store only anonymous participant keys and opaque audit references in Git.
+ * The actual consent/interview evidence stays outside the public repository.
+ */
+function validateInterviewEvidence(interviews, checkedAt) {
+  if (!Array.isArray(interviews.records)) {
+    if (interviews.consented === 0 && interviews.specificWillingness === 0) return;
+    throw new Error('同意済みヒアリングと支払意思には匿名の監査証拠が必要です');
+  }
+  if (interviews.records.length !== interviews.consented) {
+    throw new Error('同意済みヒアリング件数と監査証拠件数が一致しません');
+  }
+  const seen = new Set();
+  let willingness = 0;
+  const hasRef = value => typeof value === 'string' && value.trim().length > 0;
+  for (const record of interviews.records) {
+    if (!record || typeof record.participantKey !== 'string' ||
+        !/^[a-zA-Z0-9_-]{3,64}$/.test(record.participantKey) ||
+        seen.has(record.participantKey.toLowerCase())) {
+      throw new Error('面談参加者の匿名識別子が不正または重複しています');
+    }
+    seen.add(record.participantKey.toLowerCase());
+    if (!validDate(record.consentedAt) || !validDate(record.interviewedAt) ||
+        record.consentedAt > record.interviewedAt || record.interviewedAt > checkedAt ||
+        !hasRef(record.consentEvidenceRef) || !hasRef(record.interviewEvidenceRef)) {
+      throw new Error('同意・実施日時または面談の監査証拠が不足しています');
+    }
+    if (record.willingness === true) {
+      if (!Number.isSafeInteger(record.willingnessPriceJPY) ||
+          record.willingnessPriceJPY < 2980 ||
+          record.decisionMakerConfirmed !== true ||
+          !hasRef(record.willingnessTimeframe) ||
+          !hasRef(record.requiredFeatures) ||
+          !hasRef(record.willingnessEvidenceRef)) {
+        throw new Error('2,980円の支払意思には価格・決裁者・時期・機能・監査証拠が必要です');
+      }
+      willingness++;
+    } else if (record.willingness !== false) {
+      throw new Error('支払意思の確認状態が不正です');
+    }
+  }
+  if (willingness !== interviews.specificWillingness) {
+    throw new Error('支払意思件数と匿名の監査証拠件数が一致しません');
+  }
+}
+
 export function summarizeDemandEvidence(registry) {
   if (!registry || !Array.isArray(registry.sources)) {
     throw new Error('証拠の一覧がありません');
@@ -125,6 +173,7 @@ export function summarizeDemandEvidence(registry) {
       interviews.specificWillingness > interviews.consented) {
     throw new Error('許諾済みヒアリング数と支払意思確認数が不正です');
   }
+  validateInterviewEvidence(interviews, registry.checkedAt);
   if (typeof registry.realCsvCompatibilityVerified !== 'boolean') {
     throw new Error('実CSVの適合確認状況が不正です');
   }
