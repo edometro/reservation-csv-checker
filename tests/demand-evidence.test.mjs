@@ -568,6 +568,32 @@ test('M2: multiple URLs by the same operator count as one independent user', () 
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
+test('M2: operator identity is case- and width-insensitive across URLs', () => {
+  const data = clone();
+  data.sources.push({...firsthand(914), operatorKey: '  HANDMADE-WORKSHOP-AUTHOR  '});
+  data.sources.push({...firsthand(915), operatorKey: 'ｈａｎｄｍａｄｅ-workshop-author'});
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 1, '表記揺れで独立事業者を水増ししない');
+  assert.deepEqual(result.duplicateOperatorIds, ['U914', 'U915']);
+  assert.equal(result.missing.firsthandCases, 4);
+});
+
+test('Issue #3: target MF operator IDs with case/width variants count once', () => {
+  const data = clone();
+  const mf = (n, operatorKey) => ({
+    ...firsthand(n), operatorKey, targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    accountingSoftwareUseEvidence: '合成例：MF会計を本人が操作',
+    monthlyPayoutReconciliationWork: '合成例：予約入金と銀行着金を月次照合'
+  });
+  data.sources.push(mf(916, 'MF-Operator'), mf(917, 'ｍｆ-operator'));
+  const result = summarizeDemandEvidence(data);
+  assert.equal(result.targetMfReconciliationWorkflows, 1);
+  assert.deepEqual(result.targetMfDuplicateOperatorIds, ['U917']);
+  assert.equal(result.m2QualifiedFirsthandWorkflows, 2, '同一MF運営者はM2にも1件だけ');
+  assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
+});
+
 test('M2: a different URL without operator identity cannot count as a new person', () => {
   const data = clone();
   const item = {...firsthand(912)};
