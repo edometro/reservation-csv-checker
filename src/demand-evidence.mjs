@@ -15,6 +15,10 @@ const normalizeOperatorKey = value => typeof value === 'string' ? value.trim().n
 // Interview dates and crawl dates are not publication dates. Month precision is allowed.
 const validPublicationPeriod = value => validDate(value) ||
   (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && validDate(value + '-01'));
+// A future-dated article or interview cannot be observed as firsthand evidence.
+// For YYYY-MM, the first day of the month is the earliest possible publication.
+const isFutureEvidencePeriod = (value, checkedAt) => validPublicationPeriod(value) &&
+  (value.length === 7 ? value + '-01' : value) > checkedAt;
 
 function hasRealCsvProof(verification, checkedAt) {
   return verification && validDate(verification.reviewedAt) &&
@@ -98,6 +102,11 @@ export function summarizeDemandEvidence(registry) {
     }
     ids.add(item.id);
     urls.add(normalizedUrl);
+    if (item.kind === 'firsthand_workflow' &&
+        (isFutureEvidencePeriod(item.publishedAt, registry.checkedAt) ||
+         (item.targetMfUser === true && isFutureEvidencePeriod(item.interviewedAt, registry.checkedAt)))) {
+      throw new Error('本人一次証拠の掲載・取材時期が調査日より未来です');
+    }
     if (item.kind === 'firsthand_workflow' &&
         (typeof item.accountingSoftware !== 'string' || !item.accountingSoftware.trim() || !item.observedWork)) {
       throw new Error('実利用者の体験談には会計ソフト名と観察できた作業が必要です');
