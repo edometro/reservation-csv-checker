@@ -4,7 +4,7 @@ import {assessPayoutFormatEvidence, PAYOUT_BREAKDOWN_ROLES} from '../src/payout-
 
 const sample = role => ({
   role, product: 'STORES予約', exportSurface: 'payout_history',
-  sourceKind: 'official_public_sample', sourceUrl: 'https://example.org/official-public-sample.csv',
+  sourceKind: 'official_public_sample', sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
   observedAt: '2026-10-29', fileFormat: 'csv',
   headers: ['payout_reference', 'transaction_id', 'amount'],
   identifierColumns: ['payout_reference', 'transaction_id'], rowGrain: 'payment',
@@ -65,7 +65,7 @@ test('duplicate role, unknown role, and missing official URL are rejected', () =
   const b = check(entries).blockers;
   assert.ok(b.includes('DUPLICATE_ROLE:payout_reservations'));
   assert.ok(b.includes('INVALID_ROLE:3'));
-  assert.ok(b.includes('payout_reservations:OFFICIAL_SAMPLE_URL_MISSING'));
+  assert.ok(b.includes('payout_reservations:OFFICIAL_SAMPLE_URL_UNTRUSTED'));
 });
 
 test('empty input and invalid type fail closed', () => {
@@ -110,4 +110,31 @@ test('a bare join name without provenance explanation is not evidence', () => {
   const entries = both();
   entries[0].payoutJoin.evidenceNote = '';
   assert.ok(check(entries).blockers.includes('payout_reservations:PAYOUT_JOIN_UNPROVEN'));
+});
+
+test('M3 official sample provenance rejects unrelated HTTPS and lookalike hosts', () => {
+  for (const url of [
+    'https://example.org/synthetic-only.csv',
+    'https://stores.jp.evil.example/file.csv',
+    'https://attacker@reserve-faq.stores.jp/file.csv',
+    'http://reserve-faq.stores.jp/file.csv',
+    'https://notstores.fun.example/file.csv'
+  ]) {
+    const entries = both();
+    entries[0].sourceUrl = url;
+    assert.ok(check(entries).blockers.includes('payout_reservations:OFFICIAL_SAMPLE_URL_UNTRUSTED'), url);
+  }
+  // These are synthetic URLs on known domains, not actual verified samples.
+  assert.equal(check(both()).state, 'READY_FOR_MANUAL_SCHEMA_REVIEW');
+});
+
+test('M3 format evidence refuses future observation and identifier not in observed headers', () => {
+  const entries = both();
+  entries[0].observedAt = '2026-11-01';
+  entries[1].identifierColumns = ['payout_reference', 'imaginary_id'];
+  const blockers = assessPayoutFormatEvidence(entries, {asOf: '2026-10-31'}).blockers;
+  assert.ok(blockers.includes('payout_reservations:OBSERVATION_DATE_IN_FUTURE'));
+  assert.ok(blockers.includes('payout_passes_subscriptions:IDENTIFIER_COLUMNS_NOT_IN_HEADERS'));
+  assert.equal(assessPayoutFormatEvidence(both(), {asOf: '2026-10-31'}).state,
+    'READY_FOR_MANUAL_SCHEMA_REVIEW');
 });
