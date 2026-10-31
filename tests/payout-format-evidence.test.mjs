@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessPayoutFormatEvidence, PAYOUT_BREAKDOWN_ROLES} from '../src/payout-format-evidence.mjs';
+import {assessPayoutFormatEvidence, assessPayoutJoinDiscrimination, PAYOUT_BREAKDOWN_ROLES} from '../src/payout-format-evidence.mjs';
 
 const sample = role => ({
   role, product: 'STORES予約', exportSurface: 'payout_history',
@@ -137,4 +137,52 @@ test('M3 format evidence refuses future observation and identifier not in observ
   assert.ok(blockers.includes('payout_passes_subscriptions:IDENTIFIER_COLUMNS_NOT_IN_HEADERS'));
   assert.equal(assessPayoutFormatEvidence(both(), {asOf: '2026-10-31'}).state,
     'READY_FOR_MANUAL_SCHEMA_REVIEW');
+});
+
+
+const syntheticJoinAudit = () => ({
+  distinctPayoutsObserved: 2,
+  keyMeaningEvidenceRef: 'audit:synthetic-key-meaning',
+  checks: ['A', 'B'].map(payoutLabel => ({
+    payoutLabel, reservationsPresent: true, passesAndSubscriptionsPresent: true,
+    withinPayoutMatchVerified: true, otherPayoutMismatchVerified: true,
+    evidenceRef: 'audit:synthetic-' + payoutLabel
+  }))
+});
+
+test('M3 two-payout A/B observations are only ready for manual audit, not real compatibility', () => {
+  assert.deepEqual(assessPayoutJoinDiscrimination(syntheticJoinAudit()), {
+    state: 'READY_FOR_MANUAL_JOIN_REVIEW', blockers: []
+  });
+});
+
+test('M3 cannot claim payout identity from a single payout or duplicated A label', () => {
+  const one = syntheticJoinAudit();
+  one.distinctPayoutsObserved = 1;
+  assert.ok(assessPayoutJoinDiscrimination(one).blockers.includes('TWO_DISTINCT_PAYOUTS_NOT_OBSERVED'));
+  const duplicated = syntheticJoinAudit();
+  duplicated.checks[1].payoutLabel = 'A';
+  assert.ok(assessPayoutJoinDiscrimination(duplicated).blockers.includes('A_B_OBSERVATIONS_MISSING_OR_DUPLICATE'));
+});
+
+test('M3 refuses missing breakdowns, false positive joins, and untested A-to-B cross joins', () => {
+  for (const [field, blocker] of [
+    ['passesAndSubscriptionsPresent', 'A:BOTH_BREAKDOWNS_NOT_OBSERVED'],
+    ['withinPayoutMatchVerified', 'A:POSITIVE_MATCH_UNVERIFIED'],
+    ['otherPayoutMismatchVerified', 'A:CROSS_PAYOUT_NEGATIVE_UNVERIFIED']
+  ]) {
+    const audit = syntheticJoinAudit();
+    audit.checks[0][field] = false;
+    assert.ok(assessPayoutJoinDiscrimination(audit).blockers.includes(blocker), field);
+  }
+});
+
+test('M3 requires non-sensitive audit references for both payout cases and key meaning', () => {
+  const audit = syntheticJoinAudit();
+  audit.checks[1].evidenceRef = '';
+  audit.keyMeaningEvidenceRef = '';
+  const blockers = assessPayoutJoinDiscrimination(audit).blockers;
+  assert.ok(blockers.includes('B:AUDIT_REFERENCE_MISSING'));
+  assert.ok(blockers.includes('KEY_MEANING_AUDIT_MISSING'));
+  assert.ok(assessPayoutJoinDiscrimination(null).blockers.includes('JOIN_OBSERVATION_MISSING'));
 });
