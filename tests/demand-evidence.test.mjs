@@ -125,8 +125,38 @@ test('only complete requirements allow human Go review, never auto-launch', () =
   addToFive(data);
   data.interviews = {consented: 5, specificWillingness: 3};
   data.realCsvCompatibilityVerified = true;
+  data.realCsvVerification = {
+    reviewedAt: '2026-10-31',
+    ...Object.fromEntries(["payoutReservations","payoutPassesAndSubscriptions","sharedPayoutKey","bankDepositReconciliation","moneyForwardImport"].map(key =>
+      [key, {verified: true, evidenceRef: 'synthetic-test-proof-' + key}]))
+  };
   assert.equal(summarizeDemandEvidence(data).decision, 'READY_FOR_HUMAN_GO_REVIEW');
   data.interviews.specificWillingness = 2;
+  assert.equal(summarizeDemandEvidence(data).decision, 'INSUFFICIENT_EVIDENCE');
+});
+
+test('M5: flipping the real-CSV boolean cannot bypass actual proof references', () => {
+  const data = clone();
+  addToFive(data);
+  data.interviews = {consented: 5, specificWillingness: 3};
+  data.realCsvCompatibilityVerified = true;
+  assert.throws(() => summarizeDemandEvidence(data), /実CSV適合.*監査証拠/);
+  data.realCsvVerification = {
+    reviewedAt: '2026-10-31',
+    ...Object.fromEntries(["payoutReservations","payoutPassesAndSubscriptions","sharedPayoutKey","bankDepositReconciliation","moneyForwardImport"].map(key =>
+      [key, {verified: true, evidenceRef: 'synthetic-test-proof-' + key}]))
+  };
+  for (const key of ["payoutReservations","payoutPassesAndSubscriptions","sharedPayoutKey","bankDepositReconciliation","moneyForwardImport"]) {
+    const invalid = structuredClone(data);
+    invalid.realCsvVerification[key].evidenceRef = '';
+    assert.throws(() => summarizeDemandEvidence(invalid), /監査証拠/, key + ': reference is mandatory');
+    invalid.realCsvVerification[key].evidenceRef = 'synthetic-test-proof';
+    invalid.realCsvVerification[key].verified = false;
+    assert.throws(() => summarizeDemandEvidence(invalid), /監査証拠/, key + ': verification is mandatory');
+  }
+  data.realCsvVerification.reviewedAt = '2026-11-01';
+  assert.throws(() => summarizeDemandEvidence(data), /監査証拠/, 'future review date cannot qualify');
+  data.realCsvCompatibilityVerified = false;
   assert.equal(summarizeDemandEvidence(data).decision, 'INSUFFICIENT_EVIDENCE');
 });
 
