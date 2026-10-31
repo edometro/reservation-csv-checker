@@ -450,3 +450,27 @@ npm run payout:preflight -- /private/reservations.csv /private/passes-subscripti
 **今回の判定・予定対実績**：既存の[STORES予約公式入金履歴FAQ（2026-08-04更新）](https://reserve-faq.stores.jp/hc/ja/articles/28713301405977)は2区分のダウンロード導線を示すが、現行の2振込分の実ファイルや共通キーは公開していない。今回のA/Bは**合成ラベルであり実取引ではない**。M2は10/31期限・適格本人一次1/5（不足4）・blocked、M3は11/03期限・真正な現行実CSV0件・blocked、M4同意面談0/5、M5支払意思0/3・実CSV適合false、有料化No-Go。公式FAQの再収集や第三者連絡は行わない。
 
 **次の1作業**：11/01 JSTにM2未達をoverdueへ同期し、M3は真正な公式公開2内訳の実ファイルURLまたは権利者の個別承認が得られた場合だけ、本節のA/B正負例を含めて検証する。承認がなければ本節は未実施の受入仕様として保持する。
+
+
+## 22. 2026-10-31：2振込の正負例をM3完了判定へ接続（Issue #2）
+
+第21節の**実データで観測する2振込A/B**を、M3完了判定の機械可読な必要条件にした。これは現行のSTORES予約CSVを入手したという意味ではない。
+
+`m3Verification.joinDiscrimination` の匿名監査メタデータは次の形で記録する。**A/Bはローカルの合成ラベルであり、実振込ID・金額・顧客情報・CSV行を公開しない。**
+
+```json
+{
+  "distinctPayoutsObserved": 2,
+  "keyMeaningEvidenceRef": "audit:non-sensitive-reference",
+  "checks": [
+    {"payoutLabel":"A","reservationsPresent":true,"passesAndSubscriptionsPresent":true,"withinPayoutMatchVerified":true,"otherPayoutMismatchVerified":true,"evidenceRef":"audit:case-A"},
+    {"payoutLabel":"B","reservationsPresent":true,"passesAndSubscriptionsPresent":true,"withinPayoutMatchVerified":true,"otherPayoutMismatchVerified":true,"evidenceRef":"audit:case-B"}
+  ]
+}
+```
+
+このJSONは**形式例のみ**。上記の値をそのまま本番台帳に貼っても真正な証拠にはならない。実ファイルの出力元、同じ振込を指すキーの意味、A↔Bの誤結合拒否を、権利者の個別承認または真正な公式公開サンプルの範囲で人間が監査する。
+
+**機械ゲートの拒否条件**：観測振込が1件以下、A/Bの重複・欠落、いずれかの区分に実明細がない、同一振込の正例が未確認、異なる振込の負例が未確認、監査参照が欠落。いずれもM3の`done`を拒否する。合成回帰テストでは形式を検証できるが、実CSV適合は引き続き`false`。銀行着金照合・MF会計実取込・支払意思も別ゲート。
+
+**予定対実績**：10/31 JST、M2適格1/5（不足4）・blocked、M3真正な実CSV0件・blocked、M4面談0/5、M5支払意思0/3、実CSV適合false、有料化No-Go。**次の1作業**：11/01 JSTにM2の期限超過を機械台帳・Markdownへ同期し、M3は真正な公開実ファイルまたは個別承認がなければ未検証を維持する。
