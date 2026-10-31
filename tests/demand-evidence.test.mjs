@@ -96,6 +96,36 @@ test('M2: interview month and crawl date do not substitute for a published perio
   assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 5);
 });
 
+test('M2: future publication day or month cannot inflate qualified firsthand evidence', () => {
+  const data = clone();
+  const candidate = firsthand(920);
+  data.sources.push(candidate);
+  const nextMonth = new Date(saved.checkedAt + 'T00:00:00Z');
+  nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+  candidate.publishedAt = dayAfterEvidenceCheck;
+  assert.throws(() => summarizeDemandEvidence(data), /掲載・取材時期が調査日より未来/);
+  candidate.publishedAt = nextMonth.toISOString().slice(0, 7);
+  assert.throws(() => summarizeDemandEvidence(data), /掲載・取材時期が調査日より未来/);
+  candidate.publishedAt = saved.checkedAt;
+  assert.equal(summarizeDemandEvidence(data).m2QualifiedFirsthandWorkflows,
+    summarizeDemandEvidence(saved).m2QualifiedFirsthandWorkflows + 1);
+});
+
+test('Issue #3: a future interview month cannot qualify as target MF firsthand evidence', () => {
+  const data = clone();
+  const candidate = {...firsthand(921), targetMfUser: true,
+    accountingSoftware: 'マネーフォワード クラウド会計',
+    monthlyPayoutReconciliationWork: '合成例：予約入金と銀行着金の月次照合',
+    publishedAt: '未確認'};
+  const nextMonth = new Date(saved.checkedAt + 'T00:00:00Z');
+  nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+  candidate.interviewedAt = nextMonth.toISOString().slice(0, 7);
+  data.sources.push(candidate);
+  assert.throws(() => summarizeDemandEvidence(data), /掲載・取材時期が調査日より未来/);
+  candidate.interviewedAt = '2026-10';
+  assert.equal(summarizeDemandEvidence(data).targetMfReconciliationWorkflows, 1);
+});
+
 test('M2: same-operator dated booking post corroborates U002 but cannot date its undated interview', () => {
   const u2 = saved.sources.find(s => s.id === 'U002');
   assert.equal(u2.sameOperatorCorroboration.url, 'https://mimosa-eyedesign.stores.jp/reserve/mimosaeyedesign/blogs/990644');
