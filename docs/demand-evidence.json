@@ -397,6 +397,12 @@
       "kind": "official_capability",
       "url": "https://reserve-faq.stores.jp/hc/ja/articles/28713302057241",
       "summary": "2026-06-22更新のSTORES予約公式入金サイクルFAQ。月次25日振込では日本時間1日00:00〜08:59の決済が当月振込対象、同日09:00以降は翌月振込対象となる例を明示。週次は別の対象期間。月次決済日付だけで入金内訳・銀行着金を結合しない。現行2内訳CSVの実ヘッダー・振込キーや利用者需要の証拠ではない。"
+    },
+    {
+      "id": "O040",
+      "kind": "official_capability",
+      "url": "https://regi-faq.stores.jp/hc/ja/articles/32997746487833",
+      "summary": "STORESレジ公式FAQ（2025-04-04更新、2026-11-01閲覧）。レジ→MFクラウド会計はレジ登録売上を連携するが、レジ単独連携ではSTORES決済手数料は連携しない。公式はレジとSTORES決済の双方をMFへ連携し、決済側の売上は仕訳登録せず二重計上を避ける方法を案内。これはレジ経由のSTORES決済についての説明であり、STORES予約のオンライン事前決済・現行入金2内訳の自動連携や、利用者の残作業・支払意思を証明しない。"
     }
   ],
   "realCsvVerification": {
