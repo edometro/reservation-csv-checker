@@ -11,7 +11,8 @@
     "demand": "node scripts/demand-status.mjs",
     "milestones": "node scripts/milestone-status.mjs",
     "payout:preflight": "node scripts/payout-header-preflight.mjs",
-    "demand:gaps": "node scripts/m2-gap-audit.mjs"
+    "demand:gaps": "node scripts/m2-gap-audit.mjs",
+    "payout:keys": "node scripts/payout-key-preflight.mjs"
   },
   "engines": {
     "node": ">=20"
