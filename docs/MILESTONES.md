@@ -4,6 +4,16 @@
 >
 > **機械可読台帳**: [milestones.json](milestones.json)。**需要証拠の唯一の集計元**: [demand-evidence.json](demand-evidence.json)。検証方針の原本: [DEMAND_VALIDATION_SPRINT_2026-10-27.md](DEMAND_VALIDATION_SPRINT_2026-10-27.md)。
 
+### 2026-10-31 22:32 JST：M3の2振込A/B正負例を完了ゲートへ接続（Issue #2）
+
+**今回の単一成果物**：既存[入金ソース契約の第21・22節](PAYOUT_SOURCE_CONTRACT_2026-10-28.md#22-2026-10-312振込の正負例をm3完了判定へ接続issue-2)に基づき、M3の`done`には異なる2振込A/Bの双方で予約・回数券/月謝内訳が存在し、同一振込の正例が通り、A↔Bの誤結合が拒否され、匿名の監査参照があることを必須化。従来の列名・キー意味の文字列一致だけでM3を完了扱いしない。合成テストは真正なCSVを示さず、出典の人間監査が別途必要。
+
+**検証条件**：`tests/payout-format-evidence.test.mjs` と `tests/milestone-progress.test.mjs` に、2振込・正例・負例・片区分欠落・監査参照欠落の合成回帰を追加。GitHub Actionsで`npm test`、`npm run demand`、`npm run demand:gaps`、`npm run milestones`の結果を確認する。実ファイル・顧客データ・実振込IDは追加しない。
+
+**予定対実績**：M1 done、M2（10/31期限）適格一次1/5・不足4・blocked、対象MF本人0、M3（11/03期限）真正な実CSV0・blocked、M4同意済み0/5、M5支払意思0/3、実CSV適合false、M6未判断。有料化`INSUFFICIENT_EVIDENCE` / No-Go。新規顧客・売上・面談・一次証拠なし。
+
+**障害・挽回策・次の1作業**：真正な現行2内訳ファイルと個別承認がなく、A/B観測は未実施。11/01 JSTにM2の未達を`overdue`へ同期することを次の単一作業とする。M3の実検証は真正な公式公開実ファイルまたは権利者の個別承認が得られるまで停止。第三者への無承認営業・実顧客CSV取得・決済・公開デプロイは行わない。
+
 ### 2026-10-31 20:40 JST：M2期限当日の7件全数監査と追加候補の不採用判定（Issue #3）
 
 **今回の単一成果物・完了条件**：`docs/demand-evidence.json` にある本人一次7件を、**掲載時期・STORES予約の本人作業・会計ソフトの本人実使用・運営者の独立性**で全件再照合し、M2の採否と不足を出典ごとに固定する。既存の `npm run demand:gaps` と同じ厳格基準を使用し、**会計ソフト未公表を勝手に補わない**。期限10/31の20:40 JST時点ではまだ期限超過でないため、M2は`blocked`を維持する。新しい利用者を獲得したという意味ではない。
