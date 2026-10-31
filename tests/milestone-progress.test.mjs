@@ -198,15 +198,17 @@ test('M2: five dated stories without accounting-software names cannot be marked 
   assert.equal(result.milestones[1].effectiveStatus, 'overdue');
 });
 
-test('現在の進捗表は台帳のblocked状態と適格件数に同期し、履歴は変更しない', async () => {
+test('現在の進捗表は台帳の更新日・状態・適格件数に同期し、履歴は変更しない', async () => {
   const [markdown, ledger] = await Promise.all([
     readFile(new URL('../docs/MILESTONES.md', import.meta.url), 'utf8'),
     readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse)
   ]);
-  const synced = synchronizeMilestoneMarkdown(markdown, ledger, '2026-10-31');
+  const asOf = ledger.updatedAt;
+  const m2Status = ledger.milestones.find(m => m.id === 'M2').status;
+  const synced = synchronizeMilestoneMarkdown(markdown, ledger, asOf);
   assert.equal(synced.changed, false, '公開済み進捗表が台帳と一致する');
-  assert.match(synced.content, /\| M2 \|[^\n]*全条件充足1\/5[^\n]*\*\*blocked\*\*/);
-  assert.equal(synchronizeMilestoneMarkdown(synced.content, ledger, '2026-10-31').changed, false);
+  assert.match(synced.content, new RegExp('\\| M2 \\|[^\\n]*全条件充足1/5[^\\n]*\\*\\*' + m2Status + '\\*\\*'));
+  assert.equal(synchronizeMilestoneMarkdown(synced.content, ledger, asOf).changed, false);
 });
 
 test('期限翌日にoverdueを進捗表へ反映し、古い研究記録は残す', async () => {
