@@ -392,5 +392,28 @@
       "publishedAt": "2026-10-26",
       "sourceContext": "独立媒体によるfreee予約運営担当者への取材。数値は提供者の自己申告（seller_claim）で、利用者本人の実務体験ではない。"
     }
-  ]
+  ],
+  "realCsvVerification": {
+    "reviewedAt": null,
+    "payoutReservations": {
+      "verified": false,
+      "evidenceRef": null
+    },
+    "payoutPassesAndSubscriptions": {
+      "verified": false,
+      "evidenceRef": null
+    },
+    "sharedPayoutKey": {
+      "verified": false,
+      "evidenceRef": null
+    },
+    "bankDepositReconciliation": {
+      "verified": false,
+      "evidenceRef": null
+    },
+    "moneyForwardImport": {
+      "verified": false,
+      "evidenceRef": null
+    }
+  }
 }

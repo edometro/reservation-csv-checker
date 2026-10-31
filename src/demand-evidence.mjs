@@ -3,12 +3,24 @@ export const SOURCE_KINDS = Object.freeze([
   'firsthand_workflow', 'official_capability', 'seller_claim', 'editorial'
 ]);
 const TYPES = new Set(SOURCE_KINDS);
+// M5: a single boolean is not evidence that the two payout files, bank deposit,
+// and Money Forward import were actually checked. Keep private CSVs out of Git.
+const CSV_PROOF_KEYS = ["payoutReservations","payoutPassesAndSubscriptions","sharedPayoutKey","bankDepositReconciliation","moneyForwardImport"];
 const validDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) &&
   !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s;
 const countMissing = (actual, required) => Math.max(0, required - actual);
 // Interview dates and crawl dates are not publication dates. Month precision is allowed.
 const validPublicationPeriod = value => validDate(value) ||
   (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && validDate(value + '-01'));
+
+function hasRealCsvProof(verification, checkedAt) {
+  return verification && validDate(verification.reviewedAt) &&
+    verification.reviewedAt <= checkedAt && CSV_PROOF_KEYS.every(key => {
+      const check = verification[key];
+      return check?.verified === true && typeof check.evidenceRef === 'string' &&
+        check.evidenceRef.trim().length > 0;
+    });
+}
 
 export function summarizeDemandEvidence(registry) {
   if (!registry || !Array.isArray(registry.sources)) {
@@ -115,6 +127,9 @@ export function summarizeDemandEvidence(registry) {
   }
   if (typeof registry.realCsvCompatibilityVerified !== 'boolean') {
     throw new Error('実CSVの適合確認状況が不正です');
+  }
+  if (registry.realCsvCompatibilityVerified && !hasRealCsvProof(registry.realCsvVerification, registry.checkedAt)) {
+    throw new Error('実CSV適合をtrueにするには2内訳・共通振込キー・銀行着金照合・MF実取込の監査証拠が必要です');
   }
   const missing = {
     firsthandCases: countMissing(m2QualifiedIds.length, 5),
