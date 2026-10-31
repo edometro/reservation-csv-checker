@@ -86,3 +86,41 @@ export function assessPayoutFormatEvidence(entries, {asOf} = {}) {
     realCsvCompatibilityVerified: false
   };
 }
+
+
+/**
+ * M3 two-payout discrimination gate. Labels A/B are local, non-sensitive
+ * audit labels, never transaction IDs or payout amounts. This only checks
+ * that an auditable observation was *claimed*; human review of the source
+ * and actual matching is still required.
+ */
+export function assessPayoutJoinDiscrimination(evidence) {
+  const blockers = [];
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) {
+    return {state: 'INSUFFICIENT_EVIDENCE', blockers: ['JOIN_OBSERVATION_MISSING']};
+  }
+  if (!Number.isSafeInteger(evidence.distinctPayoutsObserved) ||
+      evidence.distinctPayoutsObserved < 2) {
+    blockers.push('TWO_DISTINCT_PAYOUTS_NOT_OBSERVED');
+  }
+  if (!Array.isArray(evidence.checks) || evidence.checks.length !== 2 ||
+      new Set(evidence.checks.map(check => check?.payoutLabel)).size !== 2 ||
+      !['A', 'B'].every(label => evidence.checks.some(check => check?.payoutLabel === label))) {
+    blockers.push('A_B_OBSERVATIONS_MISSING_OR_DUPLICATE');
+  } else {
+    for (const check of evidence.checks) {
+      const prefix = check.payoutLabel + ':';
+      if (check.reservationsPresent !== true || check.passesAndSubscriptionsPresent !== true) {
+        blockers.push(prefix + 'BOTH_BREAKDOWNS_NOT_OBSERVED');
+      }
+      if (check.withinPayoutMatchVerified !== true) blockers.push(prefix + 'POSITIVE_MATCH_UNVERIFIED');
+      if (check.otherPayoutMismatchVerified !== true) blockers.push(prefix + 'CROSS_PAYOUT_NEGATIVE_UNVERIFIED');
+      if (!isNonEmptyString(check.evidenceRef)) blockers.push(prefix + 'AUDIT_REFERENCE_MISSING');
+    }
+  }
+  if (!isNonEmptyString(evidence.keyMeaningEvidenceRef)) blockers.push('KEY_MEANING_AUDIT_MISSING');
+  return {
+    state: blockers.length ? 'INSUFFICIENT_EVIDENCE' : 'READY_FOR_MANUAL_JOIN_REVIEW',
+    blockers
+  };
+}

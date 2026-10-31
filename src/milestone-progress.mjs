@@ -1,5 +1,5 @@
 import {summarizeDemandEvidence} from './demand-evidence.mjs';
-import {assessPayoutFormatEvidence} from './payout-format-evidence.mjs';
+import {assessPayoutFormatEvidence, assessPayoutJoinDiscrimination} from './payout-format-evidence.mjs';
 
 const STATES = new Set(['not_started', 'in_progress', 'blocked', 'done', 'overdue']);
 const WORK_PRIORITIES = new Set(['active', 'parked']);
@@ -20,7 +20,8 @@ function hasM3AcceptanceEvidence(v, asOf) {
     typeof v.commonPayoutKeyEvidenceRef === 'string' && v.commonPayoutKeyEvidenceRef.trim().length > 0 &&
     v.acceptanceCriteriaDocumented === true &&
     Array.isArray(v.formatEvidence) &&
-    assessPayoutFormatEvidence(v.formatEvidence, {asOf}).state === 'READY_FOR_MANUAL_SCHEMA_REVIEW';
+    assessPayoutFormatEvidence(v.formatEvidence, {asOf}).state === 'READY_FOR_MANUAL_SCHEMA_REVIEW' &&
+    assessPayoutJoinDiscrimination(v.joinDiscrimination).state === 'READY_FOR_MANUAL_JOIN_REVIEW';
 }
 
 export function evaluateMilestones(ledger, registry, asOf) {
