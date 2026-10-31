@@ -56,6 +56,14 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     reservations: verified(), passesAndSubscriptions: verified(),
     commonPayoutKeyVerified: true, commonPayoutKeyEvidenceRef: 'docs/redacted-local-verification.md',
     acceptanceCriteriaDocumented: true,
+    joinDiscrimination: {
+      distinctPayoutsObserved: 2, keyMeaningEvidenceRef: 'audit:synthetic-key-meaning',
+      checks: ['A', 'B'].map(payoutLabel => ({
+        payoutLabel, reservationsPresent: true, passesAndSubscriptionsPresent: true,
+        withinPayoutMatchVerified: true, otherPayoutMismatchVerified: true,
+        evidenceRef: 'audit:synthetic-' + payoutLabel
+      }))
+    },
     formatEvidence: ['payout_reservations', 'payout_passes_subscriptions'].map(role => ({
       role, product: 'STORES予約', exportSurface: 'payout_history',
       sourceKind: 'official_public_sample', sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
@@ -95,6 +103,17 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     ['untrusted official sample host', v => { v.formatEvidence[0].sourceUrl = 'https://example.org/not-official.csv'; }],
     ['future observed date', v => { v.formatEvidence[0].observedAt = '2026-11-01'; }],
     ['identifier absent from headers', v => { v.formatEvidence[1].identifierColumns.push('imaginary_id'); }]
+  ]) {
+    const missing = structuredClone(ledger);
+    mutate(missing.m3Verification);
+    assert.throws(() => evaluateMilestones(missing, registry, '2026-10-31'), /M3.*不足/, label);
+  }
+  for (const [label, mutate] of [
+    ['no A/B observations', v => { delete v.joinDiscrimination; }],
+    ['only one payout', v => { v.joinDiscrimination.distinctPayoutsObserved = 1; }],
+    ['A/B negative join not tested', v => { v.joinDiscrimination.checks[1].otherPayoutMismatchVerified = false; }],
+    ['missing second breakdown', v => { v.joinDiscrimination.checks[0].passesAndSubscriptionsPresent = false; }],
+    ['missing observation audit ref', v => { v.joinDiscrimination.checks[0].evidenceRef = ''; }]
   ]) {
     const missing = structuredClone(ledger);
     mutate(missing.m3Verification);
