@@ -5,6 +5,8 @@ import {summarizeDemandEvidence} from '../src/demand-evidence.mjs';
 
 const saved = JSON.parse(await readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8'));
 const clone = () => structuredClone(saved);
+// Date-based rejection tests must remain future-dated as the evidence ledger advances.
+const dayAfterEvidenceCheck = new Date(Date.parse(saved.checkedAt + 'T00:00:00Z') + 86_400_000).toISOString().slice(0, 10);
 const baselineFirsthand = saved.sources.filter(s => s.kind === 'firsthand_workflow').length;
 const baselinePublished = saved.sources.filter(s => s.kind === 'firsthand_workflow' &&
   s.bookingProduct === 'STORES予約' && s.bookingUseEvidence?.trim() &&
@@ -176,7 +178,7 @@ test('M5: flipping the real-CSV boolean cannot bypass actual proof references', 
     invalid.realCsvVerification[key].verified = false;
     assert.throws(() => summarizeDemandEvidence(invalid), /監査証拠/, key + ': verification is mandatory');
   }
-  data.realCsvVerification.reviewedAt = '2026-11-01';
+  data.realCsvVerification.reviewedAt = dayAfterEvidenceCheck;
   assert.throws(() => summarizeDemandEvidence(data), /監査証拠/, 'future review date cannot qualify');
   data.realCsvCompatibilityVerified = false;
   assert.equal(summarizeDemandEvidence(data).decision, 'INSUFFICIENT_EVIDENCE');
@@ -199,7 +201,7 @@ test('M4/M5: aggregate counters cannot fabricate consent or 2,980 yen willingnes
   assert.throws(() => summarizeDemandEvidence(duplicate), /重複/);
   const future = clone();
   addSyntheticInterviewProof(future);
-  future.interviews.records[0].interviewedAt = '2026-11-01';
+  future.interviews.records[0].interviewedAt = dayAfterEvidenceCheck;
   assert.throws(() => summarizeDemandEvidence(future), /監査証拠/);
   const lowPrice = clone();
   addSyntheticInterviewProof(lowPrice);
