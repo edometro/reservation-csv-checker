@@ -32,7 +32,7 @@ test('tracked evidence keeps real users separate from seller and official claims
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, baselineFirsthand);
   assert.equal(result.official_capability, saved.sources.filter(s => s.kind === 'official_capability').length);
-  assert.equal(result.seller_claim, 2);
+  assert.equal(result.seller_claim, saved.sources.filter(s => s.kind === 'seller_claim').length);
   assert.equal(result.editorial, saved.sources.filter(s => s.kind === 'editorial').length);
   assert.equal(result.consentedInterviews, 0);
   assert.equal(result.confirmedWillingness, 0);
@@ -40,6 +40,21 @@ test('tracked evidence keeps real users separate from seller and official claims
   assert.deepEqual(result.missing, {
     firsthandCases: baselineMissing, interviews: 5, willingness: 3, realCsvCompatibility: 1
   });
+});
+
+test('M2: freee reservation provider cross-sell is not an independent STORES user', () => {
+  const claim = saved.sources.find(s => s.id === 'S003');
+  assert.equal(claim.kind, 'seller_claim');
+  assert.equal(claim.publishedAt, '2026-10-26');
+  const withoutClaim = clone();
+  withoutClaim.sources = withoutClaim.sources.filter(s => s.id !== 'S003');
+  const baseline = summarizeDemandEvidence(withoutClaim);
+  const withClaim = summarizeDemandEvidence(saved);
+  assert.equal(withClaim.seller_claim, baseline.seller_claim + 1);
+  assert.equal(withClaim.m2QualifiedFirsthandWorkflows, baseline.m2QualifiedFirsthandWorkflows);
+  assert.equal(withClaim.targetMfReconciliationWorkflows, baseline.targetMfReconciliationWorkflows);
+  assert.equal(withClaim.confirmedWillingness, baseline.confirmedWillingness);
+  assert.equal(withClaim.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
 test('M2: interview month and crawl date do not substitute for a published period', () => {
