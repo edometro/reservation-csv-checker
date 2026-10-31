@@ -200,10 +200,12 @@
         "https://github.com/edometro/reservation-csv-checker/actions/runs/41133114374",
         "docs/MILESTONES.md#2026-10-31m3の未達issue-2を再オープンし検証再開条件を確定",
         "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md#2026-10-31-0836-jstm3の取得経路を一度だけ判定公開サンプル旧事例api個別承認",
-        "https://reserve-faq.stores.jp/hc/ja/articles/28752603270297"
+        "https://reserve-faq.stores.jp/hc/ja/articles/28752603270297",
+        "src/payout-format-evidence.mjs",
+        "docs/MILESTONES.md#2026-10-31-1832-jstm3の形式メタデータを完了条件に接続"
       ],
-      "blocker": "現行確定入金履歴2内訳の真正な公式公開実ファイルURL未特定（不存在は未証明）。2024年本人操作記録・予約/顧客APIは現行2内訳の代替不可。個別承認なし。実形式・実ヘッダー・同一振込キー・銀行照合未検証。",
-      "nextAction": "真正な現行2内訳の新規公式公開実ファイルURLまたは権利者の形式選択・ヘッダー限定検証の個別承認が得られた場合のみ既存第7節の検証を再開。11/03期限までトリガーがなければblockedを維持し、11/04からoverdue。反復FAQ検索停止。次の単一作業は11/01のM2期限超過判定。",
+      "blocker": "現行確定入金履歴2内訳の真正な公式公開実ファイルURL未特定（不存在は未証明）。2024年本人操作記録・予約/顧客APIは現行2内訳の代替不可。個別承認なし。実形式・実ヘッダー・同一振込キー・銀行照合未検証。 追加受入ゲート：現行2内訳それぞれの実ヘッダー・識別子・行粒度・出典・共通振込キーを構造化したformatEvidenceが未取得。",
+      "nextAction": "新しい真正な公式公開の入金履歴2内訳CSV、または個別承認済み匿名化サンプルが得られた場合のみ、両方の実ヘッダー・識別子・行粒度・共通振込キーをformatEvidenceに記録し、出典と真正性を人間が確認する。11/03未達なら11/04にoverdue。次回はM2の11/01期限超過同期。",
       "workPriority": "active"
     },
     {
@@ -310,6 +312,7 @@
     },
     "commonPayoutKeyVerified": false,
     "commonPayoutKeyEvidenceRef": null,
-    "acceptanceCriteriaDocumented": true
+    "acceptanceCriteriaDocumented": true,
+    "formatEvidence": []
   }
 }
