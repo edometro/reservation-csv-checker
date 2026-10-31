@@ -1,0 +1,58 @@
+name: JST milestone ledger sync
+
+on:
+  schedule:
+    # 00:20 JST (UTC+09:00), after the previous calendar day has ended.
+    - cron: '20 15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: jst-milestone-ledger-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Detect overdue or evidence drift without changing files
+        id: detect
+        run: |
+          node scripts/milestone-status.mjs > "$RUNNER_TEMP/milestone-report.json"
+          node -e 'const fs=require("node:fs"); const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); const needed=r.drift.length>0 || r.milestones.some(m=>m.stored!==m.effective); fs.appendFileSync(process.env.GITHUB_OUTPUT, "needed="+needed+"\n"); console.log("asOf="+r.asOf+"; syncNeeded="+needed+"; nextDue="+JSON.stringify(r.nextDue));' "$RUNNER_TEMP/milestone-report.json"
+      - name: Synchronize JSON and Markdown only when state has drifted
+        if: steps.detect.outputs.needed == 'true'
+        run: npm run milestones -- --write
+      - name: Verify updated ledger and regression suite
+        if: steps.detect.outputs.needed == 'true'
+        run: |
+          npm test
+          npm run demand
+          npm run demand:gaps
+          npm run milestones
+      - name: Propose status changes for review (never push to main)
+        if: steps.detect.outputs.needed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automation/jst-milestone-status
+          delete-branch: true
+          add-paths: |
+            docs/milestones.json
+            docs/MILESTONES.md
+          commit-message: 'chore(milestones): synchronize JST deadline status'
+          title: 'chore(milestones): synchronize JST deadline status'
+          body: |
+            Automated JST date-boundary synchronization of the existing milestone ledger.
+            This PR changes only docs/milestones.json and docs/MILESTONES.md.
+            The workflow runs npm test, npm run demand, npm run demand:gaps,
+            and npm run milestones before proposing changes.
+            Counts and evidence are never invented; overdue is derived from dueDate.
+            M2/M3 remain blocked by real user/CSV evidence, and paid launch remains No-Go.
+            Review and merge separately; no customer contact, payment or deployment.
