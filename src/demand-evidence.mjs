@@ -12,6 +12,20 @@ const countMissing = (actual, required) => Math.max(0, required - actual);
 // Operator IDs are internal anonymous identifiers, not case-sensitive names.
 // Canonicalize before deduplication so alternate case / Unicode width cannot inflate M2 or MF counts.
 const normalizeOperatorKey = value => typeof value === 'string' ? value.trim().normalize('NFKC').toLowerCase() : '';
+// Canonicalize only presentation/tracking differences. Query parameters such as
+// ?id=1 can identify distinct articles, so preserve non-tracking parameters.
+function canonicalSourceUrl(value) {
+  const url = new URL(value);
+  url.hash = '';
+  for (const key of [...url.searchParams.keys()]) {
+    if (/^utm_/i.test(key) || /^(fbclid|gclid|yclid|mc_cid|mc_eid)$/i.test(key)) {
+      url.searchParams.delete(key);
+    }
+  }
+  url.searchParams.sort();
+  url.pathname = url.pathname.replace(/\/+$/, '') || '/';
+  return url.toString();
+}
 // Interview dates and crawl dates are not publication dates. Month precision is allowed.
 const validPublicationPeriod = value => validDate(value) ||
   (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && validDate(value + '-01'));
@@ -96,7 +110,7 @@ export function summarizeDemandEvidence(registry) {
         typeof item.summary !== 'string' || !item.summary.trim()) {
       throw new Error('出典の識別子・URL・概要が不足しています');
     }
-    const normalizedUrl = item.url.replace(/\/$/, '');
+    const normalizedUrl = canonicalSourceUrl(item.url);
     if (ids.has(item.id) || urls.has(normalizedUrl)) {
       throw new Error('同じ出典を複数件に数えることはできません');
     }
