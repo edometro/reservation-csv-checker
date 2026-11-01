@@ -260,10 +260,11 @@
         "tests/payout-m3-semantic-negative-control.test.mjs",
         "https://booth.pm/ja/items/8776730",
         "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md#30-2026-11-02-0338-jst500円の予約一覧csv変換商品は現行入金2内訳の実csv証拠ではないissue-2--m3",
-        "https://github.com/edometro/reservation-csv-checker/issues/2#issuecomment-6564253547"
+        "https://github.com/edometro/reservation-csv-checker/issues/2#issuecomment-6564253547",
+        "docs/milestones.json#m3Verification.acquisitionAudit.postDeadlineRouting"
       ],
       "blocker": "現行確定入金履歴2内訳の真正な公式公開実ファイルURL未特定（不存在は未証明）。2024年本人操作記録・予約/顧客APIは現行2内訳の代替不可。個別承認なし。実形式・実ヘッダー・同一振込キー・銀行照合未検証。 追加受入ゲート：現行2内訳それぞれの実ヘッダー・識別子・行粒度・出典・共通振込キーを構造化したformatEvidenceが未取得。",
-      "nextAction": "11/03期限に真正な現行2内訳の公式公開架空CSV/個別承認/公式回答の新規差分のみ判定。予約一覧CSV変換商品や旧/別製品CSVは実適合に算入しない。なければ11/04にM3をoverdueへ同期しM2不足4件を優先。",
+      "nextAction": "11/03期限当日は真正な公式公開2内訳ファイル・権利者個別承認・公式回答の新規差分のみ判定。未達なら11/04からM3=overdueのまま単一activeをM2へ自動復帰し、FAQ反復調査を停止。",
       "workPriority": "active"
     },
     {
@@ -637,6 +638,24 @@
         "qualifiedFirsthandAdded": 0,
         "purchaseMade": false,
         "specRef": "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md#30-2026-11-02-0338-jst500円の予約一覧csv変換商品は現行入金2内訳の実csv証拠ではないissue-2--m3"
+      },
+      "postDeadlineRouting": {
+        "decidedAt": "2026-11-02",
+        "effectiveFrom": "2026-11-04",
+        "reason": "M3期限後も現行2内訳の真正な実ファイル・公式回答・個別承認がない状態で、毎時の公式FAQ再監査を繰り返さない。",
+        "condition": "M2とM3がともにoverdueで、M2=parked/M3=activeのときに単一activeをM2へ自動切替。M3のoverdue/blocked理由は維持。",
+        "beforeDeadline": "2026-11-03までM3をactiveとして新規の真正な公式公開ファイル・権利者承認・公式回答の差分のみ判定。",
+        "afterDeadline": "2026-11-04からM2の独立した本人一次証拠の不足4件を優先。M3は新規アクセス/資料が得られた場合にのみ再開。",
+        "sourceOfTruth": "src/milestone-progress.mjs",
+        "test": "tests/milestone-progress.test.mjs",
+        "evidenceAdded": {
+          "qualifiedFirsthand": 0,
+          "realCsvFiles": 0,
+          "interviews": 0,
+          "willingness": 0
+        },
+        "commercialDecision": "INSUFFICIENT_EVIDENCE",
+        "authorizedOutreach": false
       }
     }
   }
