@@ -559,7 +559,13 @@ test('M2: an explicitly fictional STORES予約 + freee workflow cannot count as 
   assert.match(item.summary, /フィクション/);
   assert.equal(saved.sources.filter(s => s.url === item.url).length, 1, '出典は重複計上しない');
   const summary = summarizeDemandEvidence(saved);
-  assert.equal(summary.editorial, 2);
+  const secondFiction = saved.sources.find(s => s.id === 'E003');
+  assert.ok(secondFiction, '別URLの架空の改善談も出典監査する');
+  assert.equal(secondFiction.kind, 'editorial');
+  assert.match(secondFiction.summary, /フィクション/);
+  assert.equal(saved.sources.filter(s => s.url === secondFiction.url).length, 1, '新規の架空記事も重複計上しない');
+  assert.notEqual(secondFiction.url, item.url, '同一出典の別名登録ではない');
+  assert.equal(summary.editorial, 3);
   assert.equal(summary.m2QualifiedFirsthandWorkflows, 1);
   assert.equal(summary.targetMfReconciliationWorkflows, 0);
   assert.equal(summary.missing.firsthandCases, 4);
