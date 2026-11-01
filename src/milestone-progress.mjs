@@ -72,12 +72,22 @@ export function evaluateMilestones(ledger, registry, asOf) {
   // upcoming deadline. Report the earliest outstanding due date from today.
   const nextUpcoming = milestones.filter(m => m.effectiveStatus !== 'done' && m.dueDate >= asOf)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
-  // The oldest overdue milestone stays visible, but may be blocked on access.
-  // Select exactly one independently actionable work item for this run.
-  const activeWork = milestones.filter(m => m.effectiveStatus !== 'done' && m.workPriority === 'active');
+  // M3's 11/03 evidence deadline must not leave the automation stuck on
+  // repetitive CSV/FAQ checks after 11/04. If both M2 and M3 remain overdue,
+  // route the one active work slot back to M2 without hiding M3's blocker.
+  const m2 = milestones.find(m => m.id === 'M2');
+  const m3 = milestones.find(m => m.id === 'M3');
+  const fallbackToM2 = m2?.effectiveStatus === 'overdue' && m3?.effectiveStatus === 'overdue' &&
+    m2.workPriority === 'parked' && m3.workPriority === 'active';
+  const routedMilestones = milestones.map(m => ({
+    ...m,
+    effectiveWorkPriority: fallbackToM2 && m.id === 'M2' ? 'active' :
+      fallbackToM2 && m.id === 'M3' ? 'parked' : m.workPriority
+  }));
+  const activeWork = routedMilestones.filter(m => m.effectiveStatus !== 'done' && m.effectiveWorkPriority === 'active');
   if (activeWork.length > 1) throw new Error('同時にactiveの未完了マイルストーンは1件までです');
   const work = activeWork[0] ?? null;
-  return {asOf, snapshot, decision: summary.decision, drift, milestones, nextDue: next && {
+  return {asOf, snapshot, decision: summary.decision, drift, milestones: routedMilestones, nextDue: next && {
     id: next.id, dueDate: next.dueDate, status: next.effectiveStatus, blocker: next.blocker ?? null
   }, nextUpcomingDue: nextUpcoming && {
     id: nextUpcoming.id, dueDate: nextUpcoming.dueDate, status: nextUpcoming.effectiveStatus,
@@ -91,10 +101,14 @@ export function synchronizeMilestoneLedger(ledger, evaluation) {
   const updated = structuredClone(ledger);
   updated.evidenceSnapshot = evaluation.snapshot;
   updated.commercialGate.status = evaluation.decision;
-  updated.milestones = evaluation.milestones.map(({effectiveStatus, ...m}) => ({...m, status: effectiveStatus}));
+  updated.milestones = evaluation.milestones.map(({effectiveStatus, effectiveWorkPriority, ...m}) => ({
+    ...m, status: effectiveStatus,
+    ...(effectiveWorkPriority !== undefined ? {workPriority: effectiveWorkPriority} : {})
+  }));
   const changed = JSON.stringify(updated.evidenceSnapshot) !== JSON.stringify(ledger.evidenceSnapshot) ||
     updated.commercialGate.status !== ledger.commercialGate.status ||
-    updated.milestones.some((m, i) => m.status !== ledger.milestones[i].status);
+    updated.milestones.some((m, i) => m.status !== ledger.milestones[i].status ||
+      m.workPriority !== ledger.milestones[i].workPriority);
   if (changed) updated.updatedAt = evaluation.asOf;
   return {updated, changed};
 }
