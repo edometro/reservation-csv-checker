@@ -260,6 +260,33 @@ test('duplicate sources and unsupported categories are rejected', () => {
   assert.throws(() => summarizeDemandEvidence(data), /不明な証拠/);
 });
 
+test('M2: tracking parameters, fragments and trailing slash do not create new sources', () => {
+  const original = saved.sources.find(s => s.id === 'U001');
+  const variants = [
+    original.url.replace(/\\/$/, '') + '?utm_source=newsletter&utm_campaign=test#section',
+    original.url.replace(/\\/$/, '') + '/?fbclid=tracking-only',
+    original.url.replace(/\\/$/, '') + '/#other-section'
+  ];
+  for (const [i, url] of variants.entries()) {
+    const data = clone();
+    data.sources.push({...original, id: 'synthetic-duplicate-' + i, url});
+    assert.throws(() => summarizeDemandEvidence(data), /同じ出典/,
+      'URLの表示差・追跡パラメータで本人一次証拠を二重計上しない');
+  }
+});
+
+test('M2: meaningful query identifiers are not collapsed into one source', () => {
+  const data = clone();
+  data.sources.push({...firsthand(2020), url: 'https://example.org/article?id=1&view=full'});
+  data.sources.push({...firsthand(2021), url: 'https://example.org/article?view=full&id=2'});
+  assert.doesNotThrow(() => summarizeDemandEvidence(data));
+  const reordered = clone();
+  reordered.sources.push({...firsthand(2022), url: 'https://example.org/article?id=1&view=full'});
+  reordered.sources.push({...firsthand(2023), url: 'https://example.org/article?view=full&id=1'});
+  assert.throws(() => summarizeDemandEvidence(reordered), /同じ出典/,
+    '意味のあるクエリは保持しつつ順序違いを重複として拒否する');
+});
+
 test('invalid aggregate numbers and unsubstantiated firsthand records are rejected', () => {
   const data = clone();
   data.interviews = {consented:1, specificWillingness:2};
