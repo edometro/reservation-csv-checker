@@ -68,6 +68,10 @@ export function evaluateMilestones(ledger, registry, asOf) {
   });
   const next = milestones.filter(m => m.effectiveStatus !== 'done')
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
+  // An overdue milestone is still visible as nextDue, but it is not the next
+  // upcoming deadline. Report the earliest outstanding due date from today.
+  const nextUpcoming = milestones.filter(m => m.effectiveStatus !== 'done' && m.dueDate >= asOf)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
   // The oldest overdue milestone stays visible, but may be blocked on access.
   // Select exactly one independently actionable work item for this run.
   const activeWork = milestones.filter(m => m.effectiveStatus !== 'done' && m.workPriority === 'active');
@@ -75,6 +79,9 @@ export function evaluateMilestones(ledger, registry, asOf) {
   const work = activeWork[0] ?? null;
   return {asOf, snapshot, decision: summary.decision, drift, milestones, nextDue: next && {
     id: next.id, dueDate: next.dueDate, status: next.effectiveStatus, blocker: next.blocker ?? null
+  }, nextUpcomingDue: nextUpcoming && {
+    id: nextUpcoming.id, dueDate: nextUpcoming.dueDate, status: nextUpcoming.effectiveStatus,
+    blocker: nextUpcoming.blocker ?? null
   }, nextWork: work && {
     id: work.id, dueDate: work.dueDate, status: work.effectiveStatus, blocker: work.blocker ?? null
   }};
