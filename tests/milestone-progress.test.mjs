@@ -239,6 +239,8 @@ test('期限超過のM2は未達一覧に残し、独立して進めるM3だけ�
   assert.equal(result.nextDue.id, 'M2', '遅延は隠さない');
   assert.equal(result.nextDue.status, 'overdue');
   assert.equal(result.nextWork.id, 'M3', '承認待ちのM2を無限に再調査しない');
+  assert.equal(result.nextUpcomingDue.id, 'M3', '次の未到来期限はM3（11/03）');
+  assert.equal(result.nextUpcomingDue.dueDate, '2026-11-03');
   const {updated} = synchronizeMilestoneLedger(ledger, result);
   assert.equal(updated.milestones[1].status, 'overdue');
   assert.equal(updated.milestones[1].workPriority, 'parked');
@@ -263,7 +265,25 @@ test('CLIは11/01時点の遅延M2と単一active M3を別々に出力する', (
   assert.equal(report.nextDue.id, 'M2');
   assert.equal(report.nextDue.status, 'overdue');
   assert.equal(report.nextWork.id, 'M3');
+  assert.equal(report.nextUpcomingDue.id, 'M3');
+  assert.equal(report.nextUpcomingDue.dueDate, '2026-11-03');
   assert.equal(report.nextWork.status, 'blocked', '実CSV未入手・個別承認なしのM3はactiveでもblocked');
   assert.equal(report.evidence.m2QualifiedFirsthandWorkflows, 1);
   assert.equal(report.evidence.realCsvCompatibilityVerified, false);
+});
+
+
+test('未到来の期限がなくなった後も遅延を残し、nextUpcomingDueはnullを返す', () => {
+  const ledger = baseline();
+  ledger.milestones[1].status = 'blocked';
+  const result = evaluateMilestones(ledger, registry, '2026-11-11');
+  assert.equal(result.nextDue.id, 'M2');
+  assert.equal(result.nextDue.status, 'overdue');
+  assert.equal(result.nextUpcomingDue, null);
+});
+test('期限当日のM3は次の未到来期限に含み、期限翌日にはM4に移る', () => {
+  const ledger = baseline();
+  ledger.milestones[1].status = 'blocked';
+  assert.equal(evaluateMilestones(ledger, registry, '2026-11-03').nextUpcomingDue.id, 'M3');
+  assert.equal(evaluateMilestones(ledger, registry, '2026-11-04').nextUpcomingDue.id, 'M4');
 });
