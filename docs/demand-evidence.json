@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-01",
+  "checkedAt": "2026-11-02",
   "interviews": {
     "consented": 0,
     "specificWillingness": 0
@@ -411,6 +411,14 @@
       "summary": "2026-06-05公開。旅館の『田中さん』がSTORES予約とfreee会計を導入し月次集計20時間→3時間とする物語だが、本文冒頭・末尾に人物・店舗・効果数値はフィクションと明記。実在利用者の本人作業、独立した需要、MF月次照合、支払意思、現行実CSVの証拠としては不採用。",
       "publishedAt": "2026-06-05",
       "sourceContext": "編集・サービス紹介記事。冒頭のフィクション注記と末尾の架空人物・想定数値注記を照合。本文の一人称引用を実在本人の一次体験談として数えない。"
+    },
+    {
+      "id": "S004",
+      "kind": "seller_claim",
+      "url": "https://www.i-advisory.com/stripe_to_mf/",
+      "publishedAt": "2026-10-15",
+      "summary": "会計・自動化支援サービスの販売者によるStripe→MFクラウド会計の解説。Stripe直契約の売上・手数料・振込をMF標準連携またはCSV加工で扱う選択肢を説明するが、個別顧客の本人実作業、STORES予約の現行確定入金2内訳へのアクセス、具体的支払意思・削減実績を証明しない。",
+      "sourceContext": "会計事務所の解説記事・自社サービスの案内を含む。本人一次体験談やMF公式の連携範囲保証ではない。"
     }
   ],
   "realCsvVerification": {
