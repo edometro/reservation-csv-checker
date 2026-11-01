@@ -256,10 +256,12 @@
         "scripts/milestone-status.mjs",
         ".github/workflows/milestone-jst-sync.yml",
         "docs/MILESTONES.md#2026-11-02-0032-jstm3期限前の公開実csv探索を打ち切る判定票issue-2",
-        "tests/payout-m3-semantic-negative-control.test.mjs"
+        "tests/payout-m3-semantic-negative-control.test.mjs",
+        "https://booth.pm/ja/items/8776730",
+        "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md#30-2026-11-02-0338-jst500円の予約一覧csv変換商品は現行入金2内訳の実csv証拠ではないissue-2--m3"
       ],
       "blocker": "現行確定入金履歴2内訳の真正な公式公開実ファイルURL未特定（不存在は未証明）。2024年本人操作記録・予約/顧客APIは現行2内訳の代替不可。個別承認なし。実形式・実ヘッダー・同一振込キー・銀行照合未検証。 追加受入ゲート：現行2内訳それぞれの実ヘッダー・識別子・行粒度・出典・共通振込キーを構造化したformatEvidenceが未取得。",
-      "nextAction": "11/03までに真正な現行2内訳の公式公開架空CSV/個別承認/公式回答の新規差分のみ確認。なければ11/04にM3をoverdueへ同期し、M2適格本人一次の不足4件の新規独立証拠探索へ切り替える。",
+      "nextAction": "11/03期限に真正な現行2内訳の公式公開架空CSV/個別承認/公式回答の新規差分のみ判定。予約一覧CSV変換商品や旧/別製品CSVは実適合に算入しない。なければ11/04にM3をoverdueへ同期しM2不足4件を優先。",
       "workPriority": "active"
     },
     {
@@ -610,6 +612,29 @@
         "customerDataUsed": false,
         "countsAsRealCsvCompatibility": false,
         "nextAction": "2026-11-03: new official current two-breakdown sample, individually approved owner file, or official response only; otherwise overdue from 2026-11-04."
+      },
+      "sellerBookingListScopeAudit": {
+        "auditedAt": "2026-11-02T03:38:00+09:00",
+        "sourceType": "seller_claim_not_official_csv_or_firsthand",
+        "sourceUrl": "https://booth.pm/ja/items/8776730",
+        "listedPriceYen": 500,
+        "sellerDescribedInput": "STORES予約の予約一覧CSV",
+        "sellerDescribedOutput": "freee収入取引インポート用CSV",
+        "notEstablished": [
+          "現行確定入金履歴の内訳（予約）CSV",
+          "現行確定入金履歴の内訳（回数券・月謝）CSV",
+          "実ヘッダー",
+          "共通振込キーの意味",
+          "銀行実着金照合",
+          "MF実インポート",
+          "販売実績・利用者支払意思"
+        ],
+        "decision": "reject_as_current_payout_history_format_evidence",
+        "qualification": "商品説明で確認できないことは機能不存在の証明ではない。購入せず販売者の説明範囲のみ判定。",
+        "verifiedRealCsvCount": 0,
+        "qualifiedFirsthandAdded": 0,
+        "purchaseMade": false,
+        "specRef": "docs/PAYOUT_SOURCE_CONTRACT_2026-10-28.md#30-2026-11-02-0338-jst500円の予約一覧csv変換商品は現行入金2内訳の実csv証拠ではないissue-2--m3"
       }
     }
   }
