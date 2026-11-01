@@ -403,6 +403,14 @@
       "kind": "official_capability",
       "url": "https://regi-faq.stores.jp/hc/ja/articles/32997746487833",
       "summary": "STORESレジ公式FAQ（2025-04-04更新、2026-11-01閲覧）。レジ→MFクラウド会計はレジ登録売上を連携するが、レジ単独連携ではSTORES決済手数料は連携しない。公式はレジとSTORES決済の双方をMFへ連携し、決済側の売上は仕訳登録せず二重計上を避ける方法を案内。これはレジ経由のSTORES決済についての説明であり、STORES予約のオンライン事前決済・現行入金2内訳の自動連携や、利用者の残作業・支払意思を証明しない。"
+    },
+    {
+      "id": "E003",
+      "kind": "editorial",
+      "url": "https://okomari.smilefactory-rakuai.com/articles/d7261ed7.html",
+      "summary": "2026-06-05公開。旅館の『田中さん』がSTORES予約とfreee会計を導入し月次集計20時間→3時間とする物語だが、本文冒頭・末尾に人物・店舗・効果数値はフィクションと明記。実在利用者の本人作業、独立した需要、MF月次照合、支払意思、現行実CSVの証拠としては不採用。",
+      "publishedAt": "2026-06-05",
+      "sourceContext": "編集・サービス紹介記事。冒頭のフィクション注記と末尾の架空人物・想定数値注記を照合。本文の一人称引用を実在本人の一次体験談として数えない。"
     }
   ],
   "realCsvVerification": {
