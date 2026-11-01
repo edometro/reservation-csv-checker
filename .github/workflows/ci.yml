@@ -27,3 +27,4 @@ jobs:
       - run: npm run demand
       - run: npm run demand:gaps
       - run: npm run milestones
+      - run: npm run payout:gaps

@@ -656,6 +656,20 @@
         },
         "commercialDecision": "INSUFFICIENT_EVIDENCE",
         "authorizedOutreach": false
+      },
+      "gapAudit": {
+        "recordedAt": "2026-11-02T08:38:00+09:00",
+        "command": "npm run payout:gaps",
+        "scope": "Read-only M3 evidence-gap report; no raw CSV or private references printed",
+        "realCsvFilesAdded": 0,
+        "qualifiedFirsthandAdded": 0,
+        "status": "blocked",
+        "evidence": [
+          "src/m3-gap-audit.mjs",
+          "tests/m3-gap-audit.test.mjs",
+          "docs/MILESTONES.md"
+        ],
+        "nextAction": "11/03 new authentic two-breakdown official CSV/permission/official reply only; if absent overdue from 11/04 and prioritize M2"
       }
     }
   }
