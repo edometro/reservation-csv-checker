@@ -287,3 +287,51 @@ test('期限当日のM3は次の未到来期限に含み、期限翌日にはM4�
   assert.equal(evaluateMilestones(ledger, registry, '2026-11-03').nextUpcomingDue.id, 'M3');
   assert.equal(evaluateMilestones(ledger, registry, '2026-11-04').nextUpcomingDue.id, 'M4');
 });
+
+test('M3期限の翌日、両方未達ならM2へ単一作業を自動復帰し台帳へ同期する', () => {
+  const ledger = baseline();
+  ledger.milestones[1].status = 'blocked';
+  ledger.milestones[1].workPriority = 'parked';
+  ledger.milestones[2].status = 'blocked';
+  ledger.milestones[2].workPriority = 'active';
+
+  const onDeadline = evaluateMilestones(ledger, registry, '2026-11-03');
+  assert.equal(onDeadline.nextWork.id, 'M3');
+  assert.equal(synchronizeMilestoneLedger(ledger, onDeadline).updated.milestones[2].workPriority, 'active');
+
+  const nextDay = evaluateMilestones(ledger, registry, '2026-11-04');
+  assert.equal(nextDay.nextDue.id, 'M2', 'M2遅延を消さない');
+  assert.equal(nextDay.nextUpcomingDue.id, 'M4', 'M3期限は終了');
+  assert.equal(nextDay.nextWork.id, 'M2', 'M3の公式FAQ反復を停止する');
+  assert.equal(nextDay.milestones.find(m => m.id === 'M3').effectiveStatus, 'overdue');
+  assert.equal(nextDay.milestones.find(m => m.id === 'M3').effectiveWorkPriority, 'parked');
+
+  const {updated, changed} = synchronizeMilestoneLedger(ledger, nextDay);
+  assert.equal(changed, true);
+  assert.equal(updated.milestones[1].workPriority, 'active');
+  assert.equal(updated.milestones[2].workPriority, 'parked');
+  assert.equal(updated.milestones[2].status, 'overdue');
+  const again = evaluateMilestones(updated, registry, '2026-11-04');
+  assert.equal(again.nextWork.id, 'M2');
+  assert.equal(synchronizeMilestoneLedger(updated, again).changed, false, '同期後は冪等');
+
+  const alreadyDoneM2 = structuredClone(ledger);
+  alreadyDoneM2.milestones[1].status = 'done';
+  assert.equal(evaluateMilestones(alreadyDoneM2, registry, '2026-11-04').nextWork.id, 'M3',
+    'M2完了なら不要な復帰をしない');
+});
+
+test('実台帳の11/04シミュレーションでもM3をoverdueにしてM2へ戻す', async () => {
+  const [ledger, evidence] = await Promise.all([
+    readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse),
+    readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8').then(JSON.parse)
+  ]);
+  const onDeadline = evaluateMilestones(ledger, evidence, '2026-11-03');
+  assert.equal(onDeadline.nextWork.id, 'M3');
+  const nextDay = evaluateMilestones(ledger, evidence, '2026-11-04');
+  assert.equal(nextDay.nextWork.id, 'M2');
+  assert.equal(nextDay.milestones.find(m => m.id === 'M3').effectiveStatus, 'overdue');
+  const {updated} = synchronizeMilestoneLedger(ledger, nextDay);
+  assert.equal(updated.milestones.find(m => m.id === 'M2').workPriority, 'active');
+  assert.equal(updated.milestones.find(m => m.id === 'M3').workPriority, 'parked');
+});
