@@ -263,9 +263,9 @@ test('duplicate sources and unsupported categories are rejected', () => {
 test('M2: tracking parameters, fragments and trailing slash do not create new sources', () => {
   const original = saved.sources.find(s => s.id === 'U001');
   const variants = [
-    original.url.replace(/\\/$/, '') + '?utm_source=newsletter&utm_campaign=test#section',
-    original.url.replace(/\\/$/, '') + '/?fbclid=tracking-only',
-    original.url.replace(/\\/$/, '') + '/#other-section'
+    original.url.replace(/\/$/, '') + '?utm_source=newsletter&utm_campaign=test#section',
+    original.url.replace(/\/$/, '') + '/?fbclid=tracking-only',
+    original.url.replace(/\/$/, '') + '/#other-section'
   ];
   for (const [i, url] of variants.entries()) {
     const data = clone();
