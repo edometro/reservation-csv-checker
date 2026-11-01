@@ -5,6 +5,16 @@
 > **機械可読台帳**: [milestones.json](milestones.json)。**需要証拠の唯一の集計元**: [demand-evidence.json](demand-evidence.json)。検証方針の原本: [DEMAND_VALIDATION_SPRINT_2026-10-27.md](DEMAND_VALIDATION_SPRINT_2026-10-27.md)。
 
 
+## 2026-11-02 07:38 JST：M3期限後の同一FAQ反復を停止しM2へ作業枠を自動復帰（Issue #2 / #3）
+
+**今回の単一成果物と完了条件**：M3の11/03期限を過ぎても真正な2内訳実CSV・権利者承認・公式回答がない場合、M3の遅延と障害を隠さず、11/04から単一active作業をM2へ自動復帰させる。従来は `workPriority` が台帳に固定され、期限を過ぎてもM3の公式FAQ再監査が継続する運用上の欠陥があった。`src/milestone-progress.mjs` と `tests/milestone-progress.test.mjs` に期限当日・翌日・同期後の冪等性・M2既達成時の例外を固定。既存の `npm run milestones -- --write` で11/04以降に状態と優先度を同期できる。M3の証拠が新規に得られた場合は個別の受入検証を再開するが、期限超過を勝手にdoneへ変えない。
+
+**検証・証拠**：PR Actionsで `npm test`・`npm run demand`・`npm run demand:gaps`・`npm run milestones` を確認する。2026-11-02時点では[STORES予約公式の確定入金履歴手順](https://reserve-faq.stores.jp/hc/ja/articles/28713301405977)に2内訳の別ダウンロードは示されるが、真正な現行2内訳の実ファイル・実ヘッダー・共通振込キーは未確認。公開検索の追加結果も既監査の公式FAQ・別製品・編集記事が中心で、適格本人一次は追加0件。**これは運用上の作業切替であり、顧客需要や実CSV適合の進展ではない。**
+
+**予定対実績・障害**：M1=done、M2=10/31期限超過・適格一次1/5（不足4）・overdue、M3=11/03期限・真正な現行2内訳0件・blocked、M4=同意済み面談0/5・blocked、M5=支払意思0/3・blocked、M6=not_started。実CSV適合=false、有料化No-Go。外部への無承認連絡・実顧客CSV取得・決済・公開デプロイは行わない。
+
+**次回の1作業**：11/03にM3の新規真正ファイル・個別承認・公式回答の差分だけを期限判定。未達なら11/04からM3 overdueのままM2へactiveを切替し、未監査の独立した本人一次証拠1件の適格判定に着手する。
+
 ## 2026-11-02 06:36 JST：売上CSVと確定入金2内訳の実形式を混同しない期限前判定（Issue #2 / M3）
 
 **今回の単一成果物**：[Issue #2の出力形式スコープ監査](https://github.com/edometro/reservation-csv-checker/issues/2#issuecomment-6564253547)を作成・確認した。STORES予約公式の[2025-11-14更新の会計ソフト連携FAQ](https://reserve-faq.stores.jp/hc/ja/articles/52258293899673)は「予約の売上データはCSV形式で出力可能」と説明する。一方、[2026-08-04更新の入金履歴FAQ](https://reserve-faq.stores.jp/hc/ja/articles/28713301405977)は**確定入金履歴の「内訳（予約）」「内訳（回数券・月謝）」をそれぞれダウンロードして形式選択**するよう説明するが、公開本文にその2内訳の実形式・実ヘッダー・共通振込キーの明記はない。**売上データ一般のCSV対応を現行の確定入金2内訳のCSV適合とみなさない。** 既存の公式情報を別の観測単位で再照合したもので、新しい公式サンプルを取得したわけではない。
