@@ -44,6 +44,12 @@ export function assessPayoutFormatEvidence(entries, {asOf} = {}) {
     if (entry.product !== 'STORES予約' || entry.exportSurface !== 'payout_history') {
       blockers.push(prefix + 'WRONG_EXPORT_SURFACE');
     }
+    // STORES予約 exposes both estimated upcoming payouts and finalized payout
+    // history. Matching headers/IDs cannot make a provisional amount final.
+    // This is a claimed observation, still subject to independent human review.
+    if (entry.payoutFinality !== 'confirmed' || !isNonEmptyString(entry.finalityEvidenceNote)) {
+      blockers.push(prefix + 'CONFIRMED_PAYOUT_UNPROVEN');
+    }
     if (!['official_public_sample', 'permissioned_anonymized_sample'].includes(entry.sourceKind)) {
       blockers.push(prefix + 'SOURCE_NOT_VERIFIABLE');
     } else if (entry.sourceKind === 'official_public_sample' && !isOfficialStoresSampleUrl(entry.sourceUrl)) {
