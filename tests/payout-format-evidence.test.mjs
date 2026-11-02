@@ -4,6 +4,7 @@ import {assessPayoutFormatEvidence, assessPayoutJoinDiscrimination, PAYOUT_BREAK
 
 const sample = role => ({
   role, product: 'STORES予約', exportSurface: 'payout_history',
+  payoutFinality: 'confirmed', finalityEvidenceNote: 'synthetic confirmed-history label; not a real file',
   sourceKind: 'official_public_sample', sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
   observedAt: '2026-10-29', fileFormat: 'csv',
   headers: ['payout_reference', 'transaction_id', 'amount'],
@@ -32,6 +33,27 @@ test('reservation list, analytics, and purchase-history exports cannot substitut
     entries[0].exportSurface = surface;
     assert.ok(check(entries).blockers.includes('payout_reservations:WRONG_EXPORT_SURFACE'));
   }
+});
+
+test('scheduled, unknown, and unsubstantiated payout finality cannot pass the M3 format gate', () => {
+  for (const [finality, note] of [
+    ['scheduled', 'upcoming payout amount'],
+    ['unknown', 'status unknown'],
+    [undefined, 'not established'],
+    ['confirmed', '']
+  ]) {
+    const entries = both();
+    entries[0].payoutFinality = finality;
+    entries[0].finalityEvidenceNote = note;
+    const result = check(entries);
+    assert.ok(result.blockers.includes('payout_reservations:CONFIRMED_PAYOUT_UNPROVEN'));
+    assert.equal(result.realCsvCompatibilityVerified, false);
+  }
+  // The other stream must also be finalized; a mixed pair is not enough.
+  const mixed = both();
+  mixed[1].payoutFinality = 'scheduled';
+  assert.ok(check(mixed).blockers.includes('payout_passes_subscriptions:CONFIRMED_PAYOUT_UNPROVEN'));
+  assert.equal(check(both()).state, 'READY_FOR_MANUAL_SCHEMA_REVIEW');
 });
 
 test('one breakdown alone is insufficient even with complete headers', () => {
