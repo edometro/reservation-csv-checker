@@ -67,6 +67,7 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     },
     formatEvidence: ['payout_reservations', 'payout_passes_subscriptions'].map(role => ({
       role, product: 'STORES予約', exportSurface: 'payout_history',
+      payoutFinality: 'confirmed', finalityEvidenceNote: 'synthetic fixture, no actual payout observed',
       sourceKind: 'official_public_sample', sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
       observedAt: '2026-10-29', fileFormat: 'csv',
       headers: ['payout_reference', 'transaction_id', 'amount'],
@@ -122,6 +123,7 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
     ['no structured metadata', v => { delete v.formatEvidence; }],
     ['only one payout breakdown', v => { v.formatEvidence.pop(); }],
     ['reservation-list export substituted', v => { v.formatEvidence[0].exportSurface = 'reservation_list'; }],
+    ['scheduled payout substituted', v => { v.formatEvidence[0].payoutFinality = 'scheduled'; }],
     ['missing observed header', v => { v.formatEvidence[0].headers = []; }],
     ['missing payout join', v => { delete v.formatEvidence[1].payoutJoin; }],
     ['different payout identity', v => { v.formatEvidence[1].payoutJoin.semanticKey = 'other-payout'; }],
@@ -417,6 +419,7 @@ test('M5/商用Go: 本物のM3人手審査なしでは他の全証拠フラグ�
     acceptanceCriteriaDocumented: true,
     formatEvidence: ['payout_reservations', 'payout_passes_subscriptions'].map(role => ({
       role, product: 'STORES予約', exportSurface: 'payout_history',
+      payoutFinality: 'confirmed', finalityEvidenceNote: 'synthetic fixture, no actual payout observed',
       sourceKind: 'official_public_sample',
       sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
       observedAt: '2026-11-01', fileFormat: 'csv',
