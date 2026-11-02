@@ -36,6 +36,8 @@ const addSyntheticInterviewProof = (data, willing = 3) => {
     consented: 5, specificWillingness: willing,
     records: Array.from({length: 5}, (_, i) => ({
       participantKey: 'synthetic-p' + i,
+      outreachApprovedAt: '2026-10-29',
+      outreachApprovalEvidenceRef: 'synthetic-private-approval-' + i,
       consentedAt: '2026-10-30', interviewedAt: '2026-10-31',
       consentEvidenceRef: 'synthetic-private-consent-' + i,
       interviewEvidenceRef: 'synthetic-private-interview-' + i,
@@ -221,6 +223,20 @@ test('M4/M5: aggregate counters cannot fabricate consent or 2,980 yen willingnes
   addSyntheticInterviewProof(data);
   assert.equal(summarizeDemandEvidence(data).consentedInterviews, 5);
   assert.equal(summarizeDemandEvidence(data).confirmedWillingness, 3);
+  const noApproval = clone();
+  addSyntheticInterviewProof(noApproval);
+  noApproval.interviews.records[0].outreachApprovalEvidenceRef = '';
+  assert.throws(() => summarizeDemandEvidence(noApproval), /個別承認/,
+    '本人同意だけでは個別承認済みと計上しない');
+  const noApprovalDate = clone();
+  addSyntheticInterviewProof(noApprovalDate);
+  delete noApprovalDate.interviews.records[0].outreachApprovedAt;
+  assert.throws(() => summarizeDemandEvidence(noApprovalDate), /個別承認/);
+  const lateApproval = clone();
+  addSyntheticInterviewProof(lateApproval);
+  lateApproval.interviews.records[0].outreachApprovedAt = '2026-10-31';
+  assert.throws(() => summarizeDemandEvidence(lateApproval), /個別承認/,
+    '面談同意より後日の承認は事前承認とみなさない');
   const missingConsent = clone();
   addSyntheticInterviewProof(missingConsent);
   missingConsent.interviews.records[0].consentEvidenceRef = '';
