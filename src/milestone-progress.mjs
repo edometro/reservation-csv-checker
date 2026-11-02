@@ -31,6 +31,14 @@ export function evaluateMilestones(ledger, registry, asOf) {
     throw new Error('マイルストーン台帳の形式が不正です');
   }
   const summary = summarizeDemandEvidence(registry);
+  // M5's verified CSV flag and private proof references cannot substitute for
+  // the independent M3 human review of authentic, current STORES payout exports.
+  // Both gates are required before presenting a commercial Go candidate.
+  const m3Record = ledger.milestones.find(m => m?.id === 'M3');
+  const m3EvidenceAccepted = m3Record?.status === 'done' &&
+    hasM3AcceptanceEvidence(ledger.m3Verification, asOf);
+  const decision = summary.decision === 'READY_FOR_HUMAN_GO_REVIEW' && !m3EvidenceAccepted
+    ? 'INSUFFICIENT_EVIDENCE' : summary.decision;
   const snapshot = {
     checkedAt: registry.checkedAt,
     firsthandWorkflows: summary.firsthand_workflow,
@@ -48,8 +56,8 @@ export function evaluateMilestones(ledger, registry, asOf) {
   };
   const drift = Object.entries(snapshot).filter(([key, value]) => ledger.evidenceSnapshot[key] !== value)
     .map(([key, value]) => ({field: key, stored: ledger.evidenceSnapshot[key], actual: value}));
-  if (ledger.commercialGate.status !== summary.decision) {
-    drift.push({field: 'commercialGate.status', stored: ledger.commercialGate.status, actual: summary.decision});
+  if (ledger.commercialGate.status !== decision) {
+    drift.push({field: 'commercialGate.status', stored: ledger.commercialGate.status, actual: decision});
   }
   const seen = new Set();
   const milestones = ledger.milestones.map(m => {
@@ -62,7 +70,8 @@ export function evaluateMilestones(ledger, registry, asOf) {
     if (m.status === 'done' && ((m.id === 'M2' && summary.m2QualifiedFirsthandWorkflows < 5) ||
         (m.id === 'M3' && !hasM3AcceptanceEvidence(ledger.m3Verification, asOf)) ||
         (m.id === 'M4' && summary.consentedInterviews < 5) ||
-        (m.id === 'M5' && (summary.confirmedWillingness < 3 || !summary.realCsvCompatibilityVerified)))) {
+        (m.id === 'M5' && (summary.confirmedWillingness < 3 ||
+          !summary.realCsvCompatibilityVerified || !m3EvidenceAccepted)))) {
       throw new Error(`${m.id}は完了と記録されていますが必須証拠が不足しています`);
     }
     const effectiveStatus = m.status !== 'done' && m.dueDate < asOf ? 'overdue' : m.status;
@@ -89,7 +98,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
   const activeWork = routedMilestones.filter(m => m.effectiveStatus !== 'done' && m.effectiveWorkPriority === 'active');
   if (activeWork.length > 1) throw new Error('同時にactiveの未完了マイルストーンは1件までです');
   const work = activeWork[0] ?? null;
-  return {asOf, snapshot, decision: summary.decision, drift, milestones: routedMilestones, nextDue: next && {
+  return {asOf, snapshot, decision, drift, milestones: routedMilestones, nextDue: next && {
     id: next.id, dueDate: next.dueDate, status: next.effectiveStatus, blocker: next.blocker ?? null
   }, nextUpcomingDue: nextUpcoming && {
     id: nextUpcoming.id, dueDate: nextUpcoming.dueDate, status: nextUpcoming.effectiveStatus,
