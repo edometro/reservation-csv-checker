@@ -93,7 +93,7 @@ test('M2: interview month and crawl date do not substitute for a published perio
   const data = clone();
   const u2 = data.sources.find(s => s.id === 'U002');
   u2.publishedAt = '2025-04'; // Example: only if actual publication month is verified.
-  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 5);
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 6);
   u2.publishedAt = '未記載（取材2025-04）';
   assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 5);
 });
