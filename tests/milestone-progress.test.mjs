@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {evaluateMilestones, synchronizeMilestoneLedger, synchronizeMilestoneMarkdown} from '../src/milestone-progress.mjs';
+import {summarizeDemandEvidence} from '../src/demand-evidence.mjs';
 
 const registry = {
   checkedAt: '2026-10-28', interviews: {consented: 0, specificWillingness: 0},
@@ -359,4 +360,89 @@ test('実台帳の11/04シミュレーションでもM3をoverdueにしてM2へ�
   const {updated} = synchronizeMilestoneLedger(ledger, nextDay);
   assert.equal(updated.milestones.find(m => m.id === 'M2').workPriority, 'active');
   assert.equal(updated.milestones.find(m => m.id === 'M3').workPriority, 'parked');
+});
+
+
+test('M5/商用Go: 本物のM3人手審査なしでは他の全証拠フラグが揃っても拒否する', () => {
+  // Entirely synthetic records: these are NOT customers, real CSVs, or permission.
+  const full = structuredClone(registry);
+  full.checkedAt = '2026-11-02';
+  full.interviews = {
+    consented: 5, specificWillingness: 3,
+    records: Array.from({length: 5}, (_, i) => ({
+      participantKey: 'synthetic_' + i,
+      outreachApprovedAt: '2026-10-28',
+      outreachApprovalEvidenceRef: 'restricted:synthetic-approval-' + i,
+      consentedAt: '2026-10-29', interviewedAt: '2026-10-30',
+      consentEvidenceRef: 'restricted:synthetic-consent-' + i,
+      interviewEvidenceRef: 'restricted:synthetic-interview-' + i,
+      willingness: i < 3,
+      ...(i < 3 ? {
+        willingnessPriceJPY: 2980, decisionMakerConfirmed: true,
+        willingnessTimeframe: 'next month', requiredFeatures: 'synthetic payout checks',
+        willingnessEvidenceRef: 'restricted:synthetic-willingness-' + i
+      } : {})
+    }))
+  };
+  full.realCsvCompatibilityVerified = true;
+  full.realCsvVerification = {
+    reviewedAt: '2026-11-01',
+    ...Object.fromEntries([
+      'payoutReservations', 'payoutPassesAndSubscriptions', 'sharedPayoutKey',
+      'bankDepositReconciliation', 'moneyForwardImport'
+    ].map(key => [key, {verified: true, evidenceRef: 'restricted:synthetic-' + key}]))
+  };
+  assert.equal(summarizeDemandEvidence(full).decision, 'READY_FOR_HUMAN_GO_REVIEW',
+    '需要台帳だけなら全条件達成という合成fixture');
+
+  const ledger = baseline();
+  ledger.milestones[2].status = 'blocked';
+  ledger.milestones[3].status = 'done';
+  assert.equal(evaluateMilestones(ledger, full, '2026-11-02').decision,
+    'INSUFFICIENT_EVIDENCE', 'M3の独立審査なしではGo候補にならない');
+  ledger.milestones[4].status = 'done';
+  assert.throws(() => evaluateMilestones(ledger, full, '2026-11-02'), /M5.*不足/,
+    'M5 doneもM3人手審査を迂回できない');
+
+  // The following synthetic attestation exercises the future positive code path,
+  // and is not evidence of a real file or an actual human review.
+  ledger.milestones[2].status = 'done';
+  const sample = () => ({
+    provenanceVerified: true, csvFormatVerified: true,
+    actualHeadersVerified: true, evidenceRef: 'restricted:synthetic-schema'
+  });
+  ledger.m3Verification = {
+    reservations: sample(), passesAndSubscriptions: sample(),
+    commonPayoutKeyVerified: true, commonPayoutKeyEvidenceRef: 'restricted:synthetic-key',
+    acceptanceCriteriaDocumented: true,
+    formatEvidence: ['payout_reservations', 'payout_passes_subscriptions'].map(role => ({
+      role, product: 'STORES予約', exportSurface: 'payout_history',
+      sourceKind: 'official_public_sample',
+      sourceUrl: 'https://reserve-faq.stores.jp/hc/article_attachments/synthetic-only.csv',
+      observedAt: '2026-11-01', fileFormat: 'csv',
+      headers: ['payout_reference', 'transaction_id', 'amount'],
+      identifierColumns: ['payout_reference', 'transaction_id'], rowGrain: 'payment',
+      payoutJoin: {column: 'payout_reference', semanticKey: 'same-payout',
+        evidenceNote: 'synthetic fixture only'}
+    })),
+    joinDiscrimination: {
+      distinctPayoutsObserved: 2, keyMeaningEvidenceRef: 'restricted:synthetic-key-meaning',
+      checks: ['A', 'B'].map(payoutLabel => ({
+        payoutLabel, reservationsPresent: true, passesAndSubscriptionsPresent: true,
+        withinPayoutMatchVerified: true, otherPayoutMismatchVerified: true,
+        evidenceRef: 'restricted:synthetic-' + payoutLabel
+      }))
+    },
+    manualReview: {
+      humanReviewed: true, authenticCurrentExportsConfirmed: true,
+      twoPayoutCasesReviewed: true, syntheticOnly: false,
+      reviewedAt: '2026-11-01', reviewerRole: 'synthetic_reviewer',
+      reviewEvidenceRef: 'restricted:synthetic-attestation'
+    }
+  };
+  const positive = evaluateMilestones(ledger, full, '2026-11-02');
+  assert.equal(positive.decision, 'READY_FOR_HUMAN_GO_REVIEW',
+    '両方の独立ゲートが満たされた合成状態だけGo検討候補');
+  assert.ok(positive.drift.some(d => d.field === 'commercialGate.status'),
+    '台帳の商用ゲート状態も差分として検出する');
 });
