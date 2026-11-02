@@ -34,6 +34,7 @@ export function evaluateMilestones(ledger, registry, asOf) {
   const snapshot = {
     checkedAt: registry.checkedAt,
     firsthandWorkflows: summary.firsthand_workflow,
+    buyerRequests: summary.buyer_request,
     publicationDatedFirsthandWorkflows: summary.publicationDatedFirsthandWorkflows,
     m2QualifiedFirsthandWorkflows: summary.m2QualifiedFirsthandWorkflows,
     targetMfFirsthandWorkflows: summary.targetMfReconciliationWorkflows,
