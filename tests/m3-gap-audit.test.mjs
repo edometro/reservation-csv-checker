@@ -19,6 +19,8 @@ test('M3の未取得2内訳と共通キー・A/B正負例を具体的に列挙�
   assert.ok(report.missing.includes('payout_passes_subscriptions:provenanceVerified'));
   assert.ok(report.missing.includes('format:MISSING:payout_reservations'));
   assert.ok(report.missing.includes('join:JOIN_OBSERVATION_MISSING'));
+  assert.ok(report.missing.includes('manualReview:HUMAN_REVIEW_MISSING'));
+  assert.equal(report.manualReviewGate, 'HUMAN_REVIEW_REQUIRED');
   assert.equal(report.realCsvCompatibilityVerified, false);
   assert.equal(report.commercialGoAuthorized, false);
 });
@@ -41,4 +43,18 @@ test('参照文字列・顧客の列名・データをレポートに露出し�
 
 test('不正な判定日を拒否する', () => {
   assert.throws(() => buildM3GapAudit(ledger, '2026-11-31'), /INVALID_AS_OF/);
+});
+
+test('M3監査の人手確認欄は機密参照を出力せず、将来日付も拒否する', () => {
+  const copy = structuredClone(ledger);
+  copy.m3Verification.manualReview = {
+    humanReviewed: true, authenticCurrentExportsConfirmed: true,
+    twoPayoutCasesReviewed: true, syntheticOnly: false,
+    reviewedAt: '2026-11-03', reviewerRole: 'authorized_reviewer',
+    reviewEvidenceRef: 'PRIVATE_REVIEW_REFERENCE'
+  };
+  const report = buildM3GapAudit(copy, '2026-11-02');
+  assert.ok(report.missing.includes('manualReview:HUMAN_REVIEW_DATE_IN_FUTURE'));
+  assert.ok(!JSON.stringify(report).includes('PRIVATE_REVIEW_REFERENCE'));
+  assert.equal(report.realCsvCompatibilityVerified, false);
 });

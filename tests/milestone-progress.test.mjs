@@ -74,11 +74,35 @@ test('M3: 現行2内訳の実ヘッダー・出典・共通振込キーが未確
         evidenceNote: 'synthetic metadata fixture; not real STORES evidence'}
     }))
   };
+  // Even fully populated synthetic metadata must not mark M3 done.
+  assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-31'), /M3.*不足/);
+  // This fixture models a future human-attested state; it is NOT real evidence.
+  ledger.m3Verification.manualReview = {
+    humanReviewed: true, authenticCurrentExportsConfirmed: true,
+    twoPayoutCasesReviewed: true, syntheticOnly: false,
+    reviewedAt: '2026-10-29', reviewerRole: 'authorized_reviewer',
+    reviewEvidenceRef: 'restricted:synthetic-human-review-fixture'
+  };
   const valid = evaluateMilestones(ledger, registry, '2026-10-31');
   assert.equal(valid.milestones[2].effectiveStatus, 'done');
   assert.equal(valid.snapshot.realCsvCompatibilityVerified, false,
     'M3形式確認はMF実インポート/全体適合の証明ではない');
   assert.equal(valid.decision, 'INSUFFICIENT_EVIDENCE');
+  for (const [field, value] of [
+    ['humanReviewed', false],
+    ['authenticCurrentExportsConfirmed', false],
+    ['twoPayoutCasesReviewed', false],
+    ['syntheticOnly', true],
+    ['reviewedAt', '2026-11-01'],
+    ['reviewerRole', ''],
+    ['reviewEvidenceRef', '']
+  ]) {
+    const missing = structuredClone(ledger);
+    missing.m3Verification.manualReview[field] = value;
+    assert.throws(() => evaluateMilestones(missing, registry, '2026-10-31'),
+      /M3.*不足/, 'human review gate: ' + field);
+  }
+
   for (const [section, field] of [
     ['reservations', 'provenanceVerified'],
     ['reservations', 'csvFormatVerified'],
