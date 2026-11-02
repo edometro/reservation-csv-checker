@@ -1,4 +1,4 @@
-import {summarizeDemandEvidence} from './demand-evidence.mjs';
+import {summarizeDemandEvidence, isAccountingSoftwareCandidate} from './demand-evidence.mjs';
 
 // A diagnostic report, not a substitute for manually verifying the source URL.
 // Never turn a missing publication date, unknown operator, or unverified software
@@ -8,10 +8,6 @@ const validDate = value => typeof value === 'string' &&
   !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 const validPublication = value => validDate(value) ||
   (typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value));
-const unknownSoftware = value => typeof value !== 'string' ||
-  /^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(value.trim()) ||
-  /予約|booking|coubic|レジ|決済|ネットショップ/i.test(value);
-
 export function buildM2GapAudit(registry) {
   const summary = summarizeDemandEvidence(registry);
   const qualified = new Set(summary.m2QualifiedIds);
@@ -27,7 +23,7 @@ export function buildM2GapAudit(registry) {
       if (!validPublication(source.publishedAt)) {
         missingConditions.push('SOURCE_PUBLICATION_PERIOD_UNVERIFIED');
       }
-      if (unknownSoftware(source.accountingSoftware) ||
+      if (!isAccountingSoftwareCandidate(source.accountingSoftware) ||
           !source.accountingSoftwareUseEvidence?.trim()) {
         missingConditions.push('ACCOUNTING_SOFTWARE_USE_UNVERIFIED');
       }
