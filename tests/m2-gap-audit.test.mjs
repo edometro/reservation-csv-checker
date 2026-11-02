@@ -11,14 +11,13 @@ test('M2 report is consistent with the real registry and does not invent eligibl
   assert.equal(report.qualified, 1);
   assert.equal(report.missing, 4);
   assert.equal(report.targetMfMonthlyReconciliation, 0);
-  assert.equal(report.sources.length, 8);
+  assert.equal(report.sources.length, 7);
   assert.equal(report.sources.find(row => row.id === 'U001').qualified, true);
   assert.deepEqual(report.sources.find(row => row.id === 'U001').missingConditions, []);
   assert.deepEqual(report.sources.find(row => row.id === 'U002').missingConditions,
     ['SOURCE_PUBLICATION_PERIOD_UNVERIFIED']);
-  const u8 = report.sources.find(row => row.id === 'U008');
-  assert.equal(u8.qualified, false, '予約設定の単発外注予算をCSV照合の需要に数えない');
-  assert.ok(u8.missingConditions.includes('ACCOUNTING_SOFTWARE_USE_UNVERIFIED'));
+  assert.equal(report.sources.find(row => row.id === 'U008'), undefined,
+    '公開発注募集は実施済み本人作業の不足監査対象ではない');
   const u3 = report.sources.find(row => row.id === 'U003');
   assert.ok(u3.missingConditions.includes('SOURCE_PUBLICATION_PERIOD_UNVERIFIED'));
   assert.ok(u3.missingConditions.includes('ACCOUNTING_SOFTWARE_USE_UNVERIFIED'));
@@ -52,7 +51,7 @@ test('M2 CLI prints machine-readable gap report without claiming five users', ()
   const report = JSON.parse(output);
   assert.equal(report.qualified, 1);
   assert.equal(report.missing, 4);
-  assert.equal(report.sources.length, 8);
+  assert.equal(report.sources.length, 7);
 });
 
 
