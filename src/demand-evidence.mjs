@@ -1,6 +1,6 @@
 /** Evidence accounting for a demand-validation gate. Never treat seller ads or official FAQs as customers. */
 export const SOURCE_KINDS = Object.freeze([
-  'firsthand_workflow', 'official_capability', 'seller_claim', 'editorial'
+  'firsthand_workflow', 'buyer_request', 'official_capability', 'seller_claim', 'editorial'
 ]);
 const TYPES = new Set(SOURCE_KINDS);
 // M5: a single boolean is not evidence that the two payout files, bank deposit,
@@ -134,6 +134,14 @@ export function summarizeDemandEvidence(registry) {
     }
     ids.add(item.id);
     urls.add(normalizedUrl);
+    // A public buyer request is evidence of an intended purchase or requested task,
+    // not a completed firsthand workflow or willingness to pay for THIS product.
+    if (item.kind === 'buyer_request' &&
+        (!validPublicationPeriod(item.publishedAt) ||
+         isFutureEvidencePeriod(item.publishedAt, registry.checkedAt) ||
+         typeof item.requestedWork !== 'string' || !item.requestedWork.trim())) {
+      throw new Error('公開発注募集には有効な掲載時期と依頼作業が必要です');
+    }
     if (item.kind === 'firsthand_workflow' &&
         (isFutureEvidencePeriod(item.publishedAt, registry.checkedAt) ||
          (item.targetMfUser === true && isFutureEvidencePeriod(item.interviewedAt, registry.checkedAt)))) {
