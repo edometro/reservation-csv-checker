@@ -77,6 +77,14 @@ function validateInterviewEvidence(interviews, checkedAt) {
       throw new Error('面談参加者の匿名識別子が不正または重複しています');
     }
     seen.add(record.participantKey.toLowerCase());
+    // A participant's consent is not the owner's authorization to contact them.
+    // Preserve a separate, dated, opaque reference for each individually approved outreach.
+    if (!validDate(record.outreachApprovedAt) ||
+        record.outreachApprovedAt > record.consentedAt ||
+        record.outreachApprovedAt > checkedAt ||
+        !hasRef(record.outreachApprovalEvidenceRef)) {
+      throw new Error('面談には事前の個別承認日時と監査証拠が必要です');
+    }
     if (!validDate(record.consentedAt) || !validDate(record.interviewedAt) ||
         record.consentedAt > record.interviewedAt || record.interviewedAt > checkedAt ||
         !hasRef(record.consentEvidenceRef) || !hasRef(record.interviewEvidenceRef)) {
