@@ -84,9 +84,9 @@ test('M2: freee reservation provider cross-sell is not an independent STORES use
 
 test('M2: interview month and crawl date do not substitute for a published period', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 7);
+  assert.equal(result.firsthand_workflow, 8);
   assert.equal(result.publicationDatedFirsthandWorkflows, 5);
-  assert.deepEqual(result.publicationMissingIds.sort(), ['U002', 'U003']);
+  assert.deepEqual(result.publicationMissingIds.sort(), ['U002', 'U003', 'U009']);
   assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
   assert.deepEqual(result.m2QualifiedIds, ['U001']);
   assert.equal(result.missing.firsthandCases, 4);
@@ -471,7 +471,7 @@ test('Issue #3: a public buyer request is not a performed workflow or product wi
   assert.equal(request.kind, 'buyer_request');
   assert.match(request.requestedWork, /予約/);
   assert.equal(result.buyer_request, 1);
-  assert.equal(result.firsthand_workflow, 7);
+  assert.equal(result.firsthand_workflow, 8);
   assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
   assert.equal(result.confirmedWillingness, 0);
   const data = clone();
@@ -486,12 +486,12 @@ test('Issue #3: a public buyer request is not a performed workflow or product wi
   assert.throws(() => summarizeDemandEvidence(data), /公開発注募集/);
 });
 
-test('Issue #3: seven actual stories and one buyer request are not qualified MF payout users', () => {
+test('Issue #3: eight actual stories and one buyer request are not qualified MF payout users', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 7);
+  assert.equal(result.firsthand_workflow, 8);
   assert.equal(result.targetMfReconciliationWorkflows, 0);
   assert.deepEqual(result.targetMfEvidenceIds, []);
-  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005', 'U006', 'U007']);
+  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005', 'U006', 'U007', 'U009']);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
