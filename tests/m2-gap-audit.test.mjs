@@ -51,3 +51,26 @@ test('M2 CLI prints machine-readable gap report without claiming five users', ()
   assert.equal(report.missing, 4);
   assert.equal(report.sources.length, 7);
 });
+
+
+test('M2: spreadsheet and CSV-only users are not accounting-software evidence', () => {
+  const baseline = buildM2GapAudit(registry);
+  const original = registry.sources.find(source => source.id === 'U001');
+  for (const [index, label] of ['Excel', 'Google Sheets', 'Google スプレッドシート', 'Numbers', 'CSV', '手書き帳簿'].entries()) {
+    const data = structuredClone(registry);
+    data.sources.push({
+      ...original,
+      id: 'U900',
+      url: 'https://example.org/synthetic-spreadsheet-' + index,
+      operatorKey: 'synthetic-other-operator',
+      accountingSoftware: label,
+      accountingSoftwareUseEvidence: '本人が' + label + 'で月次の売上表を管理した合成例'
+    });
+    const report = buildM2GapAudit(data);
+    assert.equal(report.qualified, baseline.qualified, label + ' must not increase M2');
+    assert.equal(report.missing, baseline.missing);
+    const candidate = report.sources.find(row => row.id === 'U900');
+    assert.equal(candidate.qualified, false);
+    assert.ok(candidate.missingConditions.includes('ACCOUNTING_SOFTWARE_USE_UNVERIFIED'));
+  }
+});

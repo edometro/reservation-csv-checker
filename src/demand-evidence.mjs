@@ -9,6 +9,16 @@ const CSV_PROOF_KEYS = ["payoutReservations","payoutPassesAndSubscriptions","sha
 const validDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) &&
   !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s;
 const countMissing = (actual, required) => Math.max(0, required - actual);
+// A spreadsheet or a generic CSV ledger is an alternative workflow, not an
+// identified accounting-software product. Do not inflate M2 with Excel users.
+export function isAccountingSoftwareCandidate(value) {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  const name = value.trim();
+  if (/^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(name)) return false;
+  if (/予約|booking|coubic|レジ|決済|ネットショップ/i.test(name)) return false;
+  if (/excel|google\s*sheets|スプレッドシート|表計算|numbers|^csv(?:$|[\s（(])|^紙|^手書き/i.test(name)) return false;
+  return true;
+}
 // Operator IDs are internal anonymous identifiers, not case-sensitive names.
 // Canonicalize before deduplication so alternate case / Unicode width cannot inflate M2 or MF counts.
 const normalizeOperatorKey = value => typeof value === 'string' ? value.trim().normalize('NFKC').toLowerCase() : '';
@@ -141,9 +151,7 @@ export function summarizeDemandEvidence(registry) {
           // freee予約 is a booking product, not freee会計.
           const hasUseProof = typeof item.accountingSoftwareUseEvidence === 'string' &&
             item.accountingSoftwareUseEvidence.trim().length > 0;
-          const isOtherProduct = /予約|booking|coubic|レジ|決済|ネットショップ/i.test(software);
-          const isUnverified = /^(未公表|未確認|不明|未記載|なし|unknown|not disclosed)(?:$|[（(\s])/i.test(software);
-          if (isUnverified || isOtherProduct || !hasUseProof) {
+          if (!isAccountingSoftwareCandidate(software) || !hasUseProof) {
             softwareUnverifiedIds.push(item.id);
           } else {
             // Different URLs from the same operator are one independent M2 case.
