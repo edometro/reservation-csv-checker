@@ -467,7 +467,7 @@ test('refund deadline is a documented CSV reconciliation gap, never a paying use
 
 test('Issue #3: eight general stories are not qualified STORES Reservation + MF payout users', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 7);
+  assert.equal(result.firsthand_workflow, 8);
   assert.equal(result.targetMfReconciliationWorkflows, 0);
   assert.deepEqual(result.targetMfEvidenceIds, []);
   assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005', 'U006', 'U007', 'U008']);
@@ -580,7 +580,7 @@ test('M2: a dated story without actual STORES予約 usage evidence is excluded f
 test('M2: dated STORES予約 reviews with undisclosed accounting software are not qualified', () => {
   const data = clone();
   const result = summarizeDemandEvidence(data);
-  assert.equal(result.publicationDatedFirsthandWorkflows, 5);
+  assert.equal(result.publicationDatedFirsthandWorkflows, 6);
   assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
   assert.deepEqual(result.softwareUnverifiedIds.sort(), ['U004', 'U005', 'U006', 'U007', 'U008']);
   const u4 = data.sources.find(s => s.id === 'U004');
