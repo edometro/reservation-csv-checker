@@ -125,3 +125,30 @@ export function assessPayoutJoinDiscrimination(evidence) {
     blockers
   };
 }
+
+
+/**
+ * A complete metadata packet is only a candidate for human review. M3 must
+ * never become done merely because someone filled booleans or test fixtures.
+ * This attestation records a human's review of lawful, authentic current
+ * exports and A/B payout discrimination; it does NOT certify MF import.
+ * The reference must point to a restricted audit record, never raw CSV/PII.
+ */
+export function assessM3ManualReview(review, {asOf} = {}) {
+  const blockers = [];
+  if (!review || typeof review !== 'object' || Array.isArray(review)) {
+    return {state: 'HUMAN_REVIEW_REQUIRED', blockers: ['HUMAN_REVIEW_MISSING']};
+  }
+  if (review.humanReviewed !== true) blockers.push('HUMAN_REVIEW_NOT_CONFIRMED');
+  if (review.authenticCurrentExportsConfirmed !== true) blockers.push('AUTHENTIC_EXPORTS_NOT_REVIEWED');
+  if (review.twoPayoutCasesReviewed !== true) blockers.push('A_B_CASES_NOT_REVIEWED');
+  if (review.syntheticOnly !== false) blockers.push('SYNTHETIC_EVIDENCE_NOT_EXCLUDED');
+  if (!isDate(review.reviewedAt)) blockers.push('HUMAN_REVIEW_DATE_MISSING');
+  else if (asOf && review.reviewedAt > asOf) blockers.push('HUMAN_REVIEW_DATE_IN_FUTURE');
+  if (!isNonEmptyString(review.reviewerRole)) blockers.push('REVIEWER_ROLE_MISSING');
+  if (!isNonEmptyString(review.reviewEvidenceRef)) blockers.push('RESTRICTED_REVIEW_REFERENCE_MISSING');
+  return {
+    state: blockers.length ? 'HUMAN_REVIEW_REQUIRED' : 'HUMAN_REVIEW_ATTESTED',
+    blockers
+  };
+}
