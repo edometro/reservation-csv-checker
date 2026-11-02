@@ -84,8 +84,8 @@ test('M2: freee reservation provider cross-sell is not an independent STORES use
 
 test('M2: interview month and crawl date do not substitute for a published period', () => {
   const result = summarizeDemandEvidence(saved);
-  assert.equal(result.firsthand_workflow, 7);
-  assert.equal(result.publicationDatedFirsthandWorkflows, 5);
+  assert.equal(result.firsthand_workflow, 8);
+  assert.equal(result.publicationDatedFirsthandWorkflows, 6);
   assert.deepEqual(result.publicationMissingIds.sort(), ['U002', 'U003']);
   assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
   assert.deepEqual(result.m2QualifiedIds, ['U001']);
@@ -93,9 +93,9 @@ test('M2: interview month and crawl date do not substitute for a published perio
   const data = clone();
   const u2 = data.sources.find(s => s.id === 'U002');
   u2.publishedAt = '2025-04'; // Example: only if actual publication month is verified.
-  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 6);
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 7);
   u2.publishedAt = '未記載（取材2025-04）';
-  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 5);
+  assert.equal(summarizeDemandEvidence(data).publicationDatedFirsthandWorkflows, 6);
 });
 
 test('M2: future publication day or month cannot inflate qualified firsthand evidence', () => {
@@ -465,12 +465,12 @@ test('refund deadline is a documented CSV reconciliation gap, never a paying use
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
-test('Issue #3: seven general stories are not qualified STORES Reservation + MF payout users', () => {
+test('Issue #3: eight general stories are not qualified STORES Reservation + MF payout users', () => {
   const result = summarizeDemandEvidence(saved);
   assert.equal(result.firsthand_workflow, 7);
   assert.equal(result.targetMfReconciliationWorkflows, 0);
   assert.deepEqual(result.targetMfEvidenceIds, []);
-  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005', 'U006', 'U007']);
+  assert.deepEqual(result.nonTargetFirsthandIds.sort(), ['U001', 'U002', 'U003', 'U004', 'U005', 'U006', 'U007', 'U008']);
   assert.equal(result.decision, 'INSUFFICIENT_EVIDENCE');
 });
 
@@ -582,7 +582,7 @@ test('M2: dated STORES予約 reviews with undisclosed accounting software are no
   const result = summarizeDemandEvidence(data);
   assert.equal(result.publicationDatedFirsthandWorkflows, 5);
   assert.equal(result.m2QualifiedFirsthandWorkflows, 1);
-  assert.deepEqual(result.softwareUnverifiedIds.sort(), ['U004', 'U005', 'U006', 'U007']);
+  assert.deepEqual(result.softwareUnverifiedIds.sort(), ['U004', 'U005', 'U006', 'U007', 'U008']);
   const u4 = data.sources.find(s => s.id === 'U004');
   u4.accountingSoftware = 'マネーフォワード クラウド会計'; // synthetic metadata, NOT a real observation
   u4.accountingSoftwareUseEvidence = '本人がMF会計を利用'; // synthetic only
