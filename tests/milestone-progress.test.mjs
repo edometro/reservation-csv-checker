@@ -286,20 +286,18 @@ test('同時並走と不正な作業優先度を拒否する', () => {
   assert.throws(() => evaluateMilestones(ledger, registry, '2026-10-31'), /不正/);
 });
 
-test('CLIは11/01時点の遅延M2と単一active M3を別々に出力する', () => {
+test('CLIは11/04時点で遅延M2を単一active作業としM3遅延も保持する', () => {
   const output = execFileSync(process.execPath,
-    ['scripts/milestone-status.mjs', '--as-of', '2026-11-01'], {encoding: 'utf8'});
+    ['scripts/milestone-status.mjs', '--as-of', '2026-11-04'], {encoding: 'utf8'});
   const report = JSON.parse(output);
   assert.equal(report.nextDue.id, 'M2');
   assert.equal(report.nextDue.status, 'overdue');
-  assert.equal(report.nextWork.id, 'M3');
-  assert.equal(report.nextUpcomingDue.id, 'M3');
-  assert.equal(report.nextUpcomingDue.dueDate, '2026-11-03');
-  assert.equal(report.nextWork.status, 'blocked', '実CSV未入手・個別承認なしのM3はactiveでもblocked');
+  assert.equal(report.nextWork.id, 'M2');
+  assert.equal(report.nextUpcomingDue.id, 'M4');
+  assert.equal(report.nextUpcomingDue.dueDate, '2026-11-07');
   assert.equal(report.evidence.m2QualifiedFirsthandWorkflows, 1);
   assert.equal(report.evidence.realCsvCompatibilityVerified, false);
 });
-
 
 test('未到来の期限がなくなった後も遅延を残し、nextUpcomingDueはnullを返す', () => {
   const ledger = baseline();
@@ -349,21 +347,19 @@ test('M3期限の翌日、両方未達ならM2へ単一作業を自動復帰し�
     'M2完了なら不要な復帰をしない');
 });
 
-test('実台帳の11/04シミュレーションでもM3をoverdueにしてM2へ戻す', async () => {
+test('実台帳の11/04はM3 overdueを保持し単一作業をM2へ移す', async () => {
   const [ledger, evidence] = await Promise.all([
     readFile(new URL('../docs/milestones.json', import.meta.url), 'utf8').then(JSON.parse),
     readFile(new URL('../docs/demand-evidence.json', import.meta.url), 'utf8').then(JSON.parse)
   ]);
-  const onDeadline = evaluateMilestones(ledger, evidence, '2026-11-03');
-  assert.equal(onDeadline.nextWork.id, 'M3');
   const nextDay = evaluateMilestones(ledger, evidence, '2026-11-04');
   assert.equal(nextDay.nextWork.id, 'M2');
   assert.equal(nextDay.milestones.find(m => m.id === 'M3').effectiveStatus, 'overdue');
   const {updated} = synchronizeMilestoneLedger(ledger, nextDay);
   assert.equal(updated.milestones.find(m => m.id === 'M2').workPriority, 'active');
   assert.equal(updated.milestones.find(m => m.id === 'M3').workPriority, 'parked');
+  assert.equal(evaluateMilestones(updated, evidence, '2026-11-04').drift.length, 0);
 });
-
 
 test('M5/商用Go: 本物のM3人手審査なしでは他の全証拠フラグが揃っても拒否する', () => {
   // Entirely synthetic records: these are NOT customers, real CSVs, or permission.
