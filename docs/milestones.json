@@ -1,12 +1,15 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-04",
+  "updatedAt": "2026-11-12",
   "timezone": "Asia/Tokyo",
   "purpose": "予約売上チェッカーの期限・証拠・遅延管理。需要の証拠は docs/demand-evidence.json を唯一の集計元とする。",
   "statusPolicy": "各定期実行で日本時間の当日と dueDate を比較し、未達で当日が期限を過ぎた場合は blocked を含め overdue に更新する。blockedReason は別フィールドで維持する。達成は証拠リンクと判定条件の全充足を確認したときのみ。",
   "evidenceSnapshot": {
     "checkedAt": "2026-11-03",
     "firsthandWorkflows": 8,
+    "buyerRequests": 1,
+    "publicationDatedFirsthandWorkflows": 5,
+    "m2QualifiedFirsthandWorkflows": 1,
     "targetMfFirsthandWorkflows": 0,
     "consentedInterviews": 0,
     "specificWillingness": 0,
@@ -14,10 +17,7 @@
     "officialCapabilities": 40,
     "sellerClaims": 7,
     "editorial": 3,
-    "sourceCount": 59,
-    "publicationDatedFirsthandWorkflows": 5,
-    "m2QualifiedFirsthandWorkflows": 1,
-    "buyerRequests": 1
+    "sourceCount": 59
   },
   "commercialGate": {
     "status": "INSUFFICIENT_EVIDENCE",
@@ -415,7 +415,7 @@
       "id": "M4",
       "dueDate": "2026-11-07",
       "title": "同意済みヒアリング5件",
-      "status": "blocked",
+      "status": "overdue",
       "acceptance": [
         "個別承認の範囲内で同意済みの本人ヒアリング5件",
         "月次作業・時間・既存代替策・支払意思を匿名集計"
@@ -437,7 +437,7 @@
       "id": "M5",
       "dueDate": "2026-11-10",
       "title": "支払意思3件・実CSV適合・価格2,980円仮説を評価",
-      "status": "blocked",
+      "status": "overdue",
       "acceptance": [
         "価格・購入条件・決裁者が具体的な支払意思3件",
         "出典明示の実CSVで適合検証",
